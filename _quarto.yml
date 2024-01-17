@@ -3,14 +3,27 @@ project:
   output-dir: docs
 
 book:
-  title: "Kenai River Baseline Water Quality Project Data QA/QC Year XXXX - XXXX"
+  title: "Kenai River Baseline Water Quality Project Data QA/QC Year 2014 - 2023"
   author: "Benjamin Meyer, Kenai Watershed Forum"
-  date: "12/15/2023"
+  page-navigation: true
   chapters:
     - index.qmd
     - intro.qmd
     - summary.qmd
     - references.qmd
+    - part: "Years"
+      chapters: 
+      - 2014.qmd
+      - 2015.qmd
+      - 2016.qmd
+      - 2017.qmd
+      - 2018.qmd
+      - 2019.qmd
+      - 2020.qmd
+      - 2021.qmd
+      - 2022.qmd
+      - 2023.qmd
+
     
   repo-url: https://github.com/Kenai-Watershed-Forum/kenai-river-wqx-qaqc
   search:
