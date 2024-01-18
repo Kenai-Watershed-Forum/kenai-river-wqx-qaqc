@@ -1,1 +1,14 @@
+# 2020 QA/QC {.unnumbered}
+
+---
+execute:
+  echo: false
+date: "`r Sys.Date()`"
+format:
+  html:
+    code-fold: true
+    code-tools: true
+    code-summary: "Show the code"
+---
+
 

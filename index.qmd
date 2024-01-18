@@ -1,9 +1,39 @@
 # Preface {.unnumbered}
 
-This is a Quarto book.
+---
+execute:
+  echo: false
+  freeze: true
+date: "`r Sys.Date()`"
+format:
+  html:
+    code-fold: true
+    code-tools: true
+    code-summary: "Show the code"
+---
 
-To learn more about Quarto books visit <https://quarto.org/docs/books>.
+::: {.content-visible when-format="html"}
+This document is the online work-in-progress for preparation of data that will be used in the upcoming report, [Water Quality Assessment of the Kenai River Watershed, 2000 - 2023](https://kenai-watershed-forum.github.io/kenai-river-wqx/).
 
-```{r}
-1 + 1
-```
+*Downloads*
+
+This report can also be downloaded as an Microsoft Word document by clicking on the 'W' symbol in the upper left corner. When the report is complete, it will be available to download as a PDF.
+
+*Github*
+
+All project files and source code are hosted in a public GitHub repository, which is accessible by clicking the GitHub symbol in the upper left corner.
+
+***This online report is not optimized for use on mobile devices, and is best accessed on a desktop or laptop computer.***
+
+<br>
+:::
+
+::: {.content-visible when-format="docx"}
+This document is the online work-in-progress preparation of data that will be used in the upcoming report, Water Quality Assessment of the Kenai River Watershed, 2000 - 2023. When completed, it will be an update to historical reports summarising available data to date for this project [@mccard2007; @guerronorejuela2016].
+
+This draft report is best accessed as an online interactive document at https://kenai-watershed-forum.github.io/kenai-river-wqx-report-v2/, where it can also be downloaded as an Microsoft Word document.
+
+All project files and source code are hosted in a public GitHub repository, also accessible at the above URL.
+:::
+
+\newpage

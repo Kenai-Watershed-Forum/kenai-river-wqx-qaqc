@@ -3,7 +3,7 @@ project:
   output-dir: docs
 
 book:
-  title: "Kenai River Baseline Water Quality Project Data QA/QC Year 2014 - 2023"
+  title: "Kenai River Baseline Water Quality Project Data QA/QC Years 2014 - 2023"
   author: "Benjamin Meyer, Kenai Watershed Forum"
   page-navigation: true
   chapters:

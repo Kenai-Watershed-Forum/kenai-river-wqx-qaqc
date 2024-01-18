@@ -1,0 +1,9 @@
+NOTE: terminal command to stage all commits:
+  git add -A && git commit -m 'staging all files'
+
+Terminal command to clear cache:
+  quarto render --cache-refresh
+
+Command to exit render at downstream script point
+
+knitr::knit_exit()
