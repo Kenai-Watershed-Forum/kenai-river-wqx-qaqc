@@ -10,3 +10,99 @@ format:
     code-tools: true
     code-summary: "Show the code"
 ---
+
+## Introduction
+
+Prior to publishing analysis and interpretation of water quality data, we will ensure that all data that meets QA/QC standards outlined in the current project [Quality Assurance Project Plan (QAPP)](https://www.kenaiwatershed.org/news-media/qapp-revisions-completed-2023/)and is accessible in the appropriate public repository.
+
+Water quality data from this project is ultimately destined for the Environmental Protection Agency's Water Quality Exchange (EPA WQX).
+
+The QAPP for this project describes data management details and responsible parties for each step of the data pipeline from observation to repository. The 2023 data preparation and review process is published here.
+
+### Year 2023 Water Quality Data
+
+In this chapter we will collate 2023 laboratory data from several sources into a single spreadsheet document with a consistent format. The desired end format is a spreadsheet template provided by the EPA Water Quality Exchange. These template files are available to download from the EPA at <https://www.epa.gov/waterdata/water-quality-exchange-web-template-files>.
+
+Once the data is collated, it will be evaluated according to a Quality Assurance Checklist (template example provided by the Alaska Department of Environmental Conservation Soldotna office). Field observations that do not meet the quality assurance standards described in the evaluation checklist will be flagged as "Rejected" before being uploaded to the EPA WQX.
+
+Data that has been uploaded to the EPA WQX is evaluated biannually by the Alaska Department of Environmental Conservation (ADEC) in their [Integrated Water Quality Monitoring and Assessment Report](https://dec.alaska.gov/water/water-quality/integrated-report/)[^2023-1]. The integrated report evaluates available water quality data from the previous five years against Alaska water quality standards and regulations [@adec2020].
+
+[^2023-1]: https://dec.alaska.gov/water/water-quality/integrated-report/
+
+#### 2023 Water Quality Data Formatting
+
+The code scripts in this document assemble water quality data from the three analytical laboratories that partnered with Kenai Watershed Forum for this project in 2023:
+
+-   SGS Laboratories (Anchorage, AK)
+
+-   Soldotna Wastewater Treatment Plant (Soldotna, AK)
+
+<br>
+
+------------------------------------------------------------------------
+
+##### 2023 Metals/Nutrients Lab Results (SGS Labs)
+
+```{r, echo = F, message = F}
+library("xfun")
+
+xfun::embed_file('other/input/2023/spring_2023_wqx_data/Data/SGS/Revision 1 SGS Data/1231846_FC5912_Rev1.csv', text = "Download Original Spring 2023 Metals/Nutrients Lab Results from SGS - Electronic Data Delivery file")
+
+xfun::embed_file('other/input/2023/spring_2023_wqx_data/Data/SGS/Revision 1 SGS Data/SGS_Spring_2023_data_final.pdf', text = "Download Original Spring 2023 Metals/Nutrients Lab Results from SGS - PDF file")
+
+```
+
+```{r, echo = F}
+xfun::embed_file('other/input/2023/summer_2023_wqx_data/SGS/Summer 2023 SGS Agency Baseline.xlsx', text = "Download Original Summer 2023 Metals/Nutrients Lab Results from SGS - Electronic Data Delivery file")
+
+xfun::embed_file('other/input/2023/summer_2023_wqx_data/SGS/1233640.pdf', text = "Download Original Summer 2023 Metals/Nutrients Lab Results from SGS - PDF file")
+
+xfun::embed_file('other/input/2023/summer_2023_wqx_data/SGS/1233640_COC.pdf', text = "Download Original Summer 2023 Metals/Nutrients Chain of Custody docs from SGS - PDF file")
+
+```
+
+<br>
+
+```{r, 2023 WQX formatting for SGS, echo = F, message = F}
+
+#| warning: false
+#| message: false
+
+
+# clear environment
+rm(list=ls())
+
+# load packages
+library(tidyverse)
+library(readxl)
+library(openxlsx)
+library(data.table)
+library(stringr)
+library(magrittr)
+library(janitor)
+library(hms)
+library(lubridate)
+library(anytime)
+
+xfun::pkg_load2(c("htmltools", "mime"))
+
+
+# Assign 2023 Field Sample Dates 
+
+# Spring 2023 sampling date
+spring21_sample_date <- "5/2/2023"
+
+# Summer 2023 Sampling Date
+summer21_sample_date <-"7/27/2021"
+```
+
+
+
+
+
+
+
+
+
+
+

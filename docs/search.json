@@ -26,5 +26,19 @@
     "title": "References",
     "section": "",
     "text": "Knuth, Donald E. 1984. “Literate Programming.” Comput.\nJ. 27 (2): 97–111. https://doi.org/10.1093/comjnl/27.2.97."
+  },
+  {
+    "objectID": "2023.html#introduction",
+    "href": "2023.html#introduction",
+    "title": "2023 QA/QC",
+    "section": "Introduction",
+    "text": "Introduction\nPrior to publishing analysis and interpretation of water quality data, we will ensure that all data that meets QA/QC standards outlined in the current project Quality Assurance Project Plan (QAPP)and is accessible in the appropriate public repository.\nWater quality data from this project is ultimately destined for the Environmental Protection Agency’s Water Quality Exchange (EPA WQX).\nThe QAPP for this project describes data management details and responsible parties for each step of the data pipeline from observation to repository. The 2023 data preparation and review process is published here.\n\nYear 2023 Water Quality Data\nIn this chapter we will collate 2023 laboratory data from several sources into a single spreadsheet document with a consistent format. The desired end format is a spreadsheet template provided by the EPA Water Quality Exchange. These template files are available to download from the EPA at https://www.epa.gov/waterdata/water-quality-exchange-web-template-files.\nOnce the data is collated, it will be evaluated according to a Quality Assurance Checklist (template example provided by the Alaska Department of Environmental Conservation Soldotna office). Field observations that do not meet the quality assurance standards described in the evaluation checklist will be flagged as “Rejected” before being uploaded to the EPA WQX.\nData that has been uploaded to the EPA WQX is evaluated biannually by the Alaska Department of Environmental Conservation (ADEC) in their Integrated Water Quality Monitoring and Assessment Report1. The integrated report evaluates available water quality data from the previous five years against Alaska water quality standards and regulations (adec2020?).\n\n2023 Water Quality Data Formatting\nThe code scripts in this document assemble water quality data from the three analytical laboratories that partnered with Kenai Watershed Forum for this project in 2023:\n\nSGS Laboratories (Anchorage, AK)\nSoldotna Wastewater Treatment Plant (Soldotna, AK)\n\n\n\n\n2023 Metals/Nutrients Lab Results (SGS Labs)\n\n\nDownload Original Spring 2023 Metals/Nutrients Lab Results from SGS - Electronic Data Delivery file\n\n\nDownload Original Spring 2023 Metals/Nutrients Lab Results from SGS - PDF file\n\n\n\n\nDownload Original Summer 2023 Metals/Nutrients Lab Results from SGS - Electronic Data Delivery file\n\n\nDownload Original Summer 2023 Metals/Nutrients Lab Results from SGS - PDF file\n\n\nDownload Original Summer 2023 Metals/Nutrients Chain of Custody docs from SGS - PDF file"
+  },
+  {
+    "objectID": "2023.html#footnotes",
+    "href": "2023.html#footnotes",
+    "title": "2023 QA/QC",
+    "section": "",
+    "text": "https://dec.alaska.gov/water/water-quality/integrated-report/↩︎"
   }
 ]
