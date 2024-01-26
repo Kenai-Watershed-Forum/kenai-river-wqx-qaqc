@@ -96,6 +96,46 @@ spring21_sample_date <- "5/2/2023"
 summer21_sample_date <-"7/27/2021"
 ```
 
+```{r message = FALSE, echo = F, include = F}
+
+#| warning: false
+#| message: false
+
+################################################################################################################
+######################################### Read in  and Clean SGS Data ######################################
+################################################################################################################
+
+
+############################ Part A: SGS Data Read In #############################
+
+## Reformat SGS data downloaded from their server client (SGS Engage, full EDD files) to match AQWMS template
+
+# read in
+# address column type issues such that both dataframes can be merged
+spring_batch_sgs23 <- read.csv("other/input/2023/spring_2023_wqx_data/Data/SGS/Revision 1 SGS Data/1231846_FC5912_Rev1.csv") %>%
+  select(-PROJECT_ID) %>%
+  mutate(DISSOLVED = case_)
+
+summer_batch_sgs23 <- read_excel("other/input/2023/summer_2023_wqx_data/SGS/Summer 2023 SGS Agency Baseline.xlsx", sheet = "Sheet9") %>%
+  select(-PROJECT_ID) 
+
+
+# address different categorical results for "DISSOLVED" column:
+
+#> unique(spring_batch_sgs23$DISSOLVED)
+#[1] TRUE
+#> unique(summer_batch_sgs23$DISSOLVED)
+#[1] "." "L" "T"
+
+
+
+# clean up column names and bind seasons together
+sgs23 <- bind_rows(spring_batch_sgs23,summer_batch_sgs23) %>%
+  clean_names() %>%
+  remove_empty() 
+
+
+```
 
 
 
