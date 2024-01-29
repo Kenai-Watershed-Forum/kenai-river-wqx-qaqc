@@ -113,27 +113,79 @@ summer21_sample_date <-"7/27/2021"
 # read in
 # address column type issues such that both dataframes can be merged
 spring_batch_sgs23 <- read.csv("other/input/2023/spring_2023_wqx_data/Data/SGS/Revision 1 SGS Data/1231846_FC5912_Rev1.csv") %>%
-  select(-PROJECT_ID) %>%
-  mutate(DISSOLVED = case_)
+  select(-PROJECT_ID,-DISSOLVED)
 
 summer_batch_sgs23 <- read_excel("other/input/2023/summer_2023_wqx_data/SGS/Summer 2023 SGS Agency Baseline.xlsx", sheet = "Sheet9") %>%
-  select(-PROJECT_ID) 
+  select(-PROJECT_ID,-DISSOLVED) 
 
 
-# address different categorical results for "DISSOLVED" column:
+# later, need to address different categorical results that were in removed "DISSOLVED" column:
 
 #> unique(spring_batch_sgs23$DISSOLVED)
 #[1] TRUE
 #> unique(summer_batch_sgs23$DISSOLVED)
 #[1] "." "L" "T"
 
-
-
-# clean up column names and bind seasons together
+# joining and preparatory steps
+## clean up column names and bind seasons together
 sgs23 <- bind_rows(spring_batch_sgs23,summer_batch_sgs23) %>%
   clean_names() %>%
-  remove_empty() 
+  remove_empty() %>%
+  
+  # add lab name
+  mutate(lab_name = "SGS North America, Anchorage, Alaska") %>%
+  
+  # make 'matrix' column consistent
+  select(-matrix) %>%
+  mutate(matrix = "Water") %>%
+  
+  # prepare separate time and date columns for 
+  # - sample collection
+  # - lab receipt
+  # - lab run 
+  # - extraction
+  
+  #NOTE summer 2023 lab receipt time/dates missing ?!@
+  
+  transform(collect_date = mdy_hm(collect_date),
+            rec_date = mdy_hm(rec_date),
+            run_date = mdy_hm(run_date),
+            extracted_date = mdy_hm(extracted_date)) %>%
+  separate(collect_date, sep = " ", into = c("collect_date","collect_time")) %>%
+  separate(rec_date, sep = " ", into = c("rec_date","rec_time")) %>%
+  separate(run_date, sep = " ", into = c("run_date","run_time")) %>%
+  separate(extracted_date, sep = " ", into = c("extracted_date","extracted_time"))
 
+# NOTE: in some past years, total metals analyses (method 200.7) have been subcontracted to ALS Laboratories (Seattle). In 2023, SGS Anchorage had the 200.7 methods run by SGS Orlando. Thus, these results are already read in here.
+
+# remove individual dataframe
+rm(spring_batch_sgs23,summer_batch_sgs23)
+            
+
+################### Part B: Create Consistent Field Site Names #####################
+
+# export list of unique sample_id
+sgs_sitenames <- sgs23 %>%
+  distinct(sample_id,collect_date)
+colnames(sgs_sitenames) <- c("sample_id","collect_date")
+sgs_sitenames %>% arrange(sample_id)
+write.csv(sgs_sitenames,"other/input/2023/misc/site_names.csv", row.names = F)
+
+# manually edit site names csv
+
+# read in manually edited csv
+
+# WORKING HERE 1/29/24
+
+
+# join sample ids to site ids
+
+# import example data w/ monitoring location IDs
+location_ids <- read.csv("other/output/example_output/results_activities_2021.csv") %>%
+  clean_names() %>%
+  select(monitoring_location_id, activity_id) %>%
+  separate(activity_id, sep = "-", into = "site_id") %>%
+  distinct()
 
 ```
 
