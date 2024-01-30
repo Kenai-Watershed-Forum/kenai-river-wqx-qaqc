@@ -158,11 +158,12 @@ sgs23 <- bind_rows(spring_batch_sgs23,summer_batch_sgs23) %>%
 
 # NOTE: in some past years, total metals analyses (method 200.7) have been subcontracted to ALS Laboratories (Seattle). In 2023, SGS Anchorage had the 200.7 methods run by SGS Orlando. Thus, these results are already read in here.
 
+
 # remove individual dataframe
 rm(spring_batch_sgs23,summer_batch_sgs23)
             
 
-################### Part B: Create Consistent Field Site Names #####################
+################### Part B: Create Consistent Sample Location Names #####################
 
 # export list of unique sample_id
 sgs_sitenames <- sgs23 %>%
@@ -171,21 +172,68 @@ colnames(sgs_sitenames) <- c("sample_id","collect_date")
 sgs_sitenames %>% arrange(sample_id)
 write.csv(sgs_sitenames,"other/input/2023/misc/site_names.csv", row.names = F)
 
-# manually edit site names csv
+# manually edit site names csv (external to script)
 
+library(stringi)
 # read in manually edited csv
+sgs_sitenames <- read_csv("other/input/2023/misc/site_names_manual_edit.csv") %>%
+  filter(!is.na(site_id)) %>%
+  # remove trailing spaces
+  mutate(sample_id = str_trim(sample_id, side = "right")) %>%
+  rename(`site_id  ` = site_id)
+colnames(sgs_sitenames) <- c("sample_id","site_id")
 
-# WORKING HERE 1/29/24
 
+#write.csv(sgs_sitenames, "other/input/2023/misc/site_names_manual_edit.csv", row.names = F)
+  
+# join site_id to main dataframe
+sgs23 <- left_join(sgs23,sgs_sitenames, by = "sample_id")
 
-# join sample ids to site ids
-
+# join "monitoring location id" to overall sgs23 dataframe
 # import example data w/ monitoring location IDs
 location_ids <- read.csv("other/output/example_output/results_activities_2021.csv") %>%
   clean_names() %>%
   select(monitoring_location_id, activity_id) %>%
   separate(activity_id, sep = "-", into = "site_id") %>%
   distinct()
+
+# join
+sgs23 <- left_join(sgs23,location_ids, by = "site_id") 
+
+# NOTE: the join for the "No Name Creek" Sample IDs are not functioning. After investigating possibilities as to why (whitespaces, etc) no diagnoses is evident. We will instead manually rectify this with mutate and case_when
+
+z <- sgs23 %>%
+  mutate(site_id = 
+           case_when(
+             grepl("No Name", sample_id) ~ "KBL_t_00.0",
+             grepl("NO NAME", sample_id) ~ "KBL_t_00.0",
+             TRUE ~ sample_id)) %>% 
+  transform(monitoring_location_id = as.character(monitoring_location_id)) %>%
+  mutate(monitoring_location_id = 
+           case_when(
+             site_id == "KBL_t_00.0" ~ "10000008",
+             TRUE ~ monitoring_location_id
+             ))
+             
+
+# keep following through 2021 example; hopefully simplify, goal: format as 2021 export
+
+
+  
+
+
+
+
+```
+
+# some RM 0 site_id and sample_id are not appearing after join. unclear why
+
+
+z <- data.frame(unique(sgs_sitenames$site_id))
+
+z1 <- data.frame(unique(sgs23$site_id))
+
+z2 <- data.frame(unique(sgs23$sample_id))
 
 ```
 
@@ -195,6 +243,25 @@ location_ids <- read.csv("other/output/example_output/results_activities_2021.cs
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# QA/QC
+
+# Are sample collection dates unique to the actual recorded dates?
+# (no; spring has two dates; lab typo)
 
 
 
