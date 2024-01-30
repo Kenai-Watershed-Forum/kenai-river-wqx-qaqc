@@ -1,0 +1,26 @@
+MonitoringLocationIdentifier,MonitoringLocationName,MonitoringLocationTypeName,MonitoringLocationDescriptionText,HUCEightDigitCode,LatitudeMeasure,LongitudeMeasure,HorizontalCollectionMethodName,HorizontalCoordinateReferenceSystemDatumName,StateCode,CountyCode
+KENAI_WQX-10000002,KBL_m_01.5,River/Stream,City_of_Kenai_Docks,19020302,60.54368,-151.22294,Interpolation-Satellite,NAD83,2,122
+KENAI_WQX-10000005,KBL_m_06.5,River/Stream,Cunningham_Park,19020302,60.54081,-151.18278,Interpolation-Satellite,NAD83,2,122
+KENAI_WQX-10000008,KBL_t_00.0,River/Stream,No_Name_Creek,19020302,60.550888,-151.268417,Interpolation-Satellite,NAD83,2,122
+KENAI_WQX-10000015,KBL_t_10.0,River/Stream,Beaver_Creek,19020302,60.548029,-151.14324,Interpolation-Satellite,NAD83,2,122
+KENAI_WQX-10000016,KBL_m_10.1,River/Stream,Kenai_River_near_Beaver_creek,19020302,60.539279,-151.142263,Interpolation-Satellite,NAD83,2,122
+KENAI_WQX-10000017,KBL_m_12.5,River/Stream,Pillars,19020302,60.533743,-151.099258,Interpolation-Satellite,NAD83,2,122
+KENAI_WQX-10000018,KBL_m_18.0,River/Stream,Poachers_Cove,19020302,60.502005,-151.106973,Interpolation-Satellite,NAD83,2,122
+KENAI_WQX-10000020,KBL_t_19.0,River/Stream,Slikok_Creek,19020302,60.482318,-151.127053,Interpolation-Satellite,NAD83,2,122
+KENAI_WQX-10000021,KBL_m_21.0,River/Stream,Soldotna_Bridge,19020302,60.476634,-151.082099,Interpolation-Satellite,NAD83,2,122
+KENAI_WQX-10000022,KBL_t_22.0,River/Stream,Soldotna_Creek,19020302,60.483364,-151.057656,Interpolation-Satellite,NAD83,2,122
+KENAI_WQX-10000023,KBL_m_23.0,River/Stream,Swiftwater_Park,19020302,60.480338,-151.030847,Interpolation-Satellite,NAD83,2,122
+KENAI_WQX-10000024,KBL_t_30.0,River/Stream,Funny_River,19020302,60.489963,-150.860982,Interpolation-Satellite,NAD83,2,122
+KENAI_WQX-10000025,KBL_m_31.0,River/Stream,Morgans_Landing,19020302,60.498284,-150.863121,Interpolation-Satellite,NAD83,2,122
+KENAI_WQX-10000026,KBL_t_36.0,River/Stream,Moose_River,19020302,60.53687,-150.754724,Interpolation-Satellite,NAD83,2,122
+KENAI_WQX-10000027,KBL_m_40.0,River/Stream,Bings_Landing,19020302,60.515441,-150.702069,Interpolation-Satellite,NAD83,2,122
+KENAI_WQX-10000028,KBL_m_43.0,River/Stream,Upstream_Dow_Island,19020302,60.489844,-150.636905,Interpolation-Satellite,NAD83,2,122
+KENAI_WQX-10000029,KBL_t_44.0,River/Stream,Killey_River,19020302,60.481518,-150.632498,Interpolation-Satellite,NAD83,2,122
+KENAI_WQX-10000030,KBL_m_50.0,River/Stream,Skilak_Lake_Outlet,19020302,60.467517,-150.507789,Interpolation-Satellite,NAD83,2,122
+KENAI_WQX-10000031,KBL_m_70.0,River/Stream,Jims_Landing,19020302,60.481392,-150.11502,Interpolation-Satellite,NAD83,2,122
+KENAI_WQX-10000032,KBL_t_74.0,River/Stream,Russian_River,19020302,60.484622,-149.993955,Interpolation-Satellite,NAD83,2,122
+KENAI_WQX-10000424,KBL_t_79.5,River/Stream,Juneau_Creek,19020302,60.489,-149.877,GPS-Unspecified,NAD83,2,122
+KENAI_WQX-10000425,KBL_m_82.0,River/Stream,Kenai_Lake_Bridge,19020302,60.492,-149.81087,Interpolation-Satellite,NAD83,2,122
+,,,,,,,,,,
+,,,,,,,,,,
+,,,, ,,,,,,

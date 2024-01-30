@@ -40,5 +40,12 @@
     "title": "2023 QA/QC",
     "section": "",
     "text": "https://dec.alaska.gov/water/water-quality/integrated-report/↩︎"
+  },
+  {
+    "objectID": "2023.html",
+    "href": "2023.html",
+    "title": "2023 QA/QC",
+    "section": "",
+    "text": "general strategy: get all columns of df to conform to final status before joining. (e.g. do all sgs first, then swwtp)"
   }
 ]

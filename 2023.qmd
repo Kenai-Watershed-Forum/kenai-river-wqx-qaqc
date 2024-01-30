@@ -13,7 +13,7 @@ format:
 
 ## Introduction
 
-Prior to publishing analysis and interpretation of water quality data, we will ensure that all data that meets QA/QC standards outlined in the current project [Quality Assurance Project Plan (QAPP)](https://www.kenaiwatershed.org/news-media/qapp-revisions-completed-2023/)and is accessible in the appropriate public repository.
+Prior to publishing analysis and interpretation of water quality data, we will ensure that all data that meets QA/QC standards outlined in the current project [Quality Assurance Project Plan (QAPP)](https://www.kenaiwatershed.org/news-media/qapp-revisions-completed-2023/) and is accessible in the appropriate public repository.
 
 Water quality data from this project is ultimately destined for the Environmental Protection Agency's Water Quality Exchange (EPA WQX).
 
@@ -201,20 +201,36 @@ location_ids <- read.csv("other/output/example_output/results_activities_2021.cs
 # join
 sgs23 <- left_join(sgs23,location_ids, by = "site_id") 
 
-# NOTE: the join for the "No Name Creek" Sample IDs are not functioning. After investigating possibilities as to why (whitespaces, etc) no diagnoses is evident. We will instead manually rectify this with mutate and case_when
+# NOTE: the join for several sites are not cooperating.
+# These sites include "No Name Creek" , "Skilak Lake Outflow," and "Jim's Landing
+# After investigating possible reasons, (white spaces, etc) no diagnoses is evident. 
+# For time efficiency, we will instead manually rectify this in script with mutate and case_when
 
 sgs23 %<>%
+  
+  # No Name Creek
   mutate(site_id = 
            case_when(
-             grepl("No Name", sample_id) ~ "KBL_t_00.0",
-             grepl("NO NAME", sample_id) ~ "KBL_t_00.0",
+             grepl("No Name|NO NAME", sample_id) ~ "KBL_t_00.0",
              TRUE ~ sample_id)) %>% 
   transform(monitoring_location_id = as.character(monitoring_location_id)) %>%
   mutate(monitoring_location_id = 
            case_when(
              site_id == "KBL_t_00.0" ~ "10000008",
-             TRUE ~ monitoring_location_id
-             ))
+             TRUE ~ monitoring_location_id)) %>%
+  
+  # Skilak Outlet
+  mutate(monitoring_location_id = 
+           case_when(
+             grepl("Skilak|SKILAK",sample_id) ~ "10000030",
+             TRUE ~ monitoring_location_id)) %>%
+
+  # Jim's Landing
+  mutate(monitoring_location_id = 
+           case_when(
+             grepl("JIM'S|Jim's",sample_id) ~ "10000031",
+             TRUE ~ monitoring_location_id))
+
              
 # all 2023 SGS data joined and present.
 
@@ -232,33 +248,12 @@ sgs23 %<>%
 # Ensure information about project sample type is placed in correct column (activity Type)
 # method blank, trip blank, field duplicate
 
-# NOTE: not all of these may be designated in the "sample_id" column, maybe in other columns
-
-# field duplicates
-dup_patterns <- c("DUP","Dup")
-
-# field blanks
-fb_patterns <- "FB"
-
-# trip blanks
-tb_patterns <- "TRIP BLANK"
-
-z1 <- data.frame(unique(sgs23$sample_id))
-
-z <- sgs23 %>%
+sgs23 %<>%
   mutate(activity_type = case_when(
-    grepl(paste(dup_patterns, collapse = "|"), sample_id) ~ "Quality Control Field Replicate Msr/Obs",
-    grepl(paste(fb_patterns, collapse = "|"), sample_id) ~ "Quality Control Sample-Field Blank",
-    grepl(paste(tb_patterns, collapse = "|"), sample_id) ~ "Quality Control Sample-Trip Blank",
-    TRUE ~ ""
-    
-  ))
-
-
-grepl(paste(my_patterns, collapse='|'), status)
-
-
-
+    grepl("DUP","Dup", sample_id) ~ "Quality Control Field Replicate Msr/Obs",
+    grepl("FB", sample_id) ~ "Quality Control Sample-Field Blank",
+    grepl("TRIP BLANK", sample_id) ~ "Quality Control Sample-Trip Blank",
+    TRUE ~ ""))
 
 ```
 
@@ -270,7 +265,32 @@ grepl(paste(my_patterns, collapse='|'), status)
 
 
 ##### 2023 Fecal Coliform Lab Results (Soldotna Wastewater Treatment Plant Lab)
+```{r message = FALSE, echo = F, include = F}
 
+```
+
+
+
+
+# FORMULAIC final steps for combined dataframe
+# activity_id (concatenate)
+# Result Analytical Method ID (matching)
+# Result Analytical Method ID (matching)
+# Result Qualifier (matching, verify symbols; SGS terms vs CDX terms)
+# Result Sample Fraction (matching)
+# Method Speciation (matching)
+# Sample Collection Equipment Name (matching)
+# Result Sample Fraction (matching)
+# Result Detection Condition (calculated)
+# Result Status ID (matching from manual table..? check domains for various options)
+# Sample Container Type (matching)
+# Sample Container Color (matching)
+# Chemical Preservative Used (matching)
+
+
+
+# STATIC final steps for combined dataframe
+# all other columns
 
 
 
