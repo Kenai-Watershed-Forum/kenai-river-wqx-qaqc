@@ -91,10 +91,10 @@ xfun::pkg_load2(c("htmltools", "mime"))
 # Assign 2023 Field Sample Dates 
 
 # Spring 2023 sampling date
-spring21_sample_date <- "5/2/2023"
+spring23_sample_date <- ymd("2023-05-02")
 
 # Summer 2023 Sampling Date
-summer21_sample_date <-"7/27/2021"
+summer23_sample_date <- ymd("2023-07-18")
 ```
 
 ```{r message = FALSE, echo = F, include = F}
@@ -203,7 +203,7 @@ sgs23 <- left_join(sgs23,location_ids, by = "site_id")
 
 # NOTE: the join for several sites are not cooperating.
 # These sites include "No Name Creek" , "Skilak Lake Outflow," and "Jim's Landing
-# After investigating possible reasons, (white spaces, etc) no diagnoses is evident. 
+# After investigating possible reasons, (white spaces, etc) no diagnoses are evident. 
 # For time efficiency, we will instead manually rectify this in script with mutate and case_when
 
 sgs23 %<>%
@@ -258,30 +258,132 @@ sgs23 %<>%
 ```
 
 
-
-
-# general strategy: get all columns of df to conform to final status before joining. (e.g. do all sgs first, then swwtp)
-
-
-
-##### 2023 Fecal Coliform Lab Results (Soldotna Wastewater Treatment Plant Lab)
 ```{r message = FALSE, echo = F, include = F}
 
+# For the remainder of steps, we will conform our data to the columns present in the spreadsheet successfully uploaded with 2021 data proceeding left to right. Columns content is created in one of the following manners:
+
+# Static - column is assigned a static value
+# Concatenated - column combines static info from multiple columns
+# Calculated - column is dependent on measurements
+
+# Project ID (static)
+sgs23 %>% mutate(project_id = "10000007")
+
+# Monitoring Location ID (static, already present)
+
+# Activity Media Name	(static)
+sgs23 %>% mutate(activity_media_name = "Water")
+
+# Activity Media Subdivision Name	(static)
+sgs23 %>% mutate(activity_media_subdivision_name = "Surface Water")
+
+# Activity ID	(concatenated)
+
+# Activity Start Date	(static)
+sgs23 %>% rename(activity_start_date = collect_date)
+
+# Activity Start Time	(static)
+sgs23 %>% rename(activity_start_time = collect_time)
+
+# Activity Start Time Zone	
+sgs23 %>% mutate (activity_start_time_zone = "AKST")
+
+# Activity Latitude	
+
+# Activity Longitude	
+
+# Activity Type	
+
+# Activity Depth/Height Measure	
+
+# Activity Depth/Height Unit	
+
+# Activity Comment	
+
+# Activity Horizontal Collection Method	
+
+# Activity Horizontal Reference Datum	
+
+# Characteristic Name	
+
+# Result Analytical Method ID	
+
+# Result Analytical Method Context	
+
+# Result Value	
+
+# Result Unit	
+
+# Result Qualifier	
+
+# Result Weight Basis	
+
+# Result Sample Fraction	
+
+# Method Speciation	
+
+# Result Value Type	
+
+# Sample Collection Equipment Name	
+
+# Result Detection Condition	
+
+# Result Status ID	
+
+# Result Detection Limit Type 1	
+
+# Result Detection Limit Value 1	
+
+# Result Detection Limit Unit 1	
+
+# Result Detection Limit Type 2	
+
+# Result Detection Limit Value 2	
+
+# Result Detection Limit Unit 2	
+
+# Laboratory Name	
+
+# Laboratory Comment Text	
+
+# Analysis Start Date	
+
+# Analysis Start Time	
+
+# Analysis Start Time Zone	
+
+# Thermal Preservative Used	
+
+# Sample Container Type	
+
+# Sample Container Color	
+
+# Chemical Preservative Used
+
+
+
 ```
+
+
+# check all these again, make decision if static, concatenated, or formulaic 
+
 
 
 
 
 # FORMULAIC final steps for combined dataframe
-# activity_id (concatenate)
-# Result Analytical Method ID (matching)
-# Result Analytical Method ID (matching)
+# (use cdx domain values)
+
+# activity_id (concatenate, use abbrv)
+# Result Analytical Method ID (matching tto cdx)
+# Result Analytical Method Context (matching to cdx)
 # Result Qualifier (matching, verify symbols; SGS terms vs CDX terms)
 # Result Sample Fraction (matching)
 # Method Speciation (matching)
 # Sample Collection Equipment Name (matching)
 # Result Sample Fraction (matching)
 # Result Detection Condition (calculated)
+# Result (see "note on non-detect values")
 # Result Status ID (matching from manual table..? check domains for various options)
 # Sample Container Type (matching)
 # Sample Container Color (matching)
@@ -291,6 +393,96 @@ sgs23 %<>%
 
 # STATIC final steps for combined dataframe
 # all other columns
+
+
+
+# general strategy: get all columns of sgs data to conform to final CDX format before joining. (e.g. do all sgs first, then swwtp)
+
+# there are pieces and parts existing in the 2021 script, but to stay organized it would make sense to proceed L --> R for each column
+
+
+------------------------------------------------------------------------
+
+##### 2023 Fecal Coliform Lab Results (Soldotna Wastewater Treatment Plant Lab)
+```{r message = FALSE, echo = F, include = F}
+# spring
+spring_23_fc_dir <- "other/input/2023/spring_2023_wqx_data/Data/SWWTP/KRWF Fecal 05-02-23.xlsx"
+xfun::embed_file(spring_23_fc_dir, text = "Download Original Spring 2023 Fecal Coliform Lab Results from SWWTP")
+
+# summer
+summer_23_fc_dir <- "other/input/2023/summer_2023_wqx_data/Data/SWWTP/KRWF Fecal 07-18-23.xlsx"
+xfun::embed_file(summer_23_fc_dir, text = "Download Original Summer 2023 Fecal Coliform Lab Results from SWWTP")
+
+```
+Chain of custody documents available upon request.
+
+```{r message = FALSE, echo = F, include = F}
+
+############################################################################################################
+##################################### Read in  and Clean SWWTP Fecal Coliform Data #########################
+############################################################################################################
+# spring
+spring_23_fc <- read_excel(spring_23_fc_dir, skip = 11, col_types = "text") %>%
+  mutate(rec_date = spring23_sample_date) 
+
+# summer
+summer_23_fc <- read_excel(summer_23_fc_dir, skip = 11, col_types = "text") %>%
+  mutate(rec_date = summer23_sample_date)
+
+# join
+fc23 <- bind_rows(spring_23_fc,summer_23_fc) %>%
+  clean_names() %>%
+  mutate(time_sampled = format(as.POSIXct(Sys.Date() + as.numeric(time_sampled)), "%H:%M", tz="UTC"),
+         time_in = format(as.POSIXct(Sys.Date() + as.numeric(time_in)), "%H:%M", tz="UTC"),
+         time_out = format(as.POSIXct(Sys.Date() + as.numeric(time_out)), "%H:%M", tz="UTC"))
+
+```
+
+##### 2023 Total Suspended Solids Lab Results (Soldotna Wastewater Treatment Plant (SWWTP))
+
+```{r, echo = F}
+# read in
+
+# spring
+spring_23_tss_dir <- "other/input/2023/spring_2023_wqx_data/Data/SWWTP/KRWF TSS MONITORING 05-02-23.xlsx"
+xfun::embed_file(spring_23_tss_dir, text = "Download Original Spring 2023 Total Suspended Solids Results from SWWTP")
+
+# summer
+summer_23_tss_dir <- "other/input/2023/summer_2023_wqx_data/Data/SWWTP/KRWF TSS MONITORING 07-18-23.xlsx"
+xfun::embed_file(spring_23_tss_dir, text = "Download Original Summer 2023 Total Suspended Solids Results from SWWTP")
+```
+
+Chain of custody documents available upon request
+
+```{r, echo = F}
+# read in 2023 TSS data
+
+# spring
+spring_23_tss <- read_excel(spring_23_tss_dir, sheet = "Updated_Formatting", skip = 1, col_types = "text") %>%
+  mutate(rec_time = as_hms("12:44:00"),
+         rec_date = spring23_sample_date)
+
+# summer
+summer_23_tss <- read_excel(summer_23_tss_dir, sheet = "Updated_Formatting", skip = 1, col_types = "text") %>%
+  mutate(rec_time = as_hms("12:25:00"),
+         rec_date = summer23_sample_date,)
+
+# join
+tss23 <- bind_rows(spring_23_tss,summer_23_tss) %>%
+  
+  # clean up names and formats
+  clean_names() %>%
+  transform(field_sample_date = excel_numeric_to_date(as.numeric(field_sample_date)),
+            date_of_analysis = excel_numeric_to_date((as.numeric(date_of_analysis)))) %>%
+  mutate(time_sampled = format(as.POSIXct(Sys.Date() + as.numeric(sample_time)), "%H:%M", tz="UTC"),
+         time_analysis = format(as.POSIXct(Sys.Date() + as.numeric(time)), "%H:%M", tz="UTC")) %>%
+  select(-sample_time,-time,-qc1,-data_entry,-qc2)
+  
+
+```
+
+
+
 
 
 
