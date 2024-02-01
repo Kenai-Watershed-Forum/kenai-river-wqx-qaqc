@@ -187,8 +187,20 @@ colnames(sgs_sitenames) <- c("sample_id","site_id")
 
 #write.csv(sgs_sitenames, "other/input/2023/misc/site_names_manual_edit.csv", row.names = F)
   
+
 # join site_id to main dataframe
 sgs23 <- left_join(sgs23,sgs_sitenames, by = "sample_id")
+
+# NOTE: the join for the "No Name Creek" sites are not cooperating.
+# After investigating possible reasons, (white spaces, etc) no diagnoses are evident. 
+# For time efficiency, we will instead manually rectify this in script with mutate and case_when
+
+sgs23 %<>%
+  mutate(site_id = 
+           case_when(
+             grepl("No Name|NO NAME", sample_id) ~ "KBL_t_00.0",
+             TRUE ~ site_id)) 
+
 
 # join "monitoring location id" to overall sgs23 dataframe
 # import example data w/ monitoring location IDs
@@ -202,40 +214,49 @@ location_ids <- read.csv("other/output/example_output/results_activities_2021.cs
 sgs23 <- left_join(sgs23,location_ids, by = "site_id") 
 
 # NOTE: the join for several sites are not cooperating.
-# These sites include "No Name Creek" , "Skilak Lake Outflow," and "Jim's Landing
+# These sites include "Skilak Lake Outflow," and "Jim's Landing
 # After investigating possible reasons, (white spaces, etc) no diagnoses are evident. 
 # For time efficiency, we will instead manually rectify this in script with mutate and case_when
 
 sgs23 %<>%
-  
-  # No Name Creek
-  mutate(site_id = 
-           case_when(
-             grepl("No Name|NO NAME", sample_id) ~ "KBL_t_00.0",
-             TRUE ~ sample_id)) %>% 
   transform(monitoring_location_id = as.character(monitoring_location_id)) %>%
+  
+  # Jim's Landing
   mutate(monitoring_location_id = 
            case_when(
-             site_id == "KBL_t_00.0" ~ "10000008",
+             grepl("JIM'S|Jim's",sample_id) ~ "10000031",
              TRUE ~ monitoring_location_id)) %>%
   
   # Skilak Outlet
   mutate(monitoring_location_id = 
            case_when(
              grepl("Skilak|SKILAK",sample_id) ~ "10000030",
-             TRUE ~ monitoring_location_id)) %>%
-
-  # Jim's Landing
-  mutate(monitoring_location_id = 
-           case_when(
-             grepl("JIM'S|Jim's",sample_id) ~ "10000031",
              TRUE ~ monitoring_location_id))
 
-             
 # all 2023 SGS data joined and present.
 
 ```
 
+```{r echo = F}
+
+# Activity Type	
+
+# method blank, trip blank, field duplicate)
+# this column is addressed out of left to right sequence because its content is needed to generate Activity ID
+
+sgs23 %<>%
+  # designate special activity types
+  mutate(activity_type = case_when(
+    grepl("DUP","Dup", sample_id) ~ "Quality Control Field Replicate Msr/Obs",
+    grepl("FB", sample_id) ~ "Quality Control Sample-Field Blank",
+    grepl("TRIP BLANK", sample_id) ~ "Quality Control Sample-Trip Blank",
+    TRUE ~ "")) %>%
+  # designate all other project samples as projet samples (using CDX domain value choices)
+  mutate(activity_type = case_when(
+    sample_type == "PS" & activity_type == "" ~ "Field Msr/Obs",
+    TRUE ~ activity_type))
+
+```
 
 
 ```{r message = FALSE, echo = F, include = F}
@@ -251,61 +272,71 @@ sgs23 %<>%
 # If we go this route; leave hashtag column names present as is for sequential navigation, just move code so as reduce redundancy
 
 # Project ID (static)***
-sgs23 %>% mutate(project_id = "10000007")
+sgs23 %<>% mutate(project_id = "10000007")
 
 # Monitoring Location ID (static, already present)
 
 # Activity Media Name	(static)***
-sgs23 %>% mutate(activity_media_name = "Water")
+sgs23 %<>% mutate(activity_media_name = "Water")
 
 # Activity Media Subdivision Name	(static)***
-sgs23 %>% mutate(activity_media_subdivision_name = "Surface Water")
+sgs23 %<>% mutate(activity_media_subdivision_name = "Surface Water")
 
-# Activity ID	(concatenated)***
+# Activity ID	(concatenated) (unique identifier) (limit of X  characters)
+
+# due to CDX character limitations, we need to use abbreviations for characteristic (analyte) and sample type
+# We will need to distinguish Activity Type (if not normal field obs) and if dissolved
+
+# no column yet designates if status is dissolved (filtered)
+# and, notice different methods used in spring vs summer
+# may have to relocate this to an earlier step
+
+analytes <- data.frame(unique(sgs23$analyte))
+
+
 
 # Activity Start Date	(static)
-sgs23 %>% rename(activity_start_date = collect_date)
+sgs23 %<>% rename(activity_start_date = collect_date)
 
 # Activity Start Time	(static)
-sgs23 %>% rename(activity_start_time = collect_time)
+sgs23 %<>% rename(activity_start_time = collect_time)
 
 # Activity Start Time Zone***
-sgs23 %>% mutate (activity_start_time_zone = "AKST")
+sgs23 %<>% mutate (activity_start_time_zone = "AKST")
 ```
 
 
-```{r}
+```{r echo = F}
+# Perform this step once all above steps are complete and set (un-hashtag)
+
 # Activity Latitude	***
 # Activity Longitude	
 
 # (join monitoring_location_id to external spreadsheet table)
-lat_long <- read_csv("other/input/2023/misc/lat_long.csv") %>%
-  transform(monitoring_location_id = as.character(monitoring_location_id))
-z <- sgs23 %>% left_join(sgs23,lat_long, relationship = "many-to-one", by = "monitoring_location_id")
+#lat_long <- read_csv("other/input/2023/misc/lat_long.csv") %>%
+#  transform(monitoring_location_id = as.character(monitoring_location_id))
+# z <- sgs23 %>% left_join(sgs23,lat_long, by = "monitoring_location_id")
+
+# 2/1/2024: This step is producing a fatal error that I am unable to diagnose. A typical left-join step instead produces a many-to-many dataframe with hundreds of thousands of rows.
+# As a temporary work-around, we will export a csv of the dataframe at this step, manually perform the join, and re-import the csv
+
+# NOTE: we will need to re-perform this manual step each time above chunks change; or if EDD sources change (sheesh)
 
 
-# working to address error here 1/31/24
-# join results in many-to-many, unclear why!
+
+# export
+#sgs23 %<>% arrange(monitoring_location_id)
+# write.csv(sgs23, "other/input/2023/misc/temp/sgs23_temp.csv",row.names = F)
+# write.csv(lat_long, "other/input/2023/misc/temp/lat_long_temp.csv",row.names = F)
+
+# import manually edited csv and replace sgs23
+#sgs23 <- read.csv("other/input/2023/misc/temp/sgs23_temp.csv") %>%
+#  select(-X)
 ```
 
 
-```{r }
-# Activity Type	
+```{r echo = F}
 
-# (Ensure information about project sample type is placed in correct column (activity Type)
-# method blank, trip blank, field duplicate)
-
-sgs23 %<>%
-  # designate special activity types
-  mutate(activity_type = case_when(
-    grepl("DUP","Dup", sample_id) ~ "Quality Control Field Replicate Msr/Obs",
-    grepl("FB", sample_id) ~ "Quality Control Sample-Field Blank",
-    grepl("TRIP BLANK", sample_id) ~ "Quality Control Sample-Trip Blank",
-    TRUE ~ "")) %>%
-  # designate all other project samples as projet samples (using CDX domain value choices)
-  mutate(activity_type = case_when(
-    sample_type == "PS" & activity_type == "" ~ "Field Msr/Obs",
-    TRUE ~ activity_type))
 
 # Activity Depth/Height Measure	***
 sgs23 %<>% mutate(activity_depth_height_measure = "15")
@@ -327,6 +358,9 @@ sgs23 %>% rename(characteristic_name = analyte)
 
 # Result Analytical Method ID	
 # (Use table from CDX to match domain values to those names provided by SGS)
+
+
+
 
 # Result Analytical Method Context	
 # (Use table from CDX to match domain values to those names provided by SGS)
@@ -407,33 +441,6 @@ sgs23 %<>% mutate(chemical_preservative_used = "HNO3")
 
 
 # check all these again, make decision if static, concatenated, or formulaic 
-
-
-
-
-
-# FORMULAIC final steps for combined dataframe
-# (use cdx domain values)
-
-# activity_id (concatenate, use abbrv)
-# Result Analytical Method ID (matching tto cdx)
-# Result Analytical Method Context (matching to cdx)
-# Result Qualifier (matching, verify symbols; SGS terms vs CDX terms)
-# Result Sample Fraction (matching)
-# Method Speciation (matching)
-# Sample Collection Equipment Name (matching)
-# Result Sample Fraction (matching)
-# Result Detection Condition (calculated)
-# Result (see "note on non-detect values")
-# Result Status ID (matching from manual table..? check domains for various options)
-# Sample Container Type (matching)
-# Sample Container Color (matching)
-# Chemical Preservative Used (matching)
-
-
-
-# STATIC final steps for combined dataframe
-# all other columns
 
 
 
