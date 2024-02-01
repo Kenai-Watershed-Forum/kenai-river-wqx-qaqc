@@ -11,6 +11,40 @@ format:
     code-summary: "Show the code"
 ---
 
+```{r, 2023 WQX formatting for SGS, echo = F, message = F}
+
+#| warning: false
+#| message: false
+
+
+# clear environment
+rm(list=ls())
+
+# load packages
+library(tidyverse)
+library(readxl)
+library(openxlsx)
+library(data.table)
+library(stringr)
+library(magrittr)
+library(janitor)
+library(hms)
+library(lubridate)
+library(anytime)
+library(stringi)
+
+xfun::pkg_load2(c("htmltools", "mime"))
+
+
+# Assign 2023 Field Sample Dates 
+
+# Spring 2023 sampling date
+spring23_sample_date <- ymd("2023-05-02")
+
+# Summer 2023 Sampling Date
+summer23_sample_date <- ymd("2023-07-18")
+```
+
 ## Introduction
 
 Prior to publishing analysis and interpretation of water quality data, we will ensure that all data that meets QA/QC standards outlined in the current project [Quality Assurance Project Plan (QAPP)](https://www.kenaiwatershed.org/news-media/qapp-revisions-completed-2023/) and is accessible in the appropriate public repository.
@@ -53,49 +87,15 @@ xfun::embed_file('other/input/2023/spring_2023_wqx_data/Data/SGS/Revision 1 SGS 
 ```
 
 ```{r, echo = F}
-xfun::embed_file('other/input/2023/summer_2023_wqx_data/SGS/Summer 2023 SGS Agency Baseline.xlsx', text = "Download Original Summer 2023 Metals/Nutrients Lab Results from SGS - Electronic Data Delivery file")
+xfun::embed_file('other/input/2023/summer_2023_wqx_data/Data/SGS/Summer 2023 SGS Agency Baseline.xlsx', text = "Download Original Summer 2023 Metals/Nutrients Lab Results from SGS - Electronic Data Delivery file")
 
-xfun::embed_file('other/input/2023/summer_2023_wqx_data/SGS/1233640.pdf', text = "Download Original Summer 2023 Metals/Nutrients Lab Results from SGS - PDF file")
+xfun::embed_file('other/input/2023/summer_2023_wqx_data/Data/SGS/1233640.pdf', text = "Download Original Summer 2023 Metals/Nutrients Lab Results from SGS - PDF file")
 
-xfun::embed_file('other/input/2023/summer_2023_wqx_data/SGS/1233640_COC.pdf', text = "Download Original Summer 2023 Metals/Nutrients Chain of Custody docs from SGS - PDF file")
+xfun::embed_file('other/input/2023/summer_2023_wqx_data/Data/SGS/1233640_COC.pdf', text = "Download Original Summer 2023 Metals/Nutrients Chain of Custody docs from SGS - PDF file")
 
 ```
 
 <br>
-
-```{r, 2023 WQX formatting for SGS, echo = F, message = F}
-
-#| warning: false
-#| message: false
-
-
-# clear environment
-rm(list=ls())
-
-# load packages
-library(tidyverse)
-library(readxl)
-library(openxlsx)
-library(data.table)
-library(stringr)
-library(magrittr)
-library(janitor)
-library(hms)
-library(lubridate)
-library(anytime)
-library(stringi)
-
-xfun::pkg_load2(c("htmltools", "mime"))
-
-
-# Assign 2023 Field Sample Dates 
-
-# Spring 2023 sampling date
-spring23_sample_date <- ymd("2023-05-02")
-
-# Summer 2023 Sampling Date
-summer23_sample_date <- ymd("2023-07-18")
-```
 
 ```{r message = FALSE, echo = F, include = F}
 
@@ -109,14 +109,14 @@ summer23_sample_date <- ymd("2023-07-18")
 
 ############################ Part A: SGS Data Read In #############################
 
-## Reformat SGS data downloaded from their server client (SGS Engage, full EDD files) to match AQWMS template
+## Reformat SGS data downloaded from their server client (SGS Engage, full EDD files) to match desired template
 
 # read in
 # address column type issues such that both dataframes can be merged
 spring_batch_sgs23 <- read.csv("other/input/2023/spring_2023_wqx_data/Data/SGS/Revision 1 SGS Data/1231846_FC5912_Rev1.csv") %>%
   select(-PROJECT_ID,-DISSOLVED)
 
-summer_batch_sgs23 <- read_excel("other/input/2023/summer_2023_wqx_data/SGS/Summer 2023 SGS Agency Baseline.xlsx", sheet = "Sheet9") %>%
+summer_batch_sgs23 <- read_excel("other/input/2023/summer_2023_wqx_data/Data/SGS/Summer 2023 SGS Agency Baseline.xlsx", sheet = "Sheet9") %>%
   select(-PROJECT_ID,-DISSOLVED) 
 
 
@@ -240,44 +240,28 @@ sgs23 %<>%
 
 ```{r message = FALSE, echo = F, include = F}
 
-#| warning: false
-#| message: false
-
-#################### Part C #################
-
-# Ensure information about project sample type is placed in correct column (activity Type)
-# method blank, trip blank, field duplicate
-
-sgs23 %<>%
-  mutate(activity_type = case_when(
-    grepl("DUP","Dup", sample_id) ~ "Quality Control Field Replicate Msr/Obs",
-    grepl("FB", sample_id) ~ "Quality Control Sample-Field Blank",
-    grepl("TRIP BLANK", sample_id) ~ "Quality Control Sample-Trip Blank",
-    TRUE ~ ""))
-
-```
-
-
-```{r message = FALSE, echo = F, include = F}
-
 # For the remainder of steps, we will conform our data to the columns present in the spreadsheet successfully uploaded with 2021 data proceeding left to right. Columns content is created in one of the following manners:
 
 # Static - column is assigned a static value
 # Concatenated - column combines static info from multiple columns
 # Calculated - column is dependent on measurements
 
-# Project ID (static)
+# NOTE: consider moving some of these steps (ones that apply to all data) to a stage after SWWTP data has been joined.
+# Marking candidates for this description with "***"
+# If we go this route; leave hashtag column names present as is for sequential navigation, just move code so as reduce redundancy
+
+# Project ID (static)***
 sgs23 %>% mutate(project_id = "10000007")
 
 # Monitoring Location ID (static, already present)
 
-# Activity Media Name	(static)
+# Activity Media Name	(static)***
 sgs23 %>% mutate(activity_media_name = "Water")
 
-# Activity Media Subdivision Name	(static)
+# Activity Media Subdivision Name	(static)***
 sgs23 %>% mutate(activity_media_subdivision_name = "Surface Water")
 
-# Activity ID	(concatenated)
+# Activity ID	(concatenated)***
 
 # Activity Start Date	(static)
 sgs23 %>% rename(activity_start_date = collect_date)
@@ -285,80 +269,137 @@ sgs23 %>% rename(activity_start_date = collect_date)
 # Activity Start Time	(static)
 sgs23 %>% rename(activity_start_time = collect_time)
 
-# Activity Start Time Zone	
+# Activity Start Time Zone***
 sgs23 %>% mutate (activity_start_time_zone = "AKST")
+```
 
-# Activity Latitude	
 
+```{r}
+# Activity Latitude	***
 # Activity Longitude	
 
+# (join monitoring_location_id to external spreadsheet table)
+lat_long <- read_csv("other/input/2023/misc/lat_long.csv") %>%
+  transform(monitoring_location_id = as.character(monitoring_location_id))
+z <- sgs23 %>% left_join(sgs23,lat_long, relationship = "many-to-one", by = "monitoring_location_id")
+
+
+# working to address error here 1/31/24
+# join results in many-to-many, unclear why!
+```
+
+
+```{r }
 # Activity Type	
 
-# Activity Depth/Height Measure	
+# (Ensure information about project sample type is placed in correct column (activity Type)
+# method blank, trip blank, field duplicate)
 
-# Activity Depth/Height Unit	
+sgs23 %<>%
+  # designate special activity types
+  mutate(activity_type = case_when(
+    grepl("DUP","Dup", sample_id) ~ "Quality Control Field Replicate Msr/Obs",
+    grepl("FB", sample_id) ~ "Quality Control Sample-Field Blank",
+    grepl("TRIP BLANK", sample_id) ~ "Quality Control Sample-Trip Blank",
+    TRUE ~ "")) %>%
+  # designate all other project samples as projet samples (using CDX domain value choices)
+  mutate(activity_type = case_when(
+    sample_type == "PS" & activity_type == "" ~ "Field Msr/Obs",
+    TRUE ~ activity_type))
+
+# Activity Depth/Height Measure	***
+sgs23 %<>% mutate(activity_depth_height_measure = "15")
+
+# Activity Depth/Height Unit	***
+sgs23 %<>% mutate(activity_depth_height_unit = "cm")
 
 # Activity Comment	
+sgs23 %<>% mutate(activity_comment = "")
 
-# Activity Horizontal Collection Method	
+# Activity Horizontal Collection Method	***
+sgs23 %<>% mutate(activity_horizontal_collection_method = "GPS-Unspecified")
 
-# Activity Horizontal Reference Datum	
+# Activity Horizontal Reference Datum	***
+sgs23 %<>% mutate(activity_horizontal_reference_datum = "NAD83")
 
 # Characteristic Name	
+sgs23 %>% rename(characteristic_name = analyte)
 
 # Result Analytical Method ID	
+# (Use table from CDX to match domain values to those names provided by SGS)
 
 # Result Analytical Method Context	
+# (Use table from CDX to match domain values to those names provided by SGS)
 
 # Result Value	
 
 # Result Unit	
+# rename
 
-# Result Qualifier	
+# Result Qualifier
+# (ensure choices match cdx domain options)
 
-# Result Weight Basis	
+# Result Weight Basis	***
+sgs23 %<>% mutate(result_weight_bases = "Sampled")
 
 # Result Sample Fraction	
+# (custom match table)
 
 # Method Speciation	
+# (custom match table)
 
-# Result Value Type	
+# Result Value Type	***
+sgs23 %<>% mutate(result_value_type = "Actual")
 
 # Sample Collection Equipment Name	
+sgs23 %<>% mutate(sample_collection_equipment_name = "Water Bottle")
 
 # Result Detection Condition	
+# categorical choice based on detection limits
 
 # Result Status ID	
+# decision made after QA/QC process
 
 # Result Detection Limit Type 1	
+# Lower Quantitation Limit
 
 # Result Detection Limit Value 1	
 
 # Result Detection Limit Unit 1	
 
 # Result Detection Limit Type 2	
+# Method Detection Level
 
 # Result Detection Limit Value 2	
 
 # Result Detection Limit Unit 2	
 
-# Laboratory Name	
+# Laboratory Name	***
+sgs23 %<>% mutate(laboratory_name  = "SGS North America, Anchorage, Alaska")
 
 # Laboratory Comment Text	
+# TBD
 
 # Analysis Start Date	
+sgs23 %<>% rename(analysis_start_date = run_date)
 
 # Analysis Start Time	
+sgs23 %<>% rename(analysis_start_time = run_time)
 
-# Analysis Start Time Zone	
+# Analysis Start Time Zone	***
+sgs23 %<>% mutate(analysis_start_time_zone = "AKST")
 
-# Thermal Preservative Used	
+# Thermal Preservative Used	***
+sgs23 %<>% mutate(thermal_preservative_used = "Cold Packs (4 deg C)")
 
-# Sample Container Type	
+# Sample Container Type	***
+sgs23 %<>% mutate(sample_container_type = "Plastic Bottle")
 
-# Sample Container Color	
+# Sample Container Color	***
+sgs23 %<>% mutate(sample_container_color = "Opaque")
 
-# Chemical Preservative Used
+# Chemical Preservative Used ***
+sgs23 %<>% mutate(chemical_preservative_used = "HNO3")
 
 
 
