@@ -259,6 +259,22 @@ sgs23 %<>%
 ```
 
 
+```{r echo = F}
+
+# Result Sample Fraction	
+# CDX domains: "Filtered, field," "Filtered, lab,"  "Unfiltered," "Volatile", "Total"
+
+sgs23 %>%
+  mutate(result_sample_fraction = case_when(
+    grepl("EP200.8", analytical_method) ~ "Filtered, lab",              # dissolved metals
+    grepl("EPA 200.7|SW846 6010D", analytical_method) ~ "Unfiltered",   # total metals
+    grepl("SW8260D", analytical_method) ~ "Volatile",                   # hydrocarbons
+    grepl("SM21 4500NO3-F|SM21 4500P-B,E", analytical_method) ~ "Total",# total N and P
+    TRUE ~ ""))
+
+```
+
+
 ```{r message = FALSE, echo = F, include = F}
 
 # For the remainder of steps, we will conform our data to the columns present in the spreadsheet successfully uploaded with 2021 data proceeding left to right. Columns content is created in one of the following manners:
@@ -287,9 +303,17 @@ sgs23 %<>% mutate(activity_media_subdivision_name = "Surface Water")
 # due to CDX character limitations, we need to use abbreviations for characteristic (analyte) and sample type
 # We will need to distinguish Activity Type (if not normal field obs) and if dissolved
 
-# no column yet designates if status is dissolved (filtered)
-# and, notice different methods used in spring vs summer
-# may have to relocate this to an earlier step
+# Designate abbreviations for filtration status (from Result Sample Fraction)
+z <- sgs23 %>%
+  mutate(sample_fraction_abbrv = 
+           
+           )
+
+# WORKING HERE 2/1/2024
+
+
+# Designate abbreviations for analytes
+# Import matching table
 
 analytes <- data.frame(unique(sgs23$analyte))
 
