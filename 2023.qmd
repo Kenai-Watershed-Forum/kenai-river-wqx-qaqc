@@ -49,7 +49,7 @@ summer23_sample_date <- ymd("2023-07-18")
 
 Prior to publishing analysis and interpretation of water quality data, we will ensure that all data that meets QA/QC standards outlined in the current project [Quality Assurance Project Plan (QAPP)](https://www.kenaiwatershed.org/news-media/qapp-revisions-completed-2023/) and is accessible in the appropriate public repository.
 
-Water quality data from this project is ultimately destined for the Environmental Protection Agency's Water Quality Exchange (EPA WQX).
+Water quality data from this project is ultimately destined for public archival in the Environmental Protection Agency's Water Quality Exchange (EPA WQX).
 
 The QAPP for this project describes data management details and responsible parties for each step of the data pipeline from observation to repository. The 2023 data preparation and review process is published here.
 
@@ -65,7 +65,7 @@ Data that has been uploaded to the EPA WQX is evaluated biannually by the Alaska
 
 #### 2023 Water Quality Data Formatting
 
-The code scripts in this document assemble water quality data from the three analytical laboratories that partnered with Kenai Watershed Forum for this project in 2023:
+The code scripts in this document assemble water quality data from the two analytical laboratories that partnered with Kenai Watershed Forum for this project in 2023:
 
 -   SGS Laboratories (Anchorage, AK)
 
@@ -311,11 +311,20 @@ z <- sgs23 %>%
 
 # WORKING HERE 2/1/2024
 
+# note that surrogate organic compunds ("surr" suffix) do not have analyte abbreviations; becuase they are not project analytes
+
 
 # Designate abbreviations for analytes
 # Import matching table
 
-analytes <- data.frame(unique(sgs23$analyte))
+# analytes <- data.frame(unique(sgs23$analyte))
+# write.csv(analytes,"other/input/2023/misc/analytes.csv", row.names = F)
+
+
+# use 2021 example?
+
+
+
 
 
 
@@ -471,6 +480,11 @@ sgs23 %<>% mutate(chemical_preservative_used = "HNO3")
 # general strategy: get all columns of sgs data to conform to final CDX format before joining. (e.g. do all sgs first, then swwtp)
 
 # there are pieces and parts existing in the 2021 script, but to stay organized it would make sense to proceed L --> R for each column
+
+
+
+
+
 
 
 ------------------------------------------------------------------------

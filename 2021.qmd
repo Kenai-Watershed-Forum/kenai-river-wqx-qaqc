@@ -11,4 +11,4 @@ format:
     code-summary: "Show the code"
 ---
 
-
+The QA/QC procedure for 2021 Kenai River Baseline Water Quality data is documented in Appendix A of "Water Quality Assessment of the Kenai River Watershed from 2000 to 2023," available at <https://kenai-watershed-forum.github.io/kenai-river-wqx/>.
