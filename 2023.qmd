@@ -233,7 +233,7 @@ sgs23 %<>%
              grepl("Skilak|SKILAK",sample_id) ~ "10000030",
              TRUE ~ monitoring_location_id))
 
-# all 2023 SGS data joined and present.
+# all 2023 SGS data joined and present in same dataframe
 
 ```
 
@@ -247,14 +247,22 @@ sgs23 %<>%
 sgs23 %<>%
   # designate special activity types
   mutate(activity_type = case_when(
-    grepl("DUP","Dup", sample_id) ~ "Quality Control Field Replicate Msr/Obs",
+    grepl("DUP|Dup", sample_id) ~ "Quality Control Field Replicate Msr/Obs",
     grepl("FB", sample_id) ~ "Quality Control Sample-Field Blank",
     grepl("TRIP BLANK", sample_id) ~ "Quality Control Sample-Trip Blank",
     TRUE ~ "")) %>%
-  # designate all other project samples as projet samples (using CDX domain value choices)
+  # designate all other project samples as project samples (using CDX domain value choices)
   mutate(activity_type = case_when(
     sample_type == "PS" & activity_type == "" ~ "Field Msr/Obs",
-    TRUE ~ activity_type))
+    TRUE ~ activity_type)) %>%
+  # designate activity type abbreviations
+  mutate(activity_type_abbrv = case_when(
+    activity_type == "Quality Control Field Replicate Msr/Obs" ~ "DUP",
+    activity_type == "Quality Control Sample-Field Blank" ~ "FB",
+    activity_type == "Quality Control Sample-Trip Blank" ~ "TB",
+    TRUE ~ ""
+  ))
+  
 
 ```
 
@@ -264,12 +272,17 @@ sgs23 %<>%
 # Result Sample Fraction	
 # CDX domains: "Filtered, field," "Filtered, lab,"  "Unfiltered," "Volatile", "Total"
 
-sgs23 %>%
+sgs23 %<>%
   mutate(result_sample_fraction = case_when(
     grepl("EP200.8", analytical_method) ~ "Filtered, lab",              # dissolved metals
     grepl("EPA 200.7|SW846 6010D", analytical_method) ~ "Unfiltered",   # total metals
     grepl("SW8260D", analytical_method) ~ "Volatile",                   # hydrocarbons
     grepl("SM21 4500NO3-F|SM21 4500P-B,E", analytical_method) ~ "Total",# total N and P
+    TRUE ~ "")) %>%
+  
+  # designate dissolved vs. total metals (filtered vs. unfiltered) for use in concatenating Activity ID
+  mutate(diss_abbrv = case_when(
+    result_sample_fraction == "Filtered, lab" ~ "Diss",
     TRUE ~ ""))
 
 ```
@@ -300,33 +313,23 @@ sgs23 %<>% mutate(activity_media_subdivision_name = "Surface Water")
 
 # Activity ID	(concatenated) (unique identifier) (limit of X  characters)
 
-# due to CDX character limitations, we need to use abbreviations for characteristic (analyte) and sample type
-# We will need to distinguish Activity Type (if not normal field obs) and if dissolved
+# due to CDX character limitations, we need to use abbreviations for 1) characteristic (analyte) and 2) sample type
 
-# Designate abbreviations for filtration status (from Result Sample Fraction)
-z <- sgs23 %>%
-  mutate(sample_fraction_abbrv = 
-           
-           )
-
-# WORKING HERE 2/1/2024
-
+# import analyte abbreviations and join
 # note that surrogate organic compunds ("surr" suffix) do not have analyte abbreviations; becuase they are not project analytes
-
-
-# Designate abbreviations for analytes
-# Import matching table
-
-# analytes <- data.frame(unique(sgs23$analyte))
-# write.csv(analytes,"other/input/2023/misc/analytes.csv", row.names = F)
-
-
-# use 2021 example?
-
-
-
-
-
+analyte_abbrv <- read.csv("other/input/2023/misc/analytes_list_manual_edit.csv") %>%
+  filter(analyte_abbreviation != "")
+colnames(analyte_abbrv) <- c("analyte","analyte_abbrv")
+sgs23 %<>% left_join(analyte_abbrv)
+  
+# create Activity ID column
+sgs23 %<>%
+  mutate(activity_id = case_when(
+    activity_type_abbrv == "" ~ paste0(site_id,"-",collect_date,"-",analyte_abbrv),
+    TRUE ~ paste0(site_id,"-",collect_date,"-",analyte_abbrv,"-",activity_type_abbrv))) %>%
+  mutate(activity_id = case_when(
+    diss_abbrv == "" ~ activity_id,
+    TRUE ~ paste0(activity_id,"-",diss_abbrv)))
 
 # Activity Start Date	(static)
 sgs23 %<>% rename(activity_start_date = collect_date)
@@ -340,10 +343,15 @@ sgs23 %<>% mutate (activity_start_time_zone = "AKST")
 
 
 ```{r echo = F}
+
+# WORKING HERE 2/13/2024
+
+
+
 # Perform this step once all above steps are complete and set (un-hashtag)
 
 # Activity Latitude	***
-# Activity Longitude	
+# Activity Longitude	***
 
 # (join monitoring_location_id to external spreadsheet table)
 #lat_long <- read_csv("other/input/2023/misc/lat_long.csv") %>%
