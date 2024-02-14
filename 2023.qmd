@@ -102,12 +102,8 @@ xfun::embed_file('other/input/2023/summer_2023_wqx_data/Data/SGS/1233640_COC.pdf
 #| warning: false
 #| message: false
 
-################################################################################################################
-######################################### Read in  and Clean SGS Data ######################################
-################################################################################################################
 
-
-############################ Part A: SGS Data Read In #############################
+############################ Part A.1: SGS 2023 Data Read In #############################
 
 ## Reformat SGS data downloaded from their server client (SGS Engage, full EDD files) to match desired template
 
@@ -164,7 +160,7 @@ sgs23 <- bind_rows(spring_batch_sgs23,summer_batch_sgs23) %>%
 rm(spring_batch_sgs23,summer_batch_sgs23)
             
 
-################### Part B: Create Consistent Sample Location Names #####################
+################### Part A.2: Create Consistent Sample Location Names for SGS data #####################
 
 # export list of unique sample_id
 sgs_sitenames <- sgs23 %>%
@@ -177,7 +173,7 @@ write.csv(sgs_sitenames,"other/input/2023/misc/site_names.csv", row.names = F)
 
 
 # read in manually edited csv
-sgs_sitenames <- read_csv("other/input/2023/misc/site_names_manual_edit.csv") %>%
+sgs_sitenames <- read_csv("other/input/2023/misc/site_names_manual_edit_sgs23.csv") %>%
   filter(!is.na(site_id)) %>%
   # remove trailing spaces
   mutate(sample_id = str_trim(sample_id, side = "right")) %>%
@@ -235,9 +231,9 @@ sgs23 %<>%
 
 # all 2023 SGS data joined and present in same dataframe
 
-```
 
-```{r echo = F}
+############### Part A.3: Assign miscellaneous calculated columns for 2023 SGS data (needed for next steps) ###############
+
 
 # Activity Type	
 
@@ -264,14 +260,8 @@ sgs23 %<>%
   ))
   
 
-```
-
-
-```{r echo = F}
-
 # Result Sample Fraction	
 # CDX domains: "Filtered, field," "Filtered, lab,"  "Unfiltered," "Volatile", "Total"
-
 sgs23 %<>%
   mutate(result_sample_fraction = case_when(
     grepl("EP200.8", analytical_method) ~ "Filtered, lab",              # dissolved metals
@@ -290,6 +280,8 @@ sgs23 %<>%
 
 ```{r message = FALSE, echo = F, include = F}
 
+################### Part A.4: Proceed left to right across column names to calculate or assign as needed ###################
+
 # For the remainder of steps, we will conform our data to the columns present in the spreadsheet successfully uploaded with 2021 data proceeding left to right. Columns content is created in one of the following manners:
 
 # Static - column is assigned a static value
@@ -301,20 +293,15 @@ sgs23 %<>%
 # If we go this route; leave hashtag column names present as is for sequential navigation, just move code so as reduce redundancy
 
 # Project ID (static)***
-sgs23 %<>% mutate(project_id = "10000007")
 
 # Monitoring Location ID (static, already present)
 
 # Activity Media Name	(static)***
-sgs23 %<>% mutate(activity_media_name = "Water")
 
 # Activity Media Subdivision Name	(static)***
-sgs23 %<>% mutate(activity_media_subdivision_name = "Surface Water")
 
 # Activity ID	(concatenated) (unique identifier) (limit of X  characters)
-
 # due to CDX character limitations, we need to use abbreviations for 1) characteristic (analyte) and 2) sample type
-
 # import analyte abbreviations and join
 # note that surrogate organic compunds ("surr" suffix) do not have analyte abbreviations; becuase they are not project analytes
 analyte_abbrv <- read.csv("other/input/2023/misc/analytes_list_manual_edit.csv") %>%
@@ -331,64 +318,23 @@ sgs23 %<>%
     diss_abbrv == "" ~ activity_id,
     TRUE ~ paste0(activity_id,"-",diss_abbrv)))
 
-# Activity Start Date	(static)
+# Activity Start Date	(static, specific to SGS)
 sgs23 %<>% rename(activity_start_date = collect_date)
 
-# Activity Start Time	(static)
+# Activity Start Time	(static, specific to SGS)
 sgs23 %<>% rename(activity_start_time = collect_time)
 
 # Activity Start Time Zone***
-sgs23 %<>% mutate (activity_start_time_zone = "AKST")
-```
-
-
-```{r echo = F}
-
-# Perform this step once all above steps are complete and set (un-hashtag)
-
-# Activity Latitude	***
-# Activity Longitude	***
-
-# (join monitoring_location_id to external spreadsheet table)
-#lat_long <- read_csv("other/input/2023/misc/lat_long.csv") %>%
-#  transform(monitoring_location_id = as.character(monitoring_location_id))
-# z <- sgs23 %>% left_join(sgs23,lat_long, by = "monitoring_location_id")
-
-# 2/1/2024: This step is producing a fatal error that I am unable to diagnose. A typical left-join step instead produces a many-to-many dataframe with hundreds of thousands of rows.
-# As a temporary work-around, we will export a csv of the dataframe at this step, manually perform the join, and re-import the csv
-
-# NOTE: we will need to re-perform this manual step each time above chunks change; or if EDD sources change (sheesh)
-
-
-
-# export
-#sgs23 %<>% arrange(monitoring_location_id)
-# write.csv(sgs23, "other/input/2023/misc/temp/sgs23_temp.csv",row.names = F)
-# write.csv(lat_long, "other/input/2023/misc/temp/lat_long_temp.csv",row.names = F)
-
-# import manually edited csv and replace sgs23
-#sgs23 <- read.csv("other/input/2023/misc/temp/sgs23_temp.csv") %>%
-#  select(-X)
-```
-
-
-```{r echo = F}
-
 
 # Activity Depth/Height Measure	***
-sgs23 %<>% mutate(activity_depth_height_measure = "15")
 
 # Activity Depth/Height Unit	***
-sgs23 %<>% mutate(activity_depth_height_unit = "cm")
 
 # Activity Comment ***
-sgs23 %<>% mutate(activity_comment = "")
 
 # Activity Horizontal Collection Method	***
-sgs23 %<>% mutate(activity_horizontal_collection_method = "GPS-Unspecified")
 
 # Activity Horizontal Reference Datum	***
-sgs23 %<>% mutate(activity_horizontal_reference_datum = "NAD83")
 
 # Characteristic Name	
 sgs23 %>% rename(characteristic_name = analyte)
@@ -409,13 +355,12 @@ sgs23 %<>% left_join(analytical_methods_contexts)
 # Result Value	
 sgs23 %<>% rename(result_value = result)
 
-
 # Result Unit	
 sgs23 %<>% rename(result_unit = units)
 
 # Result Qualifier
 # options are "U"  "N"  "*N" "*"  "="  "J". Modify to ensure choices match CDX domain options.
-# *N" is not an option present in CDX; all other choices are. We will modify "*N" to simply "*" for simplification, for it's one instance as an MSD sample (matrix spike duplicate; non-field). Rationale: the "N" part of this qualifier is not mandatory information.
+# Note: *N" is not an option present in CDX; all other choices are. We will modify "*N" to simply "*" for simplification, for it's one instance as an MSD sample (matrix spike duplicate; non-field). Rationale: the "N" part of this qualifier is not mandatory information.
 sgs23 %<>% 
   mutate(result_qualifier = case_when(
     resultflag == "*N" ~ "*",
@@ -423,11 +368,9 @@ sgs23 %<>%
 
 
 # Result Weight Basis	***
-sgs23 %<>% mutate(result_weight_basis = "Sampled")
 
 # Result Sample Fraction	
 ## already completed in a previous step
-
 
 # Method Speciation	
 ## only some parameters in CDX require that speciation is made explicit. Following example from 2021 experience
@@ -438,54 +381,53 @@ sgs23 %<>%
     TRUE ~ ""))
 
 # Result Value Type	***
-sgs23 %<>% mutate(result_value_type = "Actual")
 
-# Sample Collection Equipment Name	
-sgs23 %<>% mutate(sample_collection_equipment_name = "Water Bottle")
-
-```
-
-
-```{r}
-
-# WORKING HERE 2/13/2024
+# Sample Collection Equipment Name ***	
 
 # Result Detection Condition	
-# categorical choice based on result qualifier. Import matching table.
-
-z <- sgs23 %>
-
-# import 
-
-
-
-
-
-
+# categorical choice based on result qualifier. 
+# Attempt to use matching table generates an erroneous many-to-many join for unknown reasons, so we will instead use "case_when"
+# result_detection_condition <- read.csv("other/input/2023/misc/result_detection_condition.csv")
+sgs23 %<>% 
+  mutate(result_detection_condition = case_when(
+    result_qualifier == "U" ~ "Not Detected",
+    result_qualifier == "J" ~ "Present Below Quantification Limit",
+    result_qualifier == "N" ~ "Presumptive evidence of a nontarget compound",
+    result_qualifier == "*" ~ "Sample was warm when received"))
 
 
-# Result Status ID	
+# Result Status ID	(make as very last step?)
 # decision made after QA/QC process
+# TBD work to be completed here <--------------------------------------------
+
+# Note: the acronyms & terminology for detection limits provided by SGS differ slightly from those required by CDX
 
 # Result Detection Limit Type 1	
-# Lower Quantitation Limit
+# Lower Quantitation Limit (listed as "loq", or "Limit of Quantitation")
+sgs23 %<>% mutate(result_detection_limit_type_1 = "Lower Quantitation Limit")
 
 # Result Detection Limit Value 1	
+sgs23 %<>% rename(result_detection_limit_value_1 = loq)
 
 # Result Detection Limit Unit 1	
+sgs23 %<>% mutate(result_detection_limit_unit_1 = result_unit)
 
 # Result Detection Limit Type 2	
-# Method Detection Level
+# Method Detection Level (listed as "lod", or "limit of detection")
+sgs23 %<>% mutate(result_detection_limit_type_2 = "Method Detection Level")
 
 # Result Detection Limit Value 2	
+sgs23 %<>% rename(result_detection_limit_value_2 = lod)
 
 # Result Detection Limit Unit 2	
+sgs23 %<>% mutate(result_detection_limit_unit_2 = result_unit)
 
-# Laboratory Name	***
+# Laboratory Name	
 sgs23 %<>% mutate(laboratory_name  = "SGS North America, Anchorage, Alaska")
 
 # Laboratory Comment Text	
 # TBD
+sgs23 %<>% mutate(lab_comment_text = "")
 
 # Analysis Start Date	
 sgs23 %<>% rename(analysis_start_date = run_date)
@@ -493,29 +435,27 @@ sgs23 %<>% rename(analysis_start_date = run_date)
 # Analysis Start Time	
 sgs23 %<>% rename(analysis_start_time = run_time)
 
-# Analysis Start Time Zone	***
+# Analysis Start Time Zone (can vary by year if subcontract lab used)
 sgs23 %<>% mutate(analysis_start_time_zone = "AKST")
 
 # Thermal Preservative Used	***
-sgs23 %<>% mutate(thermal_preservative_used = "Cold Packs (4 deg C)")
 
 # Sample Container Type	***
-sgs23 %<>% mutate(sample_container_type = "Plastic Bottle")
 
 # Sample Container Color	***
-sgs23 %<>% mutate(sample_container_color = "Opaque")
 
 # Chemical Preservative Used ***
-sgs23 %<>% mutate(chemical_preservative_used = "HNO3")
-
-
 
 ```
 
 
+
+--> use EPA metals guidance in QA/QC rather than at this stage!
+
+--> clip/move static pieces, then repeat for swwtp 
+
+
 # check all these again, make decision if static, concatenated, or formulaic 
-
-
 
 # general strategy: get all columns of sgs data to conform to final CDX format before joining. (e.g. do all sgs first, then swwtp)
 
@@ -524,13 +464,13 @@ sgs23 %<>% mutate(chemical_preservative_used = "HNO3")
 
 
 
-
-
-
 ------------------------------------------------------------------------
 
 ##### 2023 Fecal Coliform Lab Results (Soldotna Wastewater Treatment Plant Lab)
 ```{r message = FALSE, echo = F, include = F}
+
+######################### Part B: SWWTP Fecal Coliform Data ############################
+
 # spring
 spring_23_fc_dir <- "other/input/2023/spring_2023_wqx_data/Data/SWWTP/KRWF Fecal 05-02-23.xlsx"
 xfun::embed_file(spring_23_fc_dir, text = "Download Original Spring 2023 Fecal Coliform Lab Results from SWWTP")
@@ -544,9 +484,8 @@ Chain of custody documents available upon request.
 
 ```{r message = FALSE, echo = F, include = F}
 
-############################################################################################################
-##################################### Read in  and Clean SWWTP Fecal Coliform Data #########################
-############################################################################################################
+############################ Part B.1: SWWTP Fecal Coliform Data Read In #############################
+
 # spring
 spring_23_fc <- read_excel(spring_23_fc_dir, skip = 11, col_types = "text") %>%
   mutate(rec_date = spring23_sample_date) 
@@ -564,9 +503,35 @@ fc23 <- bind_rows(spring_23_fc,summer_23_fc) %>%
 
 ```
 
+
+```{r echo = F}
+
+################### Part B.2: Create Consistent Sample Location Names for SWWTP FC data #####################
+
+# execute once and manually modify csv
+# z <- data.frame(unique(fc23$sample_location_rm))
+# write.csv(z,"other/input/2023/misc/site_names_manual_edit_fc23.csv", row.names = F)
+
+
+
+############### Part B.3: Assign miscellaneous calculated columns for 2023 SWWTP FC (needed for next steps) ###############
+
+################### Part B.4: Proceed left to right across column names to calculate as needed #####################
+
+```
+
+
+
+
+
+
+
 ##### 2023 Total Suspended Solids Lab Results (Soldotna Wastewater Treatment Plant (SWWTP))
 
 ```{r, echo = F}
+
+############################ Part C: SWWTP Fecal Coliform Data #############################
+
 # read in
 
 # spring
@@ -609,13 +574,132 @@ tss23 <- bind_rows(spring_23_tss,summer_23_tss) %>%
 
 
 
+```{r echo = F}
+
+################### Part C.2: Create Consistent Sample Location Names for SWWTP TSS data #####################
+
+############### Part C.3: Assign miscellaneous calculated columns for 2023 SWWTP TSS (needed for next steps) ###############
+
+################### Part C.4: Proceed left to right across column names to calculate as needed #####################
+
+```
 
 
 
-# QA/QC
 
-# Are sample collection dates unique to the actual recorded dates?
+
+
+
+
+
+
+```{r echo = F}
+
+##################### Part D: Assign Information Common to All 2023 Datasets #########################
+
+
+# Static additions to overall combined dataset (marked as *** in above steps)
+
+# Note: will need to replace all "sgs23" with "dat"
+
+# Project ID (static)***
+sgs23 %<>% mutate(project_id = "10000007")
+
+# Activity Media Name	(static)***
+sgs23 %<>% mutate(activity_media_name = "Water")
+
+# Activity Media Subdivision Name	(static)***
+sgs23 %<>% mutate(activity_media_subdivision_name = "Surface Water")
+
+# Activity Start Time Zone***
+sgs23 %<>% mutate (activity_start_time_zone = "AKST")
+
+# Activity Latitude	***
+# Activity Longitude	***
+
+# Perform this step once all above steps are complete and set (un-hashtag)
+# (join monitoring_location_id to external spreadsheet table)
+#lat_long <- read_csv("other/input/2023/misc/lat_long.csv") %>%
+#  transform(monitoring_location_id = as.character(monitoring_location_id))
+# z <- sgs23 %>% left_join(sgs23,lat_long, by = "monitoring_location_id")
+
+# 2/1/2024: This step is producing a fatal error that I am unable to diagnose. A typical left-join step instead produces a many-to-many dataframe with hundreds of thousands of rows.
+# As a temporary work-around, we will export a csv of the dataframe at this step, manually perform the join, and re-import the csv
+
+# NOTE: we will need to re-perform this manual step each time above chunks change; or if EDD sources change (sheesh)
+
+
+# export
+#sgs23 %<>% arrange(monitoring_location_id)
+# write.csv(sgs23, "other/input/2023/misc/temp/sgs23_temp.csv",row.names = F)
+# write.csv(lat_long, "other/input/2023/misc/temp/lat_long_temp.csv",row.names = F)
+
+# import manually edited csv and replace sgs23
+#sgs23 <- read.csv("other/input/2023/misc/temp/sgs23_temp.csv") %>%
+#  select(-X)
+
+
+# Activity Depth/Height Measure	***
+sgs23 %<>% mutate(activity_depth_height_measure = "15")
+
+# Activity Depth/Height Unit	***
+sgs23 %<>% mutate(activity_depth_height_unit = "cm")
+
+# Activity Comment ***
+sgs23 %<>% mutate(activity_comment = "")
+
+# Activity Horizontal Collection Method	***
+sgs23 %<>% mutate(activity_horizontal_collection_method = "GPS-Unspecified")
+
+# Activity Horizontal Reference Datum	***
+sgs23 %<>% mutate(activity_horizontal_reference_datum = "NAD83")
+
+# Result Weight Basis	***
+sgs23 %<>% mutate(result_weight_basis = "Sampled")
+
+# Result Value Type	***
+sgs23 %<>% mutate(result_value_type = "Actual")
+
+# Sample Collection Equipment Name ***	
+sgs23 %<>% mutate(sample_collection_equipment_name = "Water Bottle")
+
+# Thermal Preservative Used	***
+sgs23 %<>% mutate(thermal_preservative_used = "Cold Packs (4 deg C)")
+
+# Sample Container Type	***
+sgs23 %<>% mutate(sample_container_type = "Plastic Bottle")
+
+# Sample Container Color	***
+sgs23 %<>% mutate(sample_container_color = "Opaque")
+
+# Chemical Preservative Used ***
+sgs23 %<>% mutate(chemical_preservative_used = "HNO3")
+
+
+
+```
+
+
+
+
+
+```{r}
+### Part E: QA/QC
+
+# question to add to existing list:
+# # Are sample collection dates unique to the actual recorded dates?
 # (no; spring has two dates; lab typo)
+
+
+
+```
+
+
+
+
+
+
+
 
 
 
