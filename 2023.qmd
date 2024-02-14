@@ -344,10 +344,6 @@ sgs23 %<>% mutate (activity_start_time_zone = "AKST")
 
 ```{r echo = F}
 
-# WORKING HERE 2/13/2024
-
-
-
 # Perform this step once all above steps are complete and set (un-hashtag)
 
 # Activity Latitude	***
@@ -385,7 +381,7 @@ sgs23 %<>% mutate(activity_depth_height_measure = "15")
 # Activity Depth/Height Unit	***
 sgs23 %<>% mutate(activity_depth_height_unit = "cm")
 
-# Activity Comment	
+# Activity Comment ***
 sgs23 %<>% mutate(activity_comment = "")
 
 # Activity Horizontal Collection Method	***
@@ -397,31 +393,49 @@ sgs23 %<>% mutate(activity_horizontal_reference_datum = "NAD83")
 # Characteristic Name	
 sgs23 %>% rename(characteristic_name = analyte)
 
-# Result Analytical Method ID	
-# (Use table from CDX to match domain values to those names provided by SGS)
-
-
-
-
+# Result Analytical Method ID,	and
 # Result Analytical Method Context	
 # (Use table from CDX to match domain values to those names provided by SGS)
 
+# read in table
+analytical_methods_contexts <- read.csv("other/input/2023/misc/analytical_method_id_and_context_matching_table.csv") %>%
+  select(-comments,-EPA.name) %>%
+  filter(analytical_method != "")
+
+# join to sgs23
+sgs23 %<>% left_join(analytical_methods_contexts)
+
+
 # Result Value	
+sgs23 %<>% rename(result_value = result)
+
 
 # Result Unit	
-# rename
+sgs23 %<>% rename(result_unit = units)
 
 # Result Qualifier
-# (ensure choices match cdx domain options)
+# options are "U"  "N"  "*N" "*"  "="  "J". Modify to ensure choices match CDX domain options.
+# *N" is not an option present in CDX; all other choices are. We will modify "*N" to simply "*" for simplification, for it's one instance as an MSD sample (matrix spike duplicate; non-field). Rationale: the "N" part of this qualifier is not mandatory information.
+sgs23 %<>% 
+  mutate(result_qualifier = case_when(
+    resultflag == "*N" ~ "*",
+    TRUE ~ resultflag))
+
 
 # Result Weight Basis	***
-sgs23 %<>% mutate(result_weight_bases = "Sampled")
+sgs23 %<>% mutate(result_weight_basis = "Sampled")
 
 # Result Sample Fraction	
-# (custom match table)
+## already completed in a previous step
+
 
 # Method Speciation	
-# (custom match table)
+## only some parameters in CDX require that speciation is made explicit. Following example from 2021 experience
+sgs23 %<>%
+  mutate(method_speciation = case_when(
+    result_analytical_method_id == "4500-NO3(F)" ~ "as NO2+NO3",
+    result_analytical_method_id == "4500-P-E" ~ "as P",
+    TRUE ~ ""))
 
 # Result Value Type	***
 sgs23 %<>% mutate(result_value_type = "Actual")
@@ -429,8 +443,26 @@ sgs23 %<>% mutate(result_value_type = "Actual")
 # Sample Collection Equipment Name	
 sgs23 %<>% mutate(sample_collection_equipment_name = "Water Bottle")
 
+```
+
+
+```{r}
+
+# WORKING HERE 2/13/2024
+
 # Result Detection Condition	
-# categorical choice based on detection limits
+# categorical choice based on result qualifier. Import matching table.
+
+z <- sgs23 %>
+
+# import 
+
+
+
+
+
+
+
 
 # Result Status ID	
 # decision made after QA/QC process

@@ -1,0 +1,10 @@
+result_detection_condition,result_qualifier
+Detected Not Quantified,
+Not Detected,U
+Not Detected at Detection Limit,
+Not Detected at Reporting Limit,
+Not Reported,
+Present Above Quantification Limit,
+Present Below Quantification Limit,J
+Presumptive evidence of a nontarget compound,N
+Sample was warm when received,*

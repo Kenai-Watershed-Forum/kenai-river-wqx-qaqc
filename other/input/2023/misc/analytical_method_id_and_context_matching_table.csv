@@ -1,0 +1,13 @@
+analytical_method,result_analytical_method_id,result_analytical_method_context,EPA name,comments
+EPA 200.7,200.7,USEPA,Metals in Water by ICP-AES,
+SW8260D,8260D,USEPA,8260 D ~ Volatile Organic Compounds by GC/MS,
+SW846 6010D,6010D,USEPA,Metals in Water by ICP-OES,
+EP200.8     ,200.8,USEPA,Metals in Waters by ICP/MS,
+SM21 4500NO3-F,4500-NO3(F),APHA,4500 NO3 F  ~ Nitrate in Water- Automated Cadmium Reduction,
+"SM21 4500P-B,E",4500-P-E,APHA,4500 P E ~ Phosphorus in Water by Colorimetry- Ascorbic Acid Method,
+,,,,
+, ,,,
+,,,,
+,,,,
+,,,,
+, ,,,
