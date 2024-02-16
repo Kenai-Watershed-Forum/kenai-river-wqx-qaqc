@@ -251,7 +251,7 @@ sgs23 %<>%
   mutate(activity_type = case_when(
     sample_type == "PS" & activity_type == "" ~ "Field Msr/Obs",
     TRUE ~ activity_type)) %>%
-  # designate activity type abbreviations
+  # designate activity type abbreviations for late use in actvity ID
   mutate(activity_type_abbrv = case_when(
     activity_type == "Quality Control Field Replicate Msr/Obs" ~ "DUP",
     activity_type == "Quality Control Sample-Field Blank" ~ "FB",
@@ -288,9 +288,8 @@ sgs23 %<>%
 # Concatenated - column combines static info from multiple columns
 # Calculated - column is dependent on measurements
 
-# NOTE: consider moving some of these steps (ones that apply to all data) to a stage after SWWTP data has been joined.
-# Marking candidates for this description with "***"
-# If we go this route; leave hashtag column names present as is for sequential navigation, just move code so as reduce redundancy
+# NOTE: column names marked with triple asterisk "***" are common to all dataframes, and thus are done in bulk at the end of steps that are not common to all dataframes
+
 
 # Project ID (static)***
 
@@ -337,7 +336,7 @@ sgs23 %<>% rename(activity_start_time = collect_time)
 # Activity Horizontal Reference Datum	***
 
 # Characteristic Name	
-sgs23 %>% rename(characteristic_name = analyte)
+sgs23 %<>% rename(characteristic_name = analyte)
 
 # Result Analytical Method ID,	and
 # Result Analytical Method Context	
@@ -452,7 +451,6 @@ sgs23 %<>% mutate(analysis_start_time_zone = "AKST")
 
 --> use EPA metals guidance in QA/QC rather than at this stage!
 
---> clip/move static pieces, then repeat for swwtp 
 
 
 # check all these again, make decision if static, concatenated, or formulaic 
@@ -508,20 +506,199 @@ fc23 <- bind_rows(spring_23_fc,summer_23_fc) %>%
 
 ################### Part B.2: Create Consistent Sample Location Names for SWWTP FC data #####################
 
-# execute once and manually modify csv
-# z <- data.frame(unique(fc23$sample_location_rm))
+# execute once and manually modify csv to create match table
+# z <- sgs23 %>%
+#  select(site_id,monitoring_location_id) %>%
+#  distinct()
 # write.csv(z,"other/input/2023/misc/site_names_manual_edit_fc23.csv", row.names = F)
 
+# read in fc sites
+fc23_site_names <- read.csv("other/input/2023/misc/site_names_manual_edit_fc23.csv") %>%
+  remove_empty()
+
+# join to fecal coliform data frame
+fc23 %<>% left_join(fc23_site_names)
 
 
-############### Part B.3: Assign miscellaneous calculated columns for 2023 SWWTP FC (needed for next steps) ###############
+
+############### Part B.3: Assign miscellaneous columns for 2023 SWWTP FC (needed for next steps) ###############
+
+# Activity Type	
+
+# method blank, trip blank, field duplicate)
+# this column is addressed out of left to right sequence because its content is needed to generate Activity ID
+
+fc23 %<>%
+  mutate(activity_type = case_when(
+    grepl("DUP", sample_location_rm) ~ "Quality Control Field Replicate Msr/Obs",
+    grepl("BLANK", sample_location_rm) ~ "Quality Control Sample-Lab Blank",
+    grepl("POSITIVE", sample_location_rm) ~ "Sample-Positive Control",
+    TRUE ~ "")) %>%
+# designate activity type abbreviations for late use in actvity ID
+  mutate(activity_type_abbrv = case_when(
+    activity_type == "Quality Control Field Replicate Msr/Obs" ~ "DUP",
+    activity_type == "Quality Control Sample-Lab Blank" ~ "LB",
+    activity_type == "Sample-Positive Control" ~ "POS",
+    TRUE ~ ""))
+
+
+# Result Sample Fraction	
+# CDX domains: none used in 2021 example
+fc23 %<>%
+  mutate(result_sample_fraction = "")
+
+
+# Collect Date
+fc23 %<>% rename(collect_date = rec_date)
+
+
 
 ################### Part B.4: Proceed left to right across column names to calculate as needed #####################
+
+
+# NOTE: column names marked with triple asterisk "***" are common to all dataframes, and thus are done in bulk at the end of steps that are not common to all dataframes
+
+
+# Project ID (static)***
+
+# Monitoring Location ID (static, already present)
+
+# Activity Media Name	(static)***
+
+# Activity Media Subdivision Name	(static)***
+
+# Activity ID	(concatenated) (unique identifier) (limit of X  characters)
+# due to CDX character limitations, we need to use abbreviations for 1) characteristic (analyte) and 2) sample type
+fc23 %<>% mutate(analyte_abbrv = "FC")
+  
+# create Activity ID column
+fc23 %<>%
+  mutate(activity_id = case_when(    
+    grepl("POS|LB", activity_type_abbrv) ~ "",
+    activity_type_abbrv == "" ~ paste0(site_id,"-",collect_date,"-",analyte_abbrv),
+    TRUE ~ paste0(site_id,"-",collect_date,"-",analyte_abbrv,"-",activity_type_abbrv))) 
+  
+
+# Activity Start Date	
+fc23 %<>% rename(activity_start_date = collect_date)
+
+# Activity Start Time	(static, specific to SGS)
+fc23 %<>% rename(activity_start_time = time_sampled)
+
+# Activity Start Time Zone***
+
+# Activity Depth/Height Measure	***
+
+# Activity Depth/Height Unit	***
+
+# Activity Comment ***
+
+# Activity Horizontal Collection Method	***
+
+# Activity Horizontal Reference Datum	***
+
+# Characteristic Name	
+fc23 %<>% mutate(characteristic_name = "Fecal Coliform")
+
+# Result Analytical Method ID,	and
+# Result Analytical Method Context	
+fc23 %<>%
+  mutate(result_analytical_method_id = "9222D",
+         result_analytical_method_context = "APHA")
+
+
+# Result Value	
+fc23 %<>% rename(result_value = colony_count_100m_l)
+
+ # Result Unit	
+fc23 %<>% mutate(result_unit = "cfu/100ml")
+
+# Result Qualifier
+# Use "=" if result > 1 and "U" if result < 1. See pg 17 of 2020 QAPP at "other/documents/QAPP/QAPP-2020-KenaiRiverWatershed_ZnCu.pdf" in Appendix A of comprehensive report
+fc23 %<>%
+  mutate(result_qualifier = case_when(
+    result_value < 1 ~ "U",
+    TRUE ~ "="))
+ 
+
+# Result Weight Basis	***
+
+# Result Sample Fraction	
+## already completed in a previous step
+
+# Method Speciation	
+# not applicable to fecal coliform
+
+# Result Value Type	***
+
+# Sample Collection Equipment Name ***	
+
+# Result Detection Condition	
+# categorical choice based on result qualifier. 
+# Attempt to use matching table generates an erroneous many-to-many join for unknown reasons, so we will instead use "case_when"
+# result_detection_condition <- read.csv("other/input/2023/misc/result_detection_condition.csv")
+fc23 %<>% 
+  mutate(result_detection_condition = case_when(
+    result_qualifier == "U" ~ "Not Detected",
+    result_qualifier == "J" ~ "Present Below Quantification Limit",
+    TRUE ~ ""))
+
+
+# Result Status ID	(make as very last step?)
+# decision made after QA/QC process
+# TBD work to be completed here <--------------------------------------------
+
+# Note: the acronyms & terminology for detection limits provided by SGS differ slightly from those required by CDX
+
+# Result Detection Limit Type 1	
+# Lower Quantitation Limit (listed as "loq", or "Limit of Quantitation")
+fc23 %<>% mutate(result_detection_limit_type_1 = "Lower Quantitation Limit")
+
+# Result Detection Limit Value 1	
+fc23 %<>% mutate(result_detection_limit_value_1 = 1)
+
+# Result Detection Limit Unit 1	
+fc23 %<>% mutate(result_detection_limit_unit_1 = result_unit)
+
+# Result Detection Limit Type 2	
+# Method Detection Level (listed as "lod", or "limit of detection")
+fc23 %<>% mutate(result_detection_limit_type_2 = "")
+
+# Result Detection Limit Value 2	
+fc23 %<>% mutate(result_detection_limit_value_2 = "")
+
+# Result Detection Limit Unit 2	
+fc23 %<>% mutate(result_detection_limit_unit_2 = result_unit)
+
+# Laboratory Name	
+fc23 %<>% mutate(laboratory_name  = "Soldotna Wastewater Treatment Plant, Soldotna, Alaska")
+
+# Laboratory Comment Text	
+# TBD
+fc23 %<>% mutate(lab_comment_text = notes)
+
+# Analysis Start Date	
+# all FC samples are analyzed the same day as received by the lab
+fc23 %<>% rename(analysis_start_date = activity_start_date)
+
+# Analysis Start Time	
+fc23 %<>% rename(analysis_start_time = time_in)
+
+# Analysis Start Time Zone (can vary by year if subcontract lab used)
+fc23 %<>% mutate(analysis_start_time_zone = "AKST")
+
+# Thermal Preservative Used	***
+
+# Sample Container Type	***
+
+# Sample Container Color	***
+
+# Chemical Preservative Used ***
 
 ```
 
 
-
+<br>
 
 
 
@@ -569,7 +746,6 @@ tss23 <- bind_rows(spring_23_tss,summer_23_tss) %>%
          time_analysis = format(as.POSIXct(Sys.Date() + as.numeric(time)), "%H:%M", tz="UTC")) %>%
   select(-sample_time,-time,-qc1,-data_entry,-qc2)
   
-
 ```
 
 
@@ -578,9 +754,223 @@ tss23 <- bind_rows(spring_23_tss,summer_23_tss) %>%
 
 ################### Part C.2: Create Consistent Sample Location Names for SWWTP TSS data #####################
 
+# execute once and manually modify csv to create match table
+#z <- tss23 %>%
+#  select(sample_location) %>%
+#  distinct()
+#write.csv(z,"other/input/2023/misc/site_names_manual_edit_tss23.csv", row.names = F)
+
+# read in tss sites
+tss23_site_names <- read.csv("other/input/2023/misc/site_names_manual_edit_tss23.csv") %>%
+  remove_empty()
+
+# join site names to tss data frame
+tss23 %<>% left_join(tss23_site_names)
+
+
+
 ############### Part C.3: Assign miscellaneous calculated columns for 2023 SWWTP TSS (needed for next steps) ###############
 
+# Activity Type	
+
+# method blank, field duplicate)
+# this column is addressed out of left to right sequence because its content is needed to generate Activity ID
+
+tss23 %<>%
+  mutate(activity_type = case_when(
+    grepl("DUP", sample_location) ~ "Quality Control Field Replicate Msr/Obs",
+    grepl("BLANK", sample_location) ~ "Quality Control Sample-Lab Blank",
+    TRUE ~ "")) %>%
+# designate activity type abbreviations for late use in actvity ID
+  mutate(activity_type_abbrv = case_when(
+    activity_type == "Quality Control Field Replicate Msr/Obs" ~ "DUP",
+    activity_type == "Quality Control Sample-Lab Blank" ~ "LB",
+    TRUE ~ ""))
+
+
+# Result Sample Fraction	
+# CDX domains: none used in 2021 example
+tss23 %<>%
+  mutate(result_sample_fraction = "")
+
+
+# Collect Date
+tss23 %<>% rename(collect_date = field_sample_date)
+
+
+
+
 ################### Part C.4: Proceed left to right across column names to calculate as needed #####################
+
+
+# NOTE: column names marked with triple asterisk "***" are common to all dataframes, and thus are done in bulk at the end of steps that are not common to all dataframes
+
+
+# Project ID (static)***
+
+# Monitoring Location ID (static, already present)
+
+# Activity Media Name	(static)***
+
+# Activity Media Subdivision Name	(static)***
+
+# Activity ID	(concatenated) (unique identifier) (limit of X  characters)
+# due to CDX character limitations, we need to use abbreviations for 1) characteristic (analyte) and 2) sample type
+tss23 %<>% mutate(analyte_abbrv = "TSS")
+  
+# create Activity ID column
+tss23 %<>%
+  mutate(activity_id = case_when(    
+    grepl("DUP", activity_type_abbrv) ~ paste0(site_id,"-",collect_date,"-",analyte_abbrv,"-",activity_type_abbrv),
+    grepl("LB", activity_type_abbrv) ~ "",
+    TRUE ~  paste0(site_id,"-",collect_date,"-",analyte_abbrv))) 
+  
+
+# Activity Start Date	
+tss23 %<>% rename(activity_start_date = collect_date)
+
+# Activity Start Time	(static, specific to SGS)
+tss23 %<>% rename(activity_start_time = time_sampled)
+
+# Activity Start Time Zone***
+
+# Activity Depth/Height Measure	***
+
+# Activity Depth/Height Unit	***
+
+# Activity Comment ***
+
+# Activity Horizontal Collection Method	***
+
+# Activity Horizontal Reference Datum	***
+
+# Characteristic Name	
+tss23 %<>% mutate(characteristic_name = "Total suspended solids")
+
+# Result Analytical Method ID,	and
+# Result Analytical Method Context	
+tss23 %<>%
+  mutate(result_analytical_method_id = "2540-D",
+         result_analytical_method_context = "APHA")
+
+
+# Result Value	
+tss23 %<>% rename(result_value = s_s_mg_l)
+
+# WORKING HERE 2/15/2024
+
+
+ # Result Unit	
+fc23 %<>% mutate(result_unit = "mg/L")
+
+# Result Qualifier
+
+
+
+
+
+
+fc23 %<>%
+  mutate(result_qualifier = case_when(
+    result_value < 1 ~ "U",
+    TRUE ~ "="))
+ 
+
+# Result Weight Basis	***
+
+# Result Sample Fraction	
+## already completed in a previous step
+
+# Method Speciation	
+# not applicable to fecal coliform
+
+# Result Value Type	***
+
+# Sample Collection Equipment Name ***	
+
+# Result Detection Condition	
+# categorical choice based on result qualifier. 
+# Attempt to use matching table generates an erroneous many-to-many join for unknown reasons, so we will instead use "case_when"
+# result_detection_condition <- read.csv("other/input/2023/misc/result_detection_condition.csv")
+fc23 %<>% 
+  mutate(result_detection_condition = case_when(
+    result_qualifier == "U" ~ "Not Detected",
+    result_qualifier == "J" ~ "Present Below Quantification Limit",
+    TRUE ~ ""))
+
+
+# Result Status ID	(make as very last step?)
+# decision made after QA/QC process
+# TBD work to be completed here <--------------------------------------------
+
+# Note: the acronyms & terminology for detection limits provided by SGS differ slightly from those required by CDX
+
+# Result Detection Limit Type 1	
+# Lower Quantitation Limit (listed as "loq", or "Limit of Quantitation")
+fc23 %<>% mutate(result_detection_limit_type_1 = "Lower Quantitation Limit")
+
+# Result Detection Limit Value 1	
+fc23 %<>% mutate(result_detection_limit_value_1 = 1)
+
+# Result Detection Limit Unit 1	
+fc23 %<>% mutate(result_detection_limit_unit_1 = result_unit)
+
+# Result Detection Limit Type 2	
+# Method Detection Level (listed as "lod", or "limit of detection")
+fc23 %<>% mutate(result_detection_limit_type_2 = "")
+
+# Result Detection Limit Value 2	
+fc23 %<>% mutate(result_detection_limit_value_2 = "")
+
+# Result Detection Limit Unit 2	
+fc23 %<>% mutate(result_detection_limit_unit_2 = result_unit)
+
+# Laboratory Name	
+fc23 %<>% mutate(laboratory_name  = "Soldotna Wastewater Treatment Plant, Soldotna, Alaska")
+
+# Laboratory Comment Text	
+# TBD
+fc23 %<>% mutate(lab_comment_text = notes)
+
+# Analysis Start Date	
+# all FC samples are analyzed the same day as received by the lab
+fc23 %<>% rename(analysis_start_date = activity_start_date)
+
+# Analysis Start Time	
+fc23 %<>% rename(analysis_start_time = time_in)
+
+# Analysis Start Time Zone (can vary by year if subcontract lab used)
+fc23 %<>% mutate(analysis_start_time_zone = "AKST")
+
+# Thermal Preservative Used	***
+
+# Sample Container Type	***
+
+# Sample Container Color	***
+
+# Chemical Preservative Used ***
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+################# Part D: Join Seperate Datasets into shared dataframe (SGS, Fecal Coliform, TSS) ###################
+
+
+
+
 
 ```
 
@@ -595,7 +985,7 @@ tss23 <- bind_rows(spring_23_tss,summer_23_tss) %>%
 
 ```{r echo = F}
 
-##################### Part D: Assign Information Common to All 2023 Datasets #########################
+##################### Part E: Assign Information Common to All 2023 Datasets #########################
 
 
 # Static additions to overall combined dataset (marked as *** in above steps)
@@ -689,6 +1079,9 @@ sgs23 %<>% mutate(chemical_preservative_used = "HNO3")
 # question to add to existing list:
 # # Are sample collection dates unique to the actual recorded dates?
 # (no; spring has two dates; lab typo)
+
+
+# are fecal coliform "0" values listed as "NA"? (they should be)
 
 
 
