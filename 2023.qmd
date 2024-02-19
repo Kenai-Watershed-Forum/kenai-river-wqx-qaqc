@@ -944,12 +944,12 @@ tss23 %<>% mutate(analysis_start_time_zone = "AKST")
 # Sample Container Color	***
 
 # Chemical Preservative Used ***
+```
 
 
+```{r}
 
-
-
-################# Part D: Join Seperate Datasets into shared dataframe (SGS, Fecal Coliform, TSS) ###################
+################# Part D: Join Separate Datasets into shared dataframe (SGS, Fecal Coliform, TSS) ###################
 
 # strategy - 1) retain only needed columns (2021 example), then 2) assign consistent column classes (temp loggers example)
 
@@ -963,31 +963,65 @@ tss23 %<>% mutate(analysis_start_time_zone = "AKST")
 #  select(one_of(aqwms_colnames))
 
 
-# read in 2021 column names
+# suggestion: write function that assigns class by column name; apply function to each data frame individually
+# if successful, save function to separate R script and use source()
+
+source("other/functions/transform_columns.R")
+
+
+# subset dataframes to set of desired final colnames based on 2021 example
+# read in
 col_names <- read.csv("other/output/example_output/results_activities_2021.csv") %>%
   clean_names() %>%
-  colnames() 
-
-z <- read.csv("other/output/example_output/results_activities_2021.csv") %>%
-  clean_names()
-
-write.csv(data.frame(col_names), "other/input/2023/misc/col_names.csv", row.names = F)
-
-
-
-
-
-
-
-# 2/16/2024 - working here -- how to assign column types in bulk based on name matching??
-# https://www.google.com/search?q=dplyr+Use+%60spec%28%29%60+for+the+full+column+specifications.%0D%0A%0D%0A&sca_esv=5ea4c8dbbd821d13&ei=zRXQZbKtCoqD0PEPrP626AY&ved=0ahUKEwjyx6eFprGEAxWKATQIHSy_DW0Q4dUDCBA&uact=5&oq=dplyr+Use+%60spec%28%29%60+for+the+full+column+specifications.%0D%0A%0D%0A&gs_lp=Egxnd3Mtd2l6LXNlcnAiOGRwbHlyIFVzZSBgc3BlYygpYCBmb3IgdGhlIGZ1bGwgY29sdW1uIHNwZWNpZmljYXRpb25zLgoKSABQAFgAcAB4AZABAJgBAKABAKoBALgBA8gBAPgBAfgBAg&sclient=gws-wiz-serp
-
+  colnames()
 
 # retain desired columns from each dataframe
-sgs23 %<>% select(one_of(col_names)) %>% type_convert()
-fc23 %<>% select(one_of(col_names)) %>% type_convert()
+sgs23 %<>% select(one_of(col_names)) 
+fc23 %<>% select(one_of(col_names)) 
 tss23 %<>% select(one_of(col_names))
 
+
+
+# error
+sgs23 <- set_column_classes(df = sgs23,class_list)
+
+# Sample data frame
+df <- data.frame(
+  col1 = 1:5,
+  col2 = letters[1:5],
+  col3 = 1:5
+)
+
+# Define the classes to set
+class_list <- list(
+  col1 = "character",
+  col2 = "factor"
+)
+
+# Set the classes
+df <- set_column_classes(df, class_list)
+
+# Check the classes
+sapply(df, class)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# doesn't work
 z <- bind_rows(sgs23,fc23)
 
 
@@ -1005,8 +1039,6 @@ z <- bind_rows(sgs23,fc23)
 # 
 
 
-
-z <- 
 
 
 
