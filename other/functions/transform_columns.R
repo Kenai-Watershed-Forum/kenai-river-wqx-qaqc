@@ -1,29 +1,3 @@
-
-
-# define function
-set_column_classes <- function(data_frame, classes) {
-  # Convert the classes to a named vector
-  class_vector <- unlist(classes)
-  
-  # Loop through the names and assign the classes
-  for (col_name in names(class_vector)) {
-    class_to_set <- class_vector[col_name]
-    if (is.na(class_to_set)) {
-      class_to_set <- class(data_frame[[col_name]])
-    }
-    if (class_to_set == "factor" & class(data_frame[[col_name]]) != "factor") {
-      data_frame[[col_name]] <- factor(data_frame[[col_name]])
-    } else {
-      data_frame[[col_name]] <- as(data_frame[[col_name]], class_to_set)
-    }
-  }
-  
-  # Return the modified data frame
-  return(data_frame)
-}
-
-
-
 # Define the classes to set
 class_list <- list(
   # project_id  (assigned within CDX app)
@@ -71,6 +45,35 @@ class_list <- list(
   sample_container_color = "character",              
   chemical_preservative_used = "character"
 )
+
+
+
+
+# define function
+set_column_classes <- function(data_frame, classes) {
+  # Convert the classes to a named vector
+  class_vector <- unlist(classes)
+  
+  # Loop through the names and assign the classes
+  for (col_name in names(class_vector)) {
+    class_to_set <- class_vector[col_name]
+    if (is.na(class_to_set)) {
+      class_to_set <- class(data_frame[[col_name]])
+    }
+    if (class_to_set == "factor" & class(data_frame[[col_name]]) != "factor") {
+      data_frame[[col_name]] <- factor(data_frame[[col_name]])
+    } else {
+      data_frame[[col_name]] <- as(data_frame[[col_name]], class_to_set)
+    }
+  }
+  
+  # Return the modified data frame
+  return(data_frame)
+}
+
+
+
+
 
 
 

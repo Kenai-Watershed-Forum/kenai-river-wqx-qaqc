@@ -975,7 +975,7 @@ fc23 %<>% select(one_of(col_names))
 tss23 %<>% select(one_of(col_names))
 
 
-# we only need to synchornize column types for all names in the above 3 dataframes
+# we need to synchornize column types for all names in the above 3 dataframes
 
 # WORKING HERE 2/19/2024
 
@@ -983,9 +983,6 @@ tss23 %<>% select(one_of(col_names))
 # if successful, save function to separate R script and use source()
 
 source("other/functions/transform_columns.R")
-
-
-
 
 
 
