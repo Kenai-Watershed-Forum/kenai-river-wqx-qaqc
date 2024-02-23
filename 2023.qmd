@@ -999,7 +999,8 @@ df <- data.frame(
 # Define the classes to set
 class_list <- list(
   col1 = "character",
-  col2 = "factor"
+  col2 = "factor",
+  col3 = "integer"
 )
 
 # Set the classes
@@ -1011,26 +1012,19 @@ sapply(df, class)
 
 
 
+# error
+z <- set_column_classes(sgs23, class_list)
+
+# possible disgnosis strategy: try reducing sgs23 to 2 columns as a time?
+
+z1 <- sgs23 %>% select(monitoring_location_id)
 
 
+z2 <- set_column_classes(z1,class_list)
 
+# WORKING HERE 2/23/2024
 
-
-
-
-
-
-
-
-
-
-
-# doesn't work
-z <- bind_rows(sgs23,fc23)
-
-
-
-
+# this approach seems to work for the first column at least. The issue must be cuased by a particular column (unknown which one). Continue adding across one at a time until identified.
 
 
 
