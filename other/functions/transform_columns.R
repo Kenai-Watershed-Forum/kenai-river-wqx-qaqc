@@ -1,12 +1,15 @@
 # test class list
 class_list <- list(
-  monitoring_location_id = "integer"
+  monitoring_location_id = "integer",
+  activity_media_name = "character",
+  activity_media_subdivision_name = "character",     
+  activity_id = "character"
 )
 
 
 
 # Define the classes to set
-class_list <- list(
+#class_list <- list(
   # project_id  (assigned within CDX app)
   monitoring_location_id = "integer",
   activity_media_name = "character",             
@@ -55,8 +58,7 @@ class_list <- list(
 
 
 
-
-# define function
+# define fxn
 set_column_classes <- function(data_frame, classes) {
   # Convert the classes to a named vector
   class_vector <- unlist(classes)
@@ -77,6 +79,21 @@ set_column_classes <- function(data_frame, classes) {
   # Return the modified data frame
   return(data_frame)
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

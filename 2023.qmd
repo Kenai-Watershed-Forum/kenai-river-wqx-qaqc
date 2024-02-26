@@ -439,11 +439,27 @@ sgs23 %<>% mutate(analysis_start_time_zone = "AKST")
 
 # Thermal Preservative Used	***
 
-# Sample Container Type	***
+# Sample Container Type	
+sgs23 %<>% 
+  mutate(sample_container_type = case_when(
+  result_analytical_method_id == "8260D" ~ "Glass Vial",
+  TRUE ~ "Plastic Bottle"))
 
-# Sample Container Color	***
+# Sample Container Color
+sgs23 %<>% 
+  mutate(sample_container_color = case_when(
+  result_analytical_method_id == "8260D" ~ "Amber",
+  TRUE ~ "Opaque"))
+  
 
-# Chemical Preservative Used ***
+# Chemical Preservative Used 
+# note that 200.8 samples were lab-filtered in spring & summer 2023, so no field preservative was used (would normally be HNO3 for year prior to 2022)
+sgs23 %<>% 
+  mutate(chemical_preservative_used = case_when(
+      result_analytical_method_id == "8260D" ~ "HCl",
+      result_analytical_method_id == "4500-NO3(F)" ~ "H2SO4",
+      result_analytical_method_id == "4500-P-E" ~ "H2SO4",
+      TRUE ~ ""))
 
 ```
 
@@ -689,11 +705,14 @@ fc23 %<>% mutate(analysis_start_time_zone = "AKST")
 
 # Thermal Preservative Used	***
 
-# Sample Container Type	***
+# Sample Container Type	
+fc23 %<>% mutate(sample_container_type = "Plastic Bottle")
 
-# Sample Container Color	***
+# Sample Container Color	
+fc23 %<>% mutate(sample_container_color = "Clear")
 
-# Chemical Preservative Used ***
+# Chemical Preservative Used 
+fc23 %<>% mutate(chemical_preservative_used = "")
 
 ```
 
@@ -857,8 +876,6 @@ tss23 %<>%
 # Result Value	
 tss23 %<>% rename(result_value = s_s_mg_l)
 
-# WORKING HERE 2/15/2024
-
 
  # Result Unit	
 tss23 %<>% mutate(result_unit = "mg/L")
@@ -868,8 +885,6 @@ tss23 %<>%
   mutate(result_qualifier = case_when(
     result_value < 1 & result_value > 0.31 ~ "J",
     result_value < 0.31 ~ "U"))
-
- 
 
 # Result Weight Basis	***
 
@@ -939,115 +954,55 @@ tss23 %<>% mutate(analysis_start_time_zone = "AKST")
 
 # Thermal Preservative Used	***
 
-# Sample Container Type	***
+# Sample Container Type	
+tss23 %<>% mutate(sample_container_type = "Plastic Bottle")
 
-# Sample Container Color	***
+# Sample Container Color	
+tss23 %<>% mutate(sample_container_color = "Opaque")
 
-# Chemical Preservative Used ***
+# Chemical Preservative Used 
+tss23 %<>% mutate(chemical_preservative_used = "")
+```
+
+```{r echo =F}
+# remove extraneous dataframes
+rm(fc23_site_names,sgs_sitenames,spring_23_fc,spring_23_tss,summer_23_fc,summer_23_tss,tss23_site_names)
+
 ```
 
 
-```{r}
+
+```{r echo = F}
 
 ################# Part D: Join Separate Datasets into shared dataframe (SGS, Fecal Coliform, TSS) ###################
 
 # strategy - 1) retain only needed columns (2021 example), then 2) assign consistent column classes (temp loggers example)
 
-# retain needed columns example
-# get all column names from AQWMS template
-#aqwms_colnames <- read_excel("other/input/AQWMS/AWQMS_KWF_Baseline_2021.xlsx", sheet = "KWF Baseline AWQMS Template") %>%
-#  colnames()
 
-# select from subset of column in aqwms template
-#dat %<>%
-#  select(one_of(aqwms_colnames))
-
-
-# subset dataframes to set of desired final colnames based on 2021 example
+# subset dataframes to limited set of desired final colnames based on 2021 example
 # read in column names
 col_names <- read.csv("other/output/example_output/results_activities_2021.csv") %>%
   clean_names() %>%
   colnames()
 
-# retain desired columns from each dataframe
-sgs23 %<>% select(one_of(col_names)) 
-fc23 %<>% select(one_of(col_names)) 
-tss23 %<>% select(one_of(col_names))
+# retain desired columns from each dataframe 
+# and, convert all columns to character
+sgs23 %<>% 
+  select(one_of(col_names)) %>% 
+  mutate(across(everything(), as.character))
 
+fc23 %<>% 
+  select(one_of(col_names)) %>%
+  mutate(across(everything(), as.character))
 
-# we need to synchornize column types for all names in the above 3 dataframes
+tss23 %<>% 
+  select(one_of(col_names)) %>%
+  mutate(across(everything(), as.character))
 
-# WORKING HERE 2/19/2024
-
-# suggestion: write function that assigns class by column name; apply function to each data frame individually
-# if successful, save function to separate R script and use source()
-
-source("other/functions/transform_columns.R")
-
-
-
-# error
-sgs23 <- set_column_classes(df = sgs23,class_list)
-
-# Sample data frame
-df <- data.frame(
-  col1 = 1:5,
-  col2 = letters[1:5],
-  col3 = 1:5
-)
-
-# Define the classes to set
-class_list <- list(
-  col1 = "character",
-  col2 = "factor",
-  col3 = "integer"
-)
-
-# Set the classes
-df <- set_column_classes(df, class_list)
-
-# Check the classes
-sapply(df, class)
-
-
-
-
-# error
-z <- set_column_classes(sgs23, class_list)
-
-# possible disgnosis strategy: try reducing sgs23 to 2 columns as a time?
-
-z1 <- sgs23 %>% select(monitoring_location_id)
-
-
-z2 <- set_column_classes(z1,class_list)
-
-# WORKING HERE 2/23/2024
-
-# this approach seems to work for the first column at least. The issue must be cuased by a particular column (unknown which one). Continue adding across one at a time until identified.
-
-
-
-
-# assign column classes example
-
-# colTypes <- cols("i", "c", "d", "?", "_", "_", "_")
-# read_csv(col_types = colTypes)
-
-# 
-
-
-
-
-
+# combine
+dat <- bind_rows(sgs23,fc23,tss23)
 
 ```
-
-
-
-
-
-
 
 
 
@@ -1062,83 +1017,110 @@ z2 <- set_column_classes(z1,class_list)
 # Note: will need to replace all "sgs23" with "dat"
 
 # Project ID (static)***
-sgs23 %<>% mutate(project_id = "10000007")
+dat %<>% mutate(project_id = "10000007")
 
 # Activity Media Name	(static)***
-sgs23 %<>% mutate(activity_media_name = "Water")
+dat %<>% mutate(activity_media_name = "Water")
 
 # Activity Media Subdivision Name	(static)***
-sgs23 %<>% mutate(activity_media_subdivision_name = "Surface Water")
+dat %<>% mutate(activity_media_subdivision_name = "Surface Water")
 
 # Activity Start Time Zone***
-sgs23 %<>% mutate (activity_start_time_zone = "AKST")
+dat %<>% mutate (activity_start_time_zone = "AKST")
 
 # Activity Latitude	***
 # Activity Longitude	***
 
-# Perform this step once all above steps are complete and set (un-hashtag)
-# (join monitoring_location_id to external spreadsheet table)
-#lat_long <- read_csv("other/input/2023/misc/lat_long.csv") %>%
-#  transform(monitoring_location_id = as.character(monitoring_location_id))
-# z <- sgs23 %>% left_join(sgs23,lat_long, by = "monitoring_location_id")
+# read in unqiue lat/long by monitoring location id
+lat_long <- read_csv("other/input/2023/misc/lat_long.csv") %>%
+  transform(monitoring_location_id = as.character(monitoring_location_id))
 
-# 2/1/2024: This step is producing a fatal error that I am unable to diagnose. A typical left-join step instead produces a many-to-many dataframe with hundreds of thousands of rows.
-# As a temporary work-around, we will export a csv of the dataframe at this step, manually perform the join, and re-import the csv
-
-# NOTE: we will need to re-perform this manual step each time above chunks change; or if EDD sources change (sheesh)
-
-
-# export
-#sgs23 %<>% arrange(monitoring_location_id)
-# write.csv(sgs23, "other/input/2023/misc/temp/sgs23_temp.csv",row.names = F)
-# write.csv(lat_long, "other/input/2023/misc/temp/lat_long_temp.csv",row.names = F)
-
-# import manually edited csv and replace sgs23
-#sgs23 <- read.csv("other/input/2023/misc/temp/sgs23_temp.csv") %>%
-#  select(-X)
-
+# prep overall dataframe for join, then join
+dat %<>% 
+  mutate(monitoring_location_id = str_trim(monitoring_location_id)) %>%
+  left_join(lat_long)
 
 # Activity Depth/Height Measure	***
-sgs23 %<>% mutate(activity_depth_height_measure = "15")
+dat %<>% mutate(activity_depth_height_measure = "15")
 
 # Activity Depth/Height Unit	***
-sgs23 %<>% mutate(activity_depth_height_unit = "cm")
+dat %<>% mutate(activity_depth_height_unit = "cm")
 
 # Activity Comment ***
-sgs23 %<>% mutate(activity_comment = "")
+dat %<>% mutate(activity_comment = "")
 
 # Activity Horizontal Collection Method	***
-sgs23 %<>% mutate(activity_horizontal_collection_method = "GPS-Unspecified")
+dat %<>% mutate(activity_horizontal_collection_method = "GPS-Unspecified")
 
 # Activity Horizontal Reference Datum	***
-sgs23 %<>% mutate(activity_horizontal_reference_datum = "NAD83")
+dat %<>% mutate(activity_horizontal_reference_datum = "NAD83")
 
 # Result Weight Basis	***
-sgs23 %<>% mutate(result_weight_basis = "Sampled")
+dat %<>% mutate(result_weight_basis = "Sampled")
 
 # Result Value Type	***
-sgs23 %<>% mutate(result_value_type = "Actual")
+dat %<>% mutate(result_value_type = "Actual")
 
 # Sample Collection Equipment Name ***	
-sgs23 %<>% mutate(sample_collection_equipment_name = "Water Bottle")
+dat %<>% mutate(sample_collection_equipment_name = "Water Bottle")
 
 # Thermal Preservative Used	***
-sgs23 %<>% mutate(thermal_preservative_used = "Cold Packs (4 deg C)")
+dat %<>% mutate(thermal_preservative_used = "Cold Packs (4 deg C)")
 
-# Sample Container Type	***
-sgs23 %<>% mutate(sample_container_type = "Plastic Bottle")
 
-# Sample Container Color	***
-sgs23 %<>% mutate(sample_container_color = "Opaque")
+```
 
-# Chemical Preservative Used ***
-sgs23 %<>% mutate(chemical_preservative_used = "HNO3")
+```{r echo = F}
+
+# transform column classes as necessary for QA/QC analyses
 
 
 
 ```
 
 
+### 2023 Data QA/QC Evaluation
+
+Prior to upload to the EPA WQX, all water quality data must be checked against a series of standard questions in order to evaluate how quality assurance / quality check (QA/QC) requirements are met. The draft Data Evaluation Checklist Template (available for download below) outlines these questions:
+
+```{r, echo = F}
+xfun::embed_file('other/misc/qa_qc/Kenai_Baseline_Data_Evaluation_Checklist_2023.xlsx', text = "Download 2023 Draft Kenai Baseline Data Evaluation Checklist Template")
+
+```
+
+
+Download results pre-QA/QC; including lab QA QC info
+
+
+#### Pre-database
+
+##### Overall project success
+
+**1.) Were the appropriate analytical methods used for all parameters?**
+
+Yes. Analytical methods from the approved 2020 QAPP were employed.
+
+<br>
+
+**2.) Were there any deviations from the sampling plan?**
+
+Yes. One site in spring 2023 could not be accessed for sampling due to low water conditions (Kenai River main stem, RM 10.1).
+
+<br>
+
+**3.) Were field duplicates, blanks, and/or other QC samples collected as planned?**
+
+```{r echo = F}
+z <- dat %>%
+  group_by(activity_start_date,activity_type,characteristic_name,result_analytical_method_id) %>%
+  count()
+
+# WORKING HERE 2/26/24
+
+# need to fix: for method 200.8, result_analytical_method_id and result_analytical_method_context
+
+
+```
 
 
 
@@ -1151,7 +1133,6 @@ sgs23 %<>% mutate(chemical_preservative_used = "HNO3")
 
 
 # are fecal coliform "0" values listed as "NA"? (they should be)
-
 
 
 ```
