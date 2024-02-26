@@ -1,3 +1,10 @@
+# test class list
+class_list <- list(
+  monitoring_location_id = "integer"
+)
+
+
+
 # Define the classes to set
 class_list <- list(
   # project_id  (assigned within CDX app)
