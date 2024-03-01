@@ -700,7 +700,7 @@ fc23 %<>% mutate(lab_comment_text = notes)
 
 # Analysis Start Date	
 # all FC samples are analyzed the same day as received by the lab
-fc23 %<>% rename(analysis_start_date = activity_start_date)
+fc23 %<>% mutate(analysis_start_date = activity_start_date)
 
 # Analysis Start Time	
 fc23 %<>% rename(analysis_start_time = time_in)
@@ -1079,29 +1079,32 @@ dat %<>% mutate(thermal_preservative_used = "Cold Packs (4 deg C)")
 ```
 
 
+
+
 ```{r echo = F}
-# Address self-evident errors
+# Address self-evident critical errors
 
 # A typo from the SGS labs resulted in showing multiple incorrect fieldwork dates for spring 2023. Correct this here
-z <- dat %>%
+dat %<>%
   
   # correct typo showing field sampling occurring on 2023-05-03 (day after field event)
   mutate(activity_start_date = case_when(
     activity_start_date == "2023-05-03" & sample_type == "PS" ~ "2023-05-02",
     TRUE ~ activity_start_date)) %>%
   
-  # correct typo showing lab QA/QC analyses occurring prior to summer field sampling on 2023-07-18
+  # correct typo showing lab QA/QC analyses occurring prior to summer field sampling date on 2023-07-18
+  # by definition no activity could have occurred with these project samples beforehand, as they had not yet been collected
   mutate(activity_start_date = case_when(
-    
-  ))
+    ymd(activity_start_date) < ymd("2023-07-18") &  ymd(activity_start_date) > ymd("2023-07-13")
+      & sample_type == "PS" ~ "2023-07-18",
+    TRUE ~ activity_start_date)) 
 
-# RUN_DATE_TIME data for some summer sgs data is missing here, but appears to be present in EDD. diagnosing 2/28/2024
 
-# missing activity start date column for fc23 ... not sure why!!
-z <- dat %>%
-  filter(characteristic_name == "Fecal Coliform")
+# There are three rows that indicate sample information where no sample was actually collected. These are the fecal coliform and TSS samples from RM 10.1 on 5/2/2023 (site was not visited), and a fecal coliform sample from RM40 on 5/2/2023 that was spilled on site. Remove these extraneous rows.
+dat %<>% 
+  filter(result_value != "N/A",
+         !is.na(result_value))
 
-# WORKING HERE 2/28/24
 
 ```
 
@@ -1110,7 +1113,7 @@ z <- dat %>%
 
 ```{r echo = F}
 
-# transform column classes as necessary for QA/QC analyses
+# transform column classes as necessary for QA/QC analyses here
 
 
 
@@ -1136,17 +1139,19 @@ Download results pre-QA/QC; including lab QA QC info
 
 **1.) Were the appropriate analytical methods used for all parameters?**
 
-Yes. Analytical methods from the approved 2020 QAPP were employed.
+Yes. Analytical methods from the approved 2020 QAPP were employed. (chnage in lab test)
+
+6010D rather than 200.8
 
 <br>
 
 **2.) Were there any deviations from the sampling plan?**
 
-Yes, with small exceptions. One site in spring 2023 could not be accessed for sampling due to low water conditions (Kenai River main stem, RM 10.1).
+In 2023 there were several small devaitions from the sampling plan due to challenging spring field logistics. One site in spring 2023 could not be accessed for sampling due to low water conditions (Kenai River main stem, RM 10.1). As a result there are no samples from this site/date. Additionally, one fecal coliform sample is missing from RM 10.1 on 5/2/2023 due to an on-site handling error.
 
 <br>
 
-**3.) Were field duplicates, blanks, and/or other QC samples collected as planned?**
+**3.) Were field duplicates, blanks, and/or other field QC samples collected as planned?**
 
 ```{r echo = F}
 z <- dat %>%
@@ -1155,8 +1160,15 @@ z <- dat %>%
     # filter out LABORATORY QA/QC results
   filter(!is.na(activity_start_date),
          !is.na(activity_type)) %>%
-  arrange(characteristic_name, activity_type)
+  arrange(characteristic_name, activity_type) %>%
+  filter(sample_type == "PS")
+
+
+# need to assign activity_type to TSS and FC
+
 # discuss 
+
+
 
 
 ```
