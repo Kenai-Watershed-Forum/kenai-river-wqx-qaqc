@@ -1121,8 +1121,9 @@ dat %<>%
 ```{r echo = F}
 
 # transform column classes as necessary for QA/QC analyses here
-z <- dat %>%
-  transform(rec_time = format(as.POSIXct(Sys.Date() + as.numeric(rec_time)), "%H:%M", tz="UTC"))
+dat %<>%
+    mutate(rec_time = strptime(rec_time, format = "%H:%M:%S","GMT"),
+           activity_start_time = strptime(activity_start_time, format = "%H:%M:%S","GMT"))
 
 # in progress: trying to convert characters to time formats
   
@@ -1142,6 +1143,15 @@ xfun::embed_file('other/misc/qa_qc/Kenai_Baseline_Data_Evaluation_Checklist_2023
 
 
 Download results pre-QA/QC; including lab QA QC info
+
+```{r echo = F}
+
+# to do:
+
+# 3/4/24 - just noticed: some activity IDs are incorrect because date corrections were made AFTER the activity ID was created
+
+```
+
 
 
 #### Pre-database
@@ -1288,11 +1298,25 @@ TBD
 ```{r echo = F}
 
 # calculate hold times
+z <- dat %>%
+  mutate(hold_time = as_hms(activity_start_time - rec_time)) %>%
+  filter(sample_type == "PS")
 
+# working here 3/4/2024
+
+# getting all nonsense values for hold time
+
+
+# read in max hold times
+sample_holding_times <- read.csv("other/misc/qa_qc/sample_holding_times.csv") %>%
+  filter(!is.na(max_holding_time_hours)) %>%
+  transform(max_holding_time_hours = as.numeric(max_holding_time_hours))
 
 
 
 # one sample was warm
+
+
 
 ```
 
