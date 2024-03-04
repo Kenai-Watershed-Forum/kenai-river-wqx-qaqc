@@ -518,9 +518,11 @@ summer_23_fc <- read_excel(summer_23_fc_dir, skip = 11, col_types = "text") %>%
 # join
 fc23 <- bind_rows(spring_23_fc,summer_23_fc) %>%
   clean_names() %>%
+  # standardize time formats
   mutate(time_sampled = format(as.POSIXct(Sys.Date() + as.numeric(time_sampled)), "%H:%M", tz="UTC"),
          time_in = format(as.POSIXct(Sys.Date() + as.numeric(time_in)), "%H:%M", tz="UTC"),
-         time_out = format(as.POSIXct(Sys.Date() + as.numeric(time_out)), "%H:%M", tz="UTC"))
+         time_out = format(as.POSIXct(Sys.Date() + as.numeric(time_out)), "%H:%M", tz="UTC"),
+         rec_time = format(as.POSIXct(Sys.Date() + as.numeric(rec_time)), "%H:%M", tz="UTC"))
 
 ```
 
@@ -556,7 +558,7 @@ fc23 %<>%
     grepl("DUP", sample_location_rm) ~ "Quality Control Field Replicate Msr/Obs",
     grepl("BLANK", sample_location_rm) ~ "Quality Control Sample-Lab Blank",
     grepl("POSITIVE", sample_location_rm) ~ "Sample-Positive Control",
-    TRUE ~ "")) %>%
+    TRUE ~ "Field Msr/Obs")) %>%
 # designate activity type abbreviations for late use in actvity ID
   mutate(activity_type_abbrv = case_when(
     activity_type == "Quality Control Field Replicate Msr/Obs" ~ "DUP",
@@ -803,7 +805,7 @@ tss23 %<>%
   mutate(activity_type = case_when(
     grepl("DUP", sample_location) ~ "Quality Control Field Replicate Msr/Obs",
     grepl("BLANK", sample_location) ~ "Quality Control Sample-Lab Blank",
-    TRUE ~ "")) %>%
+    TRUE ~ "Field Msr/Obs")) %>%
 # designate activity type abbreviations for late use in actvity ID
   mutate(activity_type_abbrv = case_when(
     activity_type == "Quality Control Field Replicate Msr/Obs" ~ "DUP",
@@ -986,8 +988,13 @@ rm(fc23_site_names,sgs_sitenames,spring_23_fc,spring_23_tss,summer_23_fc,summer_
 col_names <- read.csv("other/output/example_output/results_activities_2021.csv") %>%
   clean_names() 
   
-# For QA/QC purposes, we also want to retain the "sample type" column; which contains information about the purpose of various lab analyses (e.g. method blanks, matrix spikes, etc). This column is included in the SGS data deliverable, and is manually added to the other spreadsheets from the wastewater treatment plant
+# For QA/QC purposes only, we also want to various columns:
+
+# a.) retain the "sample type" column; which contains information about the purpose of various lab analyses (e.g. method blanks, matrix spikes, etc). This column is included in the SGS data deliverable, and is manually added to the other spreadsheets from the wastewater treatment plant
 col_names %<>% mutate(sample_type = "")
+
+# b.) retain info about when samples were received to laboratories (for hold time calculations)
+col_names %<>% mutate(rec_time = "")
 
 # convert column names to list
 col_names %<>% colnames()
@@ -1114,7 +1121,11 @@ dat %<>%
 ```{r echo = F}
 
 # transform column classes as necessary for QA/QC analyses here
+z <- dat %>%
+  transform(rec_time = format(as.POSIXct(Sys.Date() + as.numeric(rec_time)), "%H:%M", tz="UTC"))
 
+# in progress: trying to convert characters to time formats
+  
 
 
 ```
@@ -1139,22 +1150,26 @@ Download results pre-QA/QC; including lab QA QC info
 
 **1.) Were the appropriate analytical methods used for all parameters?**
 
-Yes. Analytical methods from the approved 2020 QAPP were employed. (chnage in lab test)
+Yes. Analytical methods from the approved 2023 QAPP were employed, withj one exception (see below).
 
-6010D rather than 200.8
+
+One change from the approved 2023 occurred. For spring 2023, a laboratory method used to analyze dissolved metals differed slightly from that specified on the QAPP. EPA method 6010D was employed rather than EPA method 200.8. The project manager at SGS Laboratories in Anchorage, AK describes that no differences are anticipated in how results can be interpreted.
+
 
 <br>
 
 **2.) Were there any deviations from the sampling plan?**
 
-In 2023 there were several small devaitions from the sampling plan due to challenging spring field logistics. One site in spring 2023 could not be accessed for sampling due to low water conditions (Kenai River main stem, RM 10.1). As a result there are no samples from this site/date. Additionally, one fecal coliform sample is missing from RM 10.1 on 5/2/2023 due to an on-site handling error.
+In 2023 there were several small deviations from the sampling plan due to challenging spring field logistics. One site in spring 2023 could not be accessed for sampling due to low water conditions (Kenai River main stem, RM 10.1). As a result there are no samples from this site/date. Additionally, one fecal coliform sample is missing from RM 10.1 on 5/2/2023 due to an on-site loss due to spillage.
 
 <br>
 
 **3.) Were field duplicates, blanks, and/or other field QC samples collected as planned?**
 
 ```{r echo = F}
-z <- dat %>%
+# lets look at this question from a few perspectives
+
+qa_samples1 <- dat %>%
   group_by(activity_start_date,activity_type,characteristic_name,result_analytical_method_id,sample_type, result_sample_fraction) %>%
   count() %>%
     # filter out LABORATORY QA/QC results
@@ -1163,22 +1178,247 @@ z <- dat %>%
   arrange(characteristic_name, activity_type) %>%
   filter(sample_type == "PS")
 
+# another way
+qa_samples2 <- dat %>%
+  group_by(activity_start_date,result_analytical_method_id,sample_type) %>%
 
-# need to assign activity_type to TSS and FC
-
-# discuss 
-
+  count() %>%
+  filter(sample_type == "PS")
 
 
+# more exacting discussion here TBD, but in general pretty close
 
 ```
+
+
+<br>
+
+
+**4.)	Do the laboratory reports provide results for all sites and parameters?**
+
+The laboratory reports from both labs provide results corresponding with the chain of custody documents provided, within the parameters of what is described in questions #1 - #3.
+
+<br>
+
+**5.)	Is a copy of the COC included with the laboratory reports?**
+
+Yes. Chain of custody documents from SGS laboratories are included in the results PDFs linked above. Chain of custody documents from the Soldotna Wastewater Treatment Plant are linked below:
+
+```{r echo = F}
+
+embed_dir("other/misc/qa_qc/chain_of_custody_2023", text = "Download 2023 Chain of Custody Documents from Soldotna Wastewater Treatment Plant")
+
+```
+
+
+<br>
+
+**6.)	Do the laboratory reports match the COC and requested methods throughout?	**
+
+Yes, with one exception discussed in question #1. For spring 2023, SGS laboratories used EPA method 6010D for dissolved metals rather than EPA method 200.8. The SGS project manager describes that no change is anticipated for how to interpret results.
+
+<br>
+
+**7.)	Are the number of samples on the laboratory reports the same as on the COC?	**
+
+Yes, no loss of samples occurred in the process of generating laboratory results.
+
+<br>
+
+**8.)	Was all supporting info provided in the laboratory report, such as reporting limits for all analyses and definitions?	**
+
+SGS laboratory reports include reporting limits in both the electronic data deliverables as well as the PDF reports. Results from the Soldotna Wastewater Treatment Plant do not contain reporting limits. Reporting limits and other QA/QC data considerations are provided in the 2023 QAPP.
+
+
+<br>
+
+**9.)	Are site names, dates, and times correct and as expected?	**
+
+Numerous corrections to site names and dates were necessary to prepare data into final form. Original documents were not modified, and corrections are applied throughout the data read-in process using R coding script.
+
+<br>
+
+**10.)	Were there any issues with instrument calibration?	**
+
+No issues are documented with calibration for KWF's field or labortory instruments. No calibration issues are described in the "Case Narrative" sections of the spring and summer SGS PDF laboratory reports.
+
+
+<br>
+
+**11.)	Did the instrument perform as expected?	**
+
+TBD with KWF results.
+
+<br>
+
+**12.)	Was instrument calibration performed according to the QAPP and instrument recommendations?	**
+
+Yes.
+
+<br>
+
+
+**13.)	Was instrument verification during the field season performed according to the QAPP and instrument recommendations? 	**
+
+For water temperature probes, instrument verification rather than calibration is performed. An ice-bath test was performed on all water temperature probes according to methods described in Mauger et al. 2015 prior to field use, and all probes recorded values within 0.25 degress celsius of a NIST certified thermometer.
+
+<br>
+
+**14.)	Were instrument calibration verification logs or records kept?	**
+
+Calibration and verification records are kepat at Kenai Watershed Forum's office at 44129 Sterling Hwy, Soldotna, AK and are available upon request.
+
+<br>
+
+**15.)	Do the instrument data files site IDs, time stamps and file names match? 	**
+
+Instrument data files from fieldwork are not generated as part of this project.
+
+<br>
+
+**16.)	Is any in-situ field data rejected and why? 	**
+
+TBD
+
+<br>
+
+**17.)	Were preservation, hold time and temperature requirements met? 	**
+
+
+```{r echo = F}
+
+# calculate hold times
+
+
+
+
+# one sample was warm
+
+```
+
+We calculated time from sample field collection to lab receipt as documented in 2023 lab reports.
+
+
+<br>
+
+**	18.)	Are dissolved metal quantities less than total metals quantities?	**
+
+<br>
+
+**	19.)	Are  the duplicate sample(s) RPD within range described in QAPP?	**
+
+<br>
+
+**	20.)	Were there any laboratory discrepancies, errors, data qualifiers, or QC failures (review laboratory duplicates, matrix spikes and blanks)? 	**
+
+<br>
+
+**	21.)	Is any laboratory data rejected and why? 	**
+
+<br>
+
+
+**	22.)	During the field season, review raw data files (EDDs, instrument records) as they are received. Document changes and corrections to methods as needed.	**
+
+
+<br>
+
+**	23.)	Is the dataset  complete and did you receive the expected number of results?	**
+
+<br>
+
+**	24.)	Was the data collected representative of environmental conditions?	**
+
+<br>
+
+**	25.)	Does project meet Completeness Measure A criteria?	**
+
+<br>
+
+**	26.)	Does project meet Completeness Measure B criteria?	**
+
+<br>
+
+
+**	27.)	Was the QA Officer consulted for any data concerns? 	**
+
+<br>
+
+
+#### Database Prep
+
+
+**	28.)	Are the correct monitoring locations associated with the project?	**
+
+<br>
+
+
+**	29.)	Are the QAPP and other supporting documents attached?	**
+
+<br>
+
+
+**	30.)	Is all metadata correct?	**
+
+<br>
+
+**	31.)	Is the organization ID correct?	**
+
+<br>
+
+**	32.)	 Are the time zones consistent and correct (AKDT in summer)?	**
+
+<br>
+
+**	33.)	 Are all media types included? Media types appropriate to Characteristic?	**
+
+<br>
+
+**	34.)	Check Sample Collection, Preparation and Preservation Methods, Thermal Preservative, Equipment ID, Activity Media. Is supporting information included and correct?	**
+
+<br>
+
+**	35.)	Are all expected activity types present and are QC samples correctly identified?	**
+
+<br>
+
+**	36.)	Is the Activity media subdivision filled in (if relevant)?	**
+
+<br>
+
+**	37.)	For Water activity media, is the relative depth filled in? 	**
+
+<br>
+
+**	38.)	Is the number of results for each Characteristic correct? 	**
+
+<br>
+
+**	39.)	Do the range of result values make sense?	**
+
+<br>
+
+**	40.)	Are units correct and consistent for each parameter?	**
+
+<br>
+
+**	41.)	Are detection limits and laboratory qualifiers included for analytical results? 	**
+
+
+
+
+
+
+
+
 
 
 
 ```{r}
 ### Part E: QA/QC
 
-# question to add to existing list:
+# questions to add to existing list:
+
 # # Are sample collection dates unique to the actual recorded dates?
 # (no; spring has two dates; lab typo)
 

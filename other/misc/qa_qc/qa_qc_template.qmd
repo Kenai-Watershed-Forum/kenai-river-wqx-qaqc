@@ -1,0 +1,205 @@
+---
+title: "QA QC Template"
+---
+
+#### Pre-database
+
+##### Overall project success
+
+**1.) Were the appropriate analytical methods used for all parameters?**
+
+
+
+<br>
+
+**2.) Were there any deviations from the sampling plan?**
+
+
+<br>
+
+**3.) Were field duplicates, blanks, and/or other field QC samples collected as planned?**
+
+```{r echo = F}
+
+
+
+```
+
+
+<br>
+
+
+**4.)	Do the laboratory reports provide results for all sites and parameters?**
+
+
+
+<br>
+
+**5.)	Is a copy of the COC included with the laboratory reports?**
+
+
+
+```{r echo = F}
+
+embed_dir()
+
+```
+
+
+<br>
+
+**6.)	Do the laboratory reports match the COC and requested methods throughout?	**
+
+Yes, with one exception discussed in question #1. For spring 2023, SGS laboratories used EPA method 6010D for dissolved metals rather than EPA method 200.8. The SGS project manager describes that no change is anticipated for how to interpret results.
+
+<br>
+
+**7.)	Are the number of samples on the laboratory reports the same as on the COC?	**
+
+Yes, no loss of samples occurred in the process of generating laboratory results.
+
+<br>
+
+**	8.)	Was all supporting info provided in the laboratory report, such as reporting limits for all analyses and definitions?	**
+
+<br>
+
+**	9.)	Are site names, dates, and times correct and as expected?	**
+
+<br>
+
+**	10.)	Were there any issues with instrument calibration?	**
+
+<br>
+
+**	11.)	Did the instrument perform as expected?	**
+
+<br>
+
+**	12.)	Was instrument calibration performed according to the QAPP and instrument recommendations?	**
+
+<br>
+
+
+**	13.)	Was instrument verification during the field season performed according to the QAPP and instrument recommendations? 	**
+
+<br>
+
+**	14.)	Were instrument calibration verification logs or records kept?	**
+
+<br>
+
+**	15.)	Do the instrument data files site IDs, time stamps and file names match? 	**
+
+<br>
+
+**	16.)	Is any insitu field data rejected and why? 	**
+
+<br>
+
+**	17.)	Were preservation, hold time and temperature requirements met? 	**
+
+<br>
+
+**	18.)	Are dissolved metal quantities less than total metals quantities?	**
+
+<br>
+
+**	19.)	Are  the duplicate sample(s) RPD within range described in QAPP?	**
+
+<br>
+
+**	20.)	Were there any laboratory discrepancies, errors, data qualifiers, or QC failures (review laboratory duplicates, matrix spikes and blanks)? 	**
+
+<br>
+
+**	21.)	Is any laboratory data rejected and why? 	**
+
+<br>
+
+
+**	22.)	During the field season, review raw data files (EDDs, instrument records) as they are received. Document changes and corrections to methods as needed.	**
+
+
+<br>
+
+**	23.)	Is the dataset  complete and did you receive the expected number of results?	**
+
+<br>
+
+**	24.)	Was the data collected representative of environmental conditions?	**
+
+<br>
+
+**	25.)	Does project meet Completeness Measure A criteria?	**
+
+<br>
+
+**	26.)	Does project meet Completeness Measure B criteria?	**
+
+<br>
+
+
+**	27.)	Was the QA Officer consulted for any data concerns? 	**
+
+<br>
+
+
+#### Database Prep
+
+
+**	28.)	Are the correct monitoring locations associated with the project?	**
+
+<br>
+
+
+**	29.)	Are the QAPP and other supporting documents attached?	**
+
+<br>
+
+
+**	30.)	Is all metadata correct?	**
+
+<br>
+
+**	31.)	Is the organization ID correct?	**
+
+<br>
+
+**	32.)	 Are the time zones consistent and correct (AKDT in summer)?	**
+
+<br>
+
+**	33.)	 Are all media types included? Media types appropriate to Characteristic?	**
+
+<br>
+
+**	34.)	Check Sample Collection, Preparation and Preservation Methods, Thermal Preservative, Equipment ID, Activity Media. Is supporting information included and correct?	**
+
+<br>
+
+**	35.)	Are all expected activity types present and are QC samples correctly identified?	**
+
+<br>
+
+**	36.)	Is the Activity media subdivision filled in (if relevant)?	**
+
+<br>
+
+**	37.)	For Water activity media, is the relative depth filled in? 	**
+
+<br>
+
+**	38.)	Is the number of results for each Characteristic correct? 	**
+
+<br>
+
+**	39.)	Do the range of result values make sense?	**
+
+<br>
+
+**	40.)	Are units correct and consistent for each parameter?	**
+
+<br>
+
+**	41.)	Are detection limits and laboratory qualifiers included for analytical results? 	**
