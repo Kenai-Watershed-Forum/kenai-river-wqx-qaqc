@@ -1322,7 +1322,7 @@ TBD
 
 <br>
 
-**17.)	Were preservation, hold time and temperature requirements met? 	**
+**17.) Were preservation, hold time, and temperature requirements met? 	**
 
 
 ```{r echo = F}
@@ -1344,24 +1344,51 @@ sample_holding_times <- read.csv("other/misc/qa_qc/sample_holding_times.csv") %>
 hold_times <- left_join(hold_times,sample_holding_times) %>%
   mutate(hold_time_pass = case_when(
     max_holding_time_hours < hold_time_hours ~ "N",
-    TRUE ~ "Y"))
+    TRUE ~ "Y")) 
 
-# one sample was warm... (MB and MSD; internal lab notes)
-
-# working here 3/5/24
 
 ```
 
-We calculated time from sample field collection to lab receipt as documented in 2023 lab reports. All samples were within holding times specified in the QAPP
+We calculated time from sample field collection to lab receipt as documented in 2023 lab reports. All samples were within holding times specified in the QAPP. 
+
+In the field, all samples were stored in coolers with ice packs at 4 degrees C until arrival at the laboratory. 
+In the results from SGS laboratories, two individual observations include the asterisk "*" in the "result_qualifier" column. This indicates that "the sample was warm when received." These observations correspond not to sample handling in the field, but rather to internal laboratory procedures used for method blank measurements. The case laboratory case narrative does not indicate that results would be affected.
+
+Hold time result calculations are available in the downloadable table below in the right-most columns.
+
+```{r echo = F}
+hold_times_dir <- "other/output/qa_qc_output/hold_times.csv"
+
+write.csv(hold_times,hold_times_dir, row.names = F)
+
+embed_file(hold_times_dir, text = "Download 2023 kenai River Baseline Water Quality Samples Hold Times")
+
+```
 
 
 <br>
 
-**	18.)	Are dissolved metal quantities less than total metals quantities?	**
+**18.) Are dissolved metal quantities less than total metals quantities?	**
+
+```{r echo = F}
+# choose characteristics
+metals <- c("")
+
+z <- dat %>%
+  filter(char)
+
+
+```
+
+
 
 <br>
 
-**	19.)	Are  the duplicate sample(s) RPD within range described in QAPP?	**
+**19.)	Are the duplicate sample(s) RPD within range described in QAPP?	**
+
+```{r echo = F}
+
+```
 
 <br>
 
@@ -1379,7 +1406,7 @@ We calculated time from sample field collection to lab receipt as documented in 
 
 <br>
 
-**	23.)	Is the dataset  complete and did you receive the expected number of results?	**
+**	23.)	Is the dataset complete and did you receive the expected number of results?	**
 
 <br>
 
@@ -1389,9 +1416,17 @@ We calculated time from sample field collection to lab receipt as documented in 
 
 **	25.)	Does project meet Completeness Measure A criteria?	**
 
+```{r echo = F}
+
+```
+
 <br>
 
 **	26.)	Does project meet Completeness Measure B criteria?	**
+
+```{r echo = F}
+
+```
 
 <br>
 
@@ -1452,6 +1487,11 @@ We calculated time from sample field collection to lab receipt as documented in 
 
 **	39.)	Do the range of result values make sense?	**
 
+```{r echo = F}
+
+```
+
+
 <br>
 
 **	40.)	Are units correct and consistent for each parameter?	**
@@ -1459,10 +1499,6 @@ We calculated time from sample field collection to lab receipt as documented in 
 <br>
 
 **	41.)	Are detection limits and laboratory qualifiers included for analytical results? 	**
-
-
-
-
 
 
 
