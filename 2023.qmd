@@ -1352,7 +1352,7 @@ hold_times <- left_join(hold_times,sample_holding_times) %>%
 
 ```
 
-We calculated time from sample field collection to lab receipt as documented in 2023 lab reports.
+We calculated time from sample field collection to lab receipt as documented in 2023 lab reports. All samples were within holding times specified in the QAPP
 
 
 <br>
