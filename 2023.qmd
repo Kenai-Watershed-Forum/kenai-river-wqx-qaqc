@@ -123,6 +123,12 @@ summer_batch_sgs23 <- read_excel("other/input/2023/summer_2023_wqx_data/Data/SGS
   select(-PROJECT_ID,-DISSOLVED) 
 
 
+# 3/14/2024: for summer 2023 results, no 200.7 results are present; all metals are 200.8. However, in the "ANALYSIS_GROUP" column, under 200.8 both "Dissolved metals by ICP/MS" AND "Metals by ICP/MS" are listed under 200.8. What gives? Check PDF
+
+# discovered: for summer 2023, 200.8 was used for both total and dissolved.
+
+
+
 # later, need to address different categorical results that were in removed "DISSOLVED" column:
 
 #> unique(spring_batch_sgs23$DISSOLVED)
@@ -149,8 +155,6 @@ sgs23 <- bind_rows(spring_batch_sgs23,summer_batch_sgs23) %>%
   # - lab run 
   # - extraction
   
-
-  
   transform(collect_date = mdy_hm(collect_date),
             rec_date = mdy_hm(rec_date),
             run_date = mdy_hm(run_date_time),
@@ -160,7 +164,7 @@ sgs23 <- bind_rows(spring_batch_sgs23,summer_batch_sgs23) %>%
   separate(run_date_time, sep = " ", into = c("run_date_time","run_time")) %>%
   separate(extracted_date, sep = " ", into = c("extracted_date","extracted_time"))
 
-# NOTE: in some past years, total metals analyses (method 200.7) have been subcontracted to ALS Laboratories (Seattle). In 2023, SGS Anchorage had the 200.7 methods run by SGS Orlando. Thus, these results are already read in here.
+# NOTE: in some past years, total metals analyses (method 200.7) have been subcontracted to ALS Laboratories (Seattle). In 2023, SGS Anchorage had the 200.7 methods run by SGS Orlando. Thus, these results are already read in here and not in a seperate ALS dataframe.
 
 
 # remove individual dataframe
@@ -239,7 +243,7 @@ sgs23 %<>%
 # all 2023 SGS data joined and present in same dataframe
 
 
-############### Part A.3: Assign miscellaneous calculated columns for 2023 SGS data (needed for next steps) ###############
+############### Part A.3: Assign miscellaneous calculated columns for 2023 SGS data (needed for next steps) ############
 
 
 # Activity Type	
@@ -266,15 +270,31 @@ sgs23 %<>%
     TRUE ~ ""
   ))
   
+```
+
+
+```{r}
+# 3/14/2024 DIAGNOSING HERE
+
+# 3/14/2024: for summer 2023 results, no 200.7 results are present; all metals are 200.8. However, in the "ANALYSIS_GROUP" column, under 200.8 both "Dissolved metals by ICP/MS" AND "Metals by ICP/MS" are listed under 200.8. According to the summer 2023 PDF lab report, for summer 2023, 200.8 was used for both total and dissolved.
+
+# Action: we will use the distinction in the "ANALYSIS_GROUP" column to assign result_sample_fraction
+
 
 # Result Sample Fraction	
 # CDX domains: "Filtered, field," "Filtered, lab,"  "Unfiltered," "Volatile", "Total"
 sgs23 %<>%
   mutate(result_sample_fraction = case_when(
-    grepl("EP200.8", analytical_method) ~ "Filtered, lab",              # dissolved metals
-    grepl("EPA 200.7|SW846 6010D", analytical_method) ~ "Unfiltered",   # total metals
     grepl("SW8260D", analytical_method) ~ "Volatile",                   # hydrocarbons
     grepl("SM21 4500NO3-F|SM21 4500P-B,E", analytical_method) ~ "Total",# total N and P
+    grepl("EPA 200.7", analytical_method) ~ "Unfiltered",               # total metals as used in spring 2023
+                                                                       
+    grepl("SW846 6010D", analytical_method) ~ "Filtered, lab",          # dissolved metals method used in Spring 2023
+    
+    analytical_method == "EP200.8" &                                    # total metals as used in summer 2023 
+      analysis_group == "Metals by ICP/MS" ~ "Unfiltered",
+    analytical_method == "EP200.8" &                                    # dissolved metals as used in summer 2023
+      analysis_group == "Dissolved Metals by ICP/MS" ~ "Filtered, lab", 
     TRUE ~ "")) %>%
   
   # designate dissolved vs. total metals (filtered vs. unfiltered) for use in concatenating Activity ID
@@ -1372,11 +1392,37 @@ embed_file(hold_times_dir, text = "Download 2023 kenai River Baseline Water Qual
 
 ```{r echo = F}
 # choose characteristics
-metals <- c("")
+metals <- c("Calcium","Iron","Magnesium","Copper","Zinc")
+cols1 <- c("activity_id","characteristic_name", "activity_start_date", "monitoring_location_id","result_sample_fraction", "result_value","result_unit")
 
-z <- dat %>%
-  filter(char)
+dat_metals <- dat %>%
+  # select field observations only
+  filter(sample_type == "PS",
+         characteristic_name %in% metals) %>%
+  # select relevant columns
+  select(all_of(cols1)) %>%
+  # designate column to identify field blanks and field duplicates
+  mutate(field_sample_type = case_when(
+    grepl("FB", activity_id) ~ "FB",
+    grepl("DUP", activity_id) ~ "DUP"
+  )) %>%
+  select(-activity_id)
 
+# create dataframes of filtered vs unfiltered (dissolved vs total)
+dat_metals_tot <- dat_metals %>%
+  filter(result_sample_fraction == "Unfiltered") %>%
+  rename(result_value_tot = result_value,
+         result_unit_tot = result_unit)
+dat_metals_diss <- dat_metals %>%
+  filter(result_sample_fraction == "Filtered, lab") %>%
+    rename(result_value_diss = result_value,
+           result_unit_diss = result_unit)
+
+z <- left_join(dat_metals_tot,dat_metals_diss)
+
+# ISSUE result_value_diss are all NA
+
+# working here 3/14/24
 
 ```
 
