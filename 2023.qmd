@@ -37,12 +37,16 @@ xfun::pkg_load2(c("htmltools", "mime"))
 
 
 # Assign 2023 Field Sample Dates 
+# future scripts: make object names generalized and not year specific
 
 # Spring 2023 sampling date
 spring23_sample_date <- ymd("2023-05-02")
 
 # Summer 2023 Sampling Date
 summer23_sample_date <- ymd("2023-07-18")
+
+# assign activity year
+activity_year <- as.character(year(spring23_sample_date))
 ```
 
 ## Introduction
@@ -1118,7 +1122,9 @@ dat %<>% mutate(thermal_preservative_used = "Cold Packs (4 deg C)")
 
 
 ```{r echo = F}
-# Address self-evident critical errors
+# Miscellaneous Tasks; Address self-evident critical errors
+
+### SGS Typos ##$
 
 # A typo from the SGS labs resulted in showing multiple incorrect fieldwork dates for spring 2023. Correct this here
 dat %<>%
@@ -1141,6 +1147,19 @@ dat %<>%
          !is.na(result_value))
 
 
+### Make Unit Names Consistent ###
+
+# Are all unit names consistent within each parameter? If not, make correction(s) here
+z <- dat %>%
+  distinct(characteristic_name,result_unit) %>%
+  arrange(characteristic_name)
+
+# for 2023, we need to consolidate "ug/l" and "ug/L"
+dat %<>%
+  mutate(result_unit = case_when(
+    result_unit == "ug/L" ~ "ug/l",
+    TRUE ~ result_unit))
+  
 ```
 
 
@@ -1412,17 +1431,21 @@ dat_metals <- dat %>%
 dat_metals_tot <- dat_metals %>%
   filter(result_sample_fraction == "Unfiltered") %>%
   rename(result_value_tot = result_value,
-         result_unit_tot = result_unit)
+         result_unit_tot = result_unit) %>%
+  select(-result_sample_fraction, -result_unit_tot)
 dat_metals_diss <- dat_metals %>%
   filter(result_sample_fraction == "Filtered, lab") %>%
     rename(result_value_diss = result_value,
-           result_unit_diss = result_unit)
+           result_unit_diss = result_unit) %>%
+  select(-result_sample_fraction, -result_unit_diss)
 
-z <- left_join(dat_metals_tot,dat_metals_diss)
+z <- inner_join(dat_metals_tot,dat_metals_diss)
 
-# ISSUE result_value_diss are all NA
+# current result has only 5 observations from spring 2023 .. whats up with that?!
 
-# working here 3/14/24
+# need to correct intake code in SGS chunk, possibly an issue with sample fraction assignment(s)
+
+# still working on this chunk
 
 ```
 
@@ -1433,12 +1456,62 @@ z <- left_join(dat_metals_tot,dat_metals_diss)
 **19.)	Are the duplicate sample(s) RPD within range described in QAPP?	**
 
 ```{r echo = F}
+# what are the randomly-chosen duplicate sample sites for spring & summer of this year?
+dir <- "other/input/2023/misc/dup_sites.csv"
+dup_sites <- dat %>%
+  filter(grepl("DUP",activity_id)) %>%
+  distinct(monitoring_location_id,activity_start_date)
+write.csv(dup_sites,dir, row.names = F)
+
+embed_file(dir, text = "Duplicate Sampling Events 2023")
+```
+
+```{r echo = F}
+cols1 <- c("activity_id",
+           "monitoring_location_id",
+           "activity_start_date",
+           "characteristic_name",
+           "result_value",
+           "result_unit",
+           "result_qualifier",
+           "result_sample_fraction")
+
+# develop dataframe with duplicate values arranged side-by-side
+
+# subset sampling events with duplicate samples
+dup_values <- dat %>%
+  inner_join(dup_sites) %>%
+  # reduce dataframe to relevant columns
+  select(cols1) 
+
+# arrange values side by side by joining tables
+dup_vals1 <- dup_values %>%
+  filter(grepl("DUP",activity_id)) %>%
+  rename(dup_result_value = result_value,
+         dup_result_qualifier = result_qualifier) %>%
+  select(-activity_id)
+
+dup_vals2 <- dup_values %>%
+  filter(!grepl("DUP",activity_id)) %>%
+  select(-activity_id)
+
+# see: extensive limitations won what values can be used for RPD purposes; EPA metals guidance doc
+
+# WORKING HERE 3/15/2024
+
+# join tables and calculate RPDs
+dup_diffs <- left_join(dup_vals1,dup_vals2) %>%
+  mutate(pct_diff = dup_)
+
 
 ```
 
 <br>
 
 **	20.)	Were there any laboratory discrepancies, errors, data qualifiers, or QC failures (review laboratory duplicates, matrix spikes and blanks)? 	**
+
+Yes
+
 
 <br>
 
