@@ -1524,7 +1524,8 @@ dup_diffs <- left_join(dup_vals2,dup_vals1) %>%
     TRUE ~ "N")) %>%
   # are both of the above numbered statements true?
 
-
+# WORKING HERE 3/19/2024
+  
 ```
 
 Nomenclature note:  "Limit of Quantitation (LOQ)", as used by ADEC, is equivalent to anotehr term used by EPA CDX, "Lower Quantitation Limit," which is used in this assessment. A memo from SGS detailing nomenclature and interpretation of reporting limits can be downloaded at the link below:
