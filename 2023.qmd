@@ -1526,7 +1526,9 @@ dup_diffs <- left_join(dup_vals2,dup_vals1) %>%
 
 # WORKING HERE 3/19/2024
   
-  # work in progress uploading raw data to read in inventory, workin backwards to 2014, currently at 2017
+  # work in progress uploading raw data to read in inventory, workin backwards to 2014, currently at 2016  !! Complete this upload
+  
+  # link: https://www.citizenscience.gov/catalog/554/#
   
 ```
 
