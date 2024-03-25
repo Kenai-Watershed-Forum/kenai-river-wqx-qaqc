@@ -1487,15 +1487,18 @@ cols1 <- c("activity_id",
            "loq_pass",
            "2xloq_pass")
 
+# add loq value & name here ?!
+
+
 # develop dataframe with duplicate values arranged side-by-side
 
 # subset sampling events with duplicate samples
 dup_values <- dat %>%
   inner_join(dup_sites) %>%
   # reduce dataframe to relevant columns
-  select(cols1) 
+  select(all_of(cols1))
 
-# arrange values side by side by joining tables
+# arrange dup values side by side 
 dup_vals1 <- dup_values %>%
   filter(grepl("DUP",activity_id)) %>%
   rename(result_value1 = result_value,
@@ -1523,10 +1526,15 @@ dup_diffs <- left_join(dup_vals2,dup_vals1) %>%
     `2xloq_pass` == "Y" | `2xloq_pass1` == "Y" ~ "Y",
     TRUE ~ "N")) %>%
   # are both of the above numbered statements true?
+  mutate(rpd_eligible = case_when(
+    loq_both_pass == "Y" | `2xloq_both_pass` == "Y" ~ "Y",
+    TRUE ~ "N"
+  ))
 
 # WORKING HERE 3/19/2024
   
-  # work in progress uploading raw data to read in inventory, workin backwards to 2014, currently at 2016  !! Complete this upload
+  
+  
   
   # link: https://www.citizenscience.gov/catalog/554/#
   
