@@ -131,8 +131,6 @@ summer_batch_sgs23 <- read_excel("other/input/2023/summer_2023_wqx_data/Data/SGS
 
 # discovered: for summer 2023, 200.8 was used for both total and dissolved.
 
-
-
 # later, need to address different categorical results that were in removed "DISSOLVED" column:
 
 #> unique(spring_batch_sgs23$DISSOLVED)
@@ -338,13 +336,7 @@ colnames(analyte_abbrv) <- c("analyte","analyte_abbrv")
 sgs23 %<>% left_join(analyte_abbrv)
   
 # create Activity ID column
-sgs23 %<>%
-  mutate(activity_id = case_when(
-    activity_type_abbrv == "" ~ paste0(site_id,"-",collect_date,"-",analyte_abbrv),
-    TRUE ~ paste0(site_id,"-",collect_date,"-",analyte_abbrv,"-",activity_type_abbrv))) %>%
-  mutate(activity_id = case_when(
-    diss_abbrv == "" ~ activity_id,
-    TRUE ~ paste0(activity_id,"-",diss_abbrv)))
+# note: this step will be performed last in the sgs block, because corrections to date and/or date format may be made throughout subsequent steps here
 
 # Activity Start Date	(static, specific to SGS)
 sgs23 %<>% rename(activity_start_date = collect_date)
@@ -490,15 +482,18 @@ sgs23 %<>%
       result_analytical_method_id == "4500-P-E" ~ "H2SO4",
       TRUE ~ ""))
 
+# create Activity ID column
+sgs23 %<>%
+  mutate(activity_id = case_when(
+    activity_type_abbrv == "" ~ paste0(site_id,"-",collect_date,"-",analyte_abbrv),
+    TRUE ~ paste0(site_id,"-",collect_date,"-",analyte_abbrv,"-",activity_type_abbrv))) %>%
+  mutate(activity_id = case_when(
+    diss_abbrv == "" ~ activity_id,
+    TRUE ~ paste0(activity_id,"-",diss_abbrv)))
+
 ```
 
 --\> use EPA metals guidance in QA/QC rather than at this stage!
-
-# check all these again, make decision if static, concatenated, or formulaic
-
-# general strategy: get all columns of sgs data to conform to final CDX format before joining. (e.g. do all sgs first, then swwtp)
-
-# there are pieces and parts existing in the 2021 script, but to stay organized it would make sense to proceed L --\> R for each column
 
 ------------------------------------------------------------------------
 
@@ -611,11 +606,8 @@ fc23 %<>% rename(collect_date = rec_date)
 fc23 %<>% mutate(analyte_abbrv = "FC")
   
 # create Activity ID column
-fc23 %<>%
-  mutate(activity_id = case_when(    
-    grepl("POS|LB", activity_type_abbrv) ~ "",
-    activity_type_abbrv == "" ~ paste0(site_id,"-",collect_date,"-",analyte_abbrv),
-    TRUE ~ paste0(site_id,"-",collect_date,"-",analyte_abbrv,"-",activity_type_abbrv))) 
+# note: this step will be performed last in the tss block, because corrections to date and/or date format may be made throughout subsequent steps here
+
   
 
 # Activity Start Date	
@@ -737,8 +729,15 @@ fc23 %<>% mutate(sample_container_color = "Clear")
 # Chemical Preservative Used 
 fc23 %<>% mutate(chemical_preservative_used = "")
 
-# date received at lab is same as activity datef
+# date received at lab is same as activity date
 fc23 %<>% mutate(rec_date = activity_start_date)
+
+# create Activity ID column
+fc23 %<>%
+  mutate(activity_id = case_when(    
+    grepl("POS|LB", activity_type_abbrv) ~ "",
+    activity_type_abbrv == "" ~ paste0(site_id,"-",collect_date,"-",analyte_abbrv),
+    TRUE ~ paste0(site_id,"-",collect_date,"-",analyte_abbrv,"-",activity_type_abbrv))) 
 
 ```
 
@@ -858,11 +857,7 @@ tss23 %<>% rename(collect_date = field_sample_date)
 tss23 %<>% mutate(analyte_abbrv = "TSS")
   
 # create Activity ID column
-tss23 %<>%
-  mutate(activity_id = case_when(    
-    grepl("DUP", activity_type_abbrv) ~ paste0(site_id,"-",collect_date,"-",analyte_abbrv,"-",activity_type_abbrv),
-    grepl("LB", activity_type_abbrv) ~ "",
-    TRUE ~  paste0(site_id,"-",collect_date,"-",analyte_abbrv))) 
+# note: this step will be performed last in the tss block, because corrections to date and/or date format may be made throughout subsequent steps here
   
 
 # Activity Start Date	
@@ -982,6 +977,13 @@ tss23 %<>% mutate(sample_container_color = "Opaque")
 
 # Chemical Preservative Used 
 tss23 %<>% mutate(chemical_preservative_used = "")
+
+# create Activity ID column
+tss23 %<>%
+  mutate(activity_id = case_when(    
+    grepl("DUP", activity_type_abbrv) ~ paste0(site_id,"-",collect_date,"-",analyte_abbrv,"-",activity_type_abbrv),
+    grepl("LB", activity_type_abbrv) ~ "",
+    TRUE ~  paste0(site_id,"-",collect_date,"-",analyte_abbrv))) 
 
 ```
 
@@ -1137,8 +1139,6 @@ dat[dat == "ug/L"] <- 'ug/l'
 
 ```
 
-
-
 ```{r echo = F}
 
 # transform column classes as necessary for QA/QC analyses in this code chunk
@@ -1170,6 +1170,10 @@ dat %<>%
   mutate(activity_start_datetime = ymd_hms(paste(activity_start_date,activity_start_time))) %>%
   mutate(activity_start_time = as_hms(activity_start_datetime),
          activity_start_date = as.Date(activity_start_datetime))
+
+# prepare format for result values
+dat %<>%
+  mutate(result_value = as.numeric(result_value))
   
 
 
@@ -1433,7 +1437,6 @@ Following the example in the Alaska Department of Environmental Conservation 202
 
 -   b.) one or both of the samples were at least two times the LOQ.”
 
-
 ```{r echo = F}
 # what are the randomly-chosen duplicate sample sites for spring & summer of this year?
 dir <- "other/input/2023/misc/dup_sites.csv"
@@ -1528,62 +1531,77 @@ dup_diffs <- left_join(dup_vals2,dup_vals1) %>%
   # are both of the above numbered statements true?
   mutate(rpd_eligible = case_when(
     loq_both_pass == "Y" | `2xloq_both_pass` == "Y" ~ "Y",
-    TRUE ~ "N"
-  ))
-
-# WORKING HERE 3/19/2024
-  
-  
-  
-  
-  # link: https://www.citizenscience.gov/catalog/554/#
-  
+    TRUE ~ "N")) %>%
+  mutate(rpd_pct = abs((result_value - result_value1)/result_value1)*100) 
 ```
 
-Nomenclature note:  "Limit of Quantitation (LOQ)", as used by ADEC, is equivalent to anotehr term used by EPA CDX, "Lower Quantitation Limit," which is used in this assessment. A memo from SGS detailing nomenclature and interpretation of reporting limits can be downloaded at the link below:
+A csv file of Relative Percent Difference values organized by site, date, and parameter may be downloaded below:
+
+```{r echo = F}
+# export & publish dup_diffs csv
+dir <- "other/output/qa_qc_output/rpd_pct.csv"
+write.csv(dup_diffs, dir, row.names = F)
+embed_file(dir)
+```
+
+Nomenclature note: "Limit of Quantitation (LOQ)", as used by ADEC, is equivalent to anotehr term used by EPA CDX, "Lower Quantitation Limit," which is used in this assessment. A memo from SGS detailing nomenclature and interpretation of reporting limits can be downloaded at the link below:
 
 ```{r echo = F}
 embed_file("other/misc/docs/DL, LOD, LOQ Interpretation.pdf")
 
 ```
 
+<br>
 
+**20.) Were there any laboratory discrepancies, errors, data qualifiers, or QC failures (review laboratory duplicates, matrix spikes and blanks)?**
 
-A csv file of Relative Percent Difference values organized by site, date, and parameter may be downloaded below:
+Yes, there were. They are listed below:
 
+*Laboratory discrepancies, errors*
 
+-   Sample collection date
 
+    -   The SGS PDF report shows some samples as collected on 5/3/2022. All samples were in fact collected on 5/2/2023. An error of pre-printed dates on page 1 of the SGS chain of custody was responsible for this error. We applied the time/date correction as part of the intake script.
 
+-   Sample receipt time/date to SGS laboratories
 
+    -   The SGS Electronic Data Deliverable (EDD; spreadsheet) of results shows 5/9/23 as the receival date for all project samples (sample_type = "PS"), and time of day is not specified. However, the PDF report for these same results indicates all samples were in fact received on 5/04/23 08:51, which is consistent with the chain of custody docs. We applied the time/date correction as part of the intake script.
 
+-   Field site names
 
+    -   Both laboratories results contained miscellaneous spellings and formats of site names that were inconsistent with of the needs of preparing for the EPA CDX. These were corrected in the intake script by use of matching tables csv files, which can be viewed in the project GitHub repository under the directory"other/input/2023/misc".
 
+*Data qualifiers, QC failures (review laboratory duplicates, matrix spikes and blanks)*
+
+-   Data qualifiers
+
+    -   Two instances of internal laboratory QC checks report, "sample was warm when received," for one matrix spike duplicate (copper) and one method blank (zinc). While these data qualifiers do not affect the result of any individual field observations, it is important to note this qualifier in the context of interpreting laboratory data for copper and zinc.
+
+-   QC failures
+
+    -   No lab QC failures are reported from Soldotna Wastewater Treatment Plant
+
+    -   Lab QC failures are listed on Listed on page 2 of the spring and summer SGS PDF reports
 
 <br>
 
-**20.) Were there any laboratory discrepancies, errors, data qualifiers, or QC failures (review laboratory duplicates, matrix spikes and blanks)? **
-
-Yes
+\*\* 21.) Is any laboratory data rejected and why? \*\*
 
 <br>
 
-** 21.) Is any laboratory data rejected and why? **
+\*\* 22.) During the field season, review raw data files (EDDs, instrument records) as they are received. Document changes and corrections to methods as needed. \*\*
 
 <br>
 
-** 22.) During the field season, review raw data files (EDDs, instrument records) as they are received. Document changes and corrections to methods as needed. **
+\*\* 23.) Is the dataset complete and did you receive the expected number of results? \*\*
 
 <br>
 
-** 23.) Is the dataset complete and did you receive the expected number of results? **
+\*\* 24.) Was the data collected representative of environmental conditions? \*\*
 
 <br>
 
-** 24.) Was the data collected representative of environmental conditions? **
-
-<br>
-
-** 25.) Does project meet Completeness Measure A criteria? **
+\*\* 25.) Does project meet Completeness Measure A criteria? \*\*
 
 ```{r echo = F}
 
@@ -1591,7 +1609,7 @@ Yes
 
 <br>
 
-** 26.) Does project meet Completeness Measure B criteria? **
+\*\* 26.) Does project meet Completeness Measure B criteria? \*\*
 
 ```{r echo = F}
 
@@ -1599,57 +1617,57 @@ Yes
 
 <br>
 
-** 27.) Was the QA Officer consulted for any data concerns? **
+\*\* 27.) Was the QA Officer consulted for any data concerns? \*\*
 
 <br>
 
 #### Database Prep
 
-** 28.) Are the correct monitoring locations associated with the project? **
+\*\* 28.) Are the correct monitoring locations associated with the project? \*\*
 
 <br>
 
-** 29.) Are the QAPP and other supporting documents attached? **
+\*\* 29.) Are the QAPP and other supporting documents attached? \*\*
 
 <br>
 
-** 30.) Is all metadata correct? **
+\*\* 30.) Is all metadata correct? \*\*
 
 <br>
 
-** 31.) Is the organization ID correct? **
+\*\* 31.) Is the organization ID correct? \*\*
 
 <br>
 
-** 32.) Are the time zones consistent and correct (AKDT in summer)? **
+\*\* 32.) Are the time zones consistent and correct (AKDT in summer)? \*\*
 
 <br>
 
-** 33.) Are all media types included? Media types appropriate to Characteristic? **
+\*\* 33.) Are all media types included? Media types appropriate to Characteristic? \*\*
 
 <br>
 
-** 34.) Check Sample Collection, Preparation and Preservation Methods, Thermal Preservative, Equipment ID, Activity Media. Is supporting information included and correct? **
+\*\* 34.) Check Sample Collection, Preparation and Preservation Methods, Thermal Preservative, Equipment ID, Activity Media. Is supporting information included and correct? \*\*
 
 <br>
 
-** 35.) Are all expected activity types present and are QC samples correctly identified? **
+\*\* 35.) Are all expected activity types present and are QC samples correctly identified? \*\*
 
 <br>
 
-** 36.) Is the Activity media subdivision filled in (if relevant)? **
+\*\* 36.) Is the Activity media subdivision filled in (if relevant)? \*\*
 
 <br>
 
-** 37.) For Water activity media, is the relative depth filled in? **
+\*\* 37.) For Water activity media, is the relative depth filled in? \*\*
 
 <br>
 
-** 38.) Is the number of results for each Characteristic correct? **
+\*\* 38.) Is the number of results for each Characteristic correct? \*\*
 
 <br>
 
-** 39.) Do the range of result values make sense? **
+\*\* 39.) Do the range of result values make sense? \*\*
 
 ```{r echo = F}
 
@@ -1657,11 +1675,11 @@ Yes
 
 <br>
 
-** 40.) Are units correct and consistent for each parameter? **
+\*\* 40.) Are units correct and consistent for each parameter? \*\*
 
 <br>
 
-** 41.) Are detection limits and laboratory qualifiers included for analytical results? **
+\*\* 41.) Are detection limits and laboratory qualifiers included for analytical results? \*\*
 
 ```{r}
 ### Part E: QA/QC
