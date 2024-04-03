@@ -275,12 +275,10 @@ sgs23 %<>%
 ```
 
 ```{r}
-# 3/14/2024 DIAGNOSING HERE
 
 # 3/14/2024: for summer 2023 results, no 200.7 results are present; all metals are 200.8. However, in the "ANALYSIS_GROUP" column, under 200.8 both "Dissolved metals by ICP/MS" AND "Metals by ICP/MS" are listed under 200.8. According to the summer 2023 PDF lab report, for summer 2023, 200.8 was used for both total and dissolved.
 
 # Action: we will use the distinction in the "ANALYSIS_GROUP" column to assign result_sample_fraction
-
 
 # Result Sample Fraction	
 # CDX domains: "Filtered, field," "Filtered, lab,"  "Unfiltered," "Volatile", "Total"
@@ -485,8 +483,8 @@ sgs23 %<>%
 # create Activity ID column
 sgs23 %<>%
   mutate(activity_id = case_when(
-    activity_type_abbrv == "" ~ paste0(site_id,"-",collect_date,"-",analyte_abbrv),
-    TRUE ~ paste0(site_id,"-",collect_date,"-",analyte_abbrv,"-",activity_type_abbrv))) %>%
+    activity_type_abbrv == "" ~ paste0(site_id,"-",activity_start_date,"-",analyte_abbrv),
+    TRUE ~ paste0(site_id,"-",activity_start_date,"-",analyte_abbrv,"-",activity_type_abbrv))) %>%
   mutate(activity_id = case_when(
     diss_abbrv == "" ~ activity_id,
     TRUE ~ paste0(activity_id,"-",diss_abbrv)))
@@ -554,7 +552,6 @@ fc23_site_names <- read.csv("other/input/2023/misc/site_names_manual_edit_fc23.c
 
 # join to fecal coliform data frame
 fc23 %<>% left_join(fc23_site_names)
-
 
 
 ############### Part B.3: Assign miscellaneous columns for 2023 SWWTP FC (needed for next steps) ###############
@@ -736,8 +733,8 @@ fc23 %<>% mutate(rec_date = activity_start_date)
 fc23 %<>%
   mutate(activity_id = case_when(    
     grepl("POS|LB", activity_type_abbrv) ~ "",
-    activity_type_abbrv == "" ~ paste0(site_id,"-",collect_date,"-",analyte_abbrv),
-    TRUE ~ paste0(site_id,"-",collect_date,"-",analyte_abbrv,"-",activity_type_abbrv))) 
+    activity_type_abbrv == "" ~ paste0(site_id,"-",activity_start_date,"-",analyte_abbrv),
+    TRUE ~ paste0(site_id,"-",activity_start_date,"-",analyte_abbrv,"-",activity_type_abbrv))) 
 
 ```
 
@@ -981,9 +978,9 @@ tss23 %<>% mutate(chemical_preservative_used = "")
 # create Activity ID column
 tss23 %<>%
   mutate(activity_id = case_when(    
-    grepl("DUP", activity_type_abbrv) ~ paste0(site_id,"-",collect_date,"-",analyte_abbrv,"-",activity_type_abbrv),
+    grepl("DUP", activity_type_abbrv) ~ paste0(site_id,"-",activity_start_date,"-",analyte_abbrv,"-",activity_type_abbrv),
     grepl("LB", activity_type_abbrv) ~ "",
-    TRUE ~  paste0(site_id,"-",collect_date,"-",analyte_abbrv))) 
+    TRUE ~  paste0(site_id,"-",activity_start_date,"-",analyte_abbrv))) 
 
 ```
 
@@ -1104,7 +1101,7 @@ dat %<>% mutate(thermal_preservative_used = "Cold Packs (4 deg C)")
 ```{r echo = F}
 # Miscellaneous Tasks; Address self-evident critical errors
 
-### SGS Typos ##$
+### SGS Typos ###
 
 # A typo from the SGS labs resulted in showing multiple incorrect fieldwork dates for spring 2023. Correct this here
 dat %<>%
@@ -1143,7 +1140,6 @@ dat[dat == "ug/L"] <- 'ug/l'
 
 # transform column classes as necessary for QA/QC analyses in this code chunk
 
-  
 # prepare time formats for fecal coliform & TSS samples; make consistent with other formats (missing seconds)
 dat %<>%
   # activity start time 
@@ -1176,7 +1172,6 @@ dat %<>%
   mutate(result_value = as.numeric(result_value))
   
 
-
 ```
 
 ### 2023 Data QA/QC Evaluation
@@ -1189,14 +1184,6 @@ xfun::embed_file('other/misc/qa_qc/Kenai_Baseline_Data_Evaluation_Checklist_2023
 ```
 
 Download results pre-QA/QC; including lab QA QC info
-
-```{r echo = F}
-
-# to do:
-
-# 3/4/24 - just noticed: some activity IDs are incorrect because date corrections were made AFTER the activity ID was created
-
-```
 
 #### Pre-database
 
@@ -1356,7 +1343,7 @@ hold_times <- left_join(hold_times,sample_holding_times) %>%
 
 We calculated time from sample field collection to lab receipt as documented in 2023 lab reports. All samples were within holding times specified in the QAPP.
 
-In the field, all samples were stored in coolers with ice packs at 4 degrees C until arrival at the laboratory. In the results from SGS laboratories, two individual observations include the asterisk "\*" in the "result_qualifier" column. This indicates that "the sample was warm when received." These observations correspond not to sample handling in the field, but rather to internal laboratory procedures used for method blank measurements. The case laboratory case narrative does not indicate that results would be affected.
+In the field, all samples were stored in coolers with ice packs at 4 degrees C until arrival at the laboratory. In the results from SGS laboratories, two individual observations include the asterisk "\*" in the "result_qualifier" column. This indicates that "the sample was warm when received." These observations correspond not to sample handling in the field, but rather to internal laboratory procedures used for method blank measurements. The laboratory case narrative does not indicate that any individual sample results would be affected.
 
 Hold time result calculations are available in the downloadable table below in the right-most columns.
 
@@ -1411,13 +1398,15 @@ z <- inner_join(dat_metals_tot,dat_metals_diss)
 
 # still working on this chunk
 
+# WORK IN PROGRESS
+
 ```
 
 <br>
 
 **19.) Are the duplicate sample(s) RPD within range described in QAPP?**
 
-In 2023, field duplicate samples were collected at two sites on both 5/2/2023 and 7/18/2023
+In 2023, field duplicate samples were collected at two sites on both 5/2/2023 and 7/18/2023:
 
 -   5/2/2023
 
@@ -1431,7 +1420,7 @@ In 2023, field duplicate samples were collected at two sites on both 5/2/2023 an
 
     -   Moose River (RM 36.0)
 
-Following the example in the Alaska Department of Environmental Conservation 2021 Kenai River Metals Field Report [@apsens2022]: “… a set of paired samples was evaluated for RPD only if:
+Only results that are meaningfully representative of the physical sample may be used for RPD calculations. Following the example in the Alaska Department of Environmental Conservation 2021 Kenai River Metals Field Report [@apsens2022]: “… a set of paired samples was evaluated for RPD only if:
 
 -   a.) one or both of the samples were above the Limit of Quantitation (LOQ); AND if
 
@@ -1454,7 +1443,7 @@ embed_file(dir, text = "Duplicate Sampling Events 2023")
 
 # WORKING HERE
 
-# RE DO
+# RE DO ???? (why)
 
 # check if script conforms to following:
 
@@ -1544,12 +1533,14 @@ write.csv(dup_diffs, dir, row.names = F)
 embed_file(dir)
 ```
 
-Nomenclature note: "Limit of Quantitation (LOQ)", as used by ADEC, is equivalent to anotehr term used by EPA CDX, "Lower Quantitation Limit," which is used in this assessment. A memo from SGS detailing nomenclature and interpretation of reporting limits can be downloaded at the link below:
+Nomenclature note: "Limit of Quantitation (LOQ)", as used by ADEC and SGS, is equivalent to another term used by EPA CDX, "Lower Quantitation Limit," which is used in this assessment. A memo from SGS detailing nomenclature and interpretation of reporting limits can be downloaded at the link below:
 
 ```{r echo = F}
 embed_file("other/misc/docs/DL, LOD, LOQ Interpretation.pdf")
 
 ```
+
+TKA interpretation of RPD values
 
 <br>
 
@@ -1565,43 +1556,63 @@ Yes, there were. They are listed below:
 
 -   Sample receipt time/date to SGS laboratories
 
-    -   The SGS Electronic Data Deliverable (EDD; spreadsheet) of results shows 5/9/23 as the receival date for all project samples (sample_type = "PS"), and time of day is not specified. However, the PDF report for these same results indicates all samples were in fact received on 5/04/23 08:51, which is consistent with the chain of custody docs. We applied the time/date correction as part of the intake script.
+    -   The SGS Electronic Data Deliverable (EDD; spreadsheet) of results shows 5/9/2023 as the receival date for all project samples (sample_type = "PS"), and time of day is not specified. However, the PDF report for these same results indicates all samples were in fact received on 5/04/23 08:51, which is consistent with the chain of custody docs. We applied the time/date correction as part of the intake script.
 
 -   Field site names
 
-    -   Both laboratories results contained miscellaneous spellings and formats of site names that were inconsistent with of the needs of preparing for the EPA CDX. These were corrected in the intake script by use of matching tables csv files, which can be viewed in the project GitHub repository under the directory"other/input/2023/misc".
+    -   Both of the laboratry's results contained miscellaneous spellings and formats of site names that were inconsistent with of the needs of preparing data for the EPA CDX. These were corrected in the intake script by use of matching tables csv files, which can be viewed in the project GitHub repository under the directory"other/input/2023/misc".
 
 *Data qualifiers, QC failures (review laboratory duplicates, matrix spikes and blanks)*
 
 -   Data qualifiers
 
-    -   Two instances of internal laboratory QC checks report, "sample was warm when received," for one matrix spike duplicate (copper) and one method blank (zinc). While these data qualifiers do not affect the result of any individual field observations, it is important to note this qualifier in the context of interpreting laboratory data for copper and zinc.
+    -   Two instances of internal laboratory QC checks report, "sample was warm when received," for one matrix spike duplicate (copper) and one method blank (zinc). While these data qualifiers do not affect the result of any individual field observations, it may be important to note this qualifier in the context of interpreting laboratory data for copper and zinc.
 
 -   QC failures
 
-    -   No lab QC failures are reported from Soldotna Wastewater Treatment Plant
+    -   No lab QC failures are reported from Soldotna Wastewater Treatment Plant for fecal coliform or total suspended solids
 
     -   Lab QC failures are listed on Listed on page 2 of the spring and summer SGS PDF reports
+
+        -   Spring 2023
+
+            -   Zinc: Two dissolved zinc method blanks (200.8) (MB) are above the Limit of Quantitation of 10.0 ug/L. One MB is at 11.3 ug/L, the other at 15.9 ug/L. **As a result, dissolved zinc results from spring 2023 may need to be flagged for QC failure.** PLAN: review 2021 ADEC report.
+
+            -   Total Nitrate/Nitrite: One matrix spike duplicate sample for total nitrate/nitrite is outside of QC criteria. The range of permissible recovery values includes the range from 90% - 110%, and the value is listed at 89%. This QC failure does not suggest a mechanism by which sample values are not still representative of environmental conditions, and will not result in spring 2023 total nitrate/nitrate values being flagged for QC failure.
+
+        -   Summer 2023
+
+            -   One matrix spike sample for total nitrate/nitrite is outside of QC criteria. The range of permissible recovery values includes the range from 90% - 110%, and the value is listed at 112%. This QC failure does not suggest a mechanism by which sample values are not still representative of environmental conditions, and will not result in spring 2023 total nitrate/nitrate values being flagged for QC failure.
 
 <br>
 
 \*\* 21.) Is any laboratory data rejected and why? \*\*
 
+TKA
+
 <br>
 
 \*\* 22.) During the field season, review raw data files (EDDs, instrument records) as they are received. Document changes and corrections to methods as needed. \*\*
+
+Changes and corrections to EDDs are documented and described throughout this series of questions.
 
 <br>
 
 \*\* 23.) Is the dataset complete and did you receive the expected number of results? \*\*
 
+Yes, we received the anticipated number of results.
+
 <br>
 
 \*\* 24.) Was the data collected representative of environmental conditions? \*\*
 
+Yes for all, TKA for dissolved zinc
+
 <br>
 
 \*\* 25.) Does project meet Completeness Measure A criteria? \*\*
+
+Uffda
 
 ```{r echo = F}
 
