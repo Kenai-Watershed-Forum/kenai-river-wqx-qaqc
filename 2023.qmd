@@ -1588,7 +1588,7 @@ Yes, there were. They are listed below:
 
 \*\* 21.) Is any laboratory data rejected and why? \*\*
 
-TKA
+TKA  _> check out 2021 example discussion
 
 <br>
 
@@ -1612,9 +1612,19 @@ Yes for all, TKA for dissolved zinc
 
 \*\* 25.) Does project meet Completeness Measure A criteria? \*\*
 
-Uffda
+From the QAPP, Completeness Measure A: “the primary number of samples collected divided by the usable number of samples submitted to ADEC, with a goal of 85% completeness.” (Note that as of 2023 results are now submitted directly to EPA rather than DEC, per request of DEC).
+
+We calculated Completeness Measure A at the following project scales:
+
+-   For individual parameters
+
+-   For individual sites
+
+-   As a project whole
 
 ```{r echo = F}
+
+# need to have data flagging decisions complete to answer this
 
 ```
 
