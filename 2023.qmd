@@ -1348,7 +1348,7 @@ In the field, all samples were stored in coolers with ice packs at 4 degrees C u
 Hold time result calculations are available in the downloadable table below in the right-most columns.
 
 ```{r echo = F}
-hold_times_dir <- "other/output/qa_qc_output/hold_times.csv"
+hold_times_dir <- "other/output/2023/qa_qc_output/hold_times_2023.csv"
 
 write.csv(hold_times,hold_times_dir, row.names = F)
 
@@ -1361,6 +1361,21 @@ embed_file(hold_times_dir, text = "Download 2023 kenai River Baseline Water Qual
 **18.) Are dissolved metal quantities less than total metals quantities?**
 
 ```{r echo = F}
+
+#PRIORITY TASK, WORKING HERE
+
+# current result has only 5 observations from spring 2023 .. whats up with that?!?!?!
+# still the case
+
+# need to correct intake code in SGS chunk, possibly an issue with sample fraction assignment(s)
+
+# still working on this chunk
+
+# WORK IN PROGRESS
+
+
+
+
 # choose characteristics
 metals <- c("Calcium","Iron","Magnesium","Copper","Zinc")
 cols1 <- c("activity_id","characteristic_name", "activity_start_date", "monitoring_location_id","result_sample_fraction", "result_value","result_unit")
@@ -1379,11 +1394,14 @@ dat_metals <- dat %>%
   select(-activity_id)
 
 # create dataframes of filtered vs unfiltered (dissolved vs total)
+# unfiltered (total)
 dat_metals_tot <- dat_metals %>%
   filter(result_sample_fraction == "Unfiltered") %>%
   rename(result_value_tot = result_value,
          result_unit_tot = result_unit) %>%
   select(-result_sample_fraction, -result_unit_tot)
+
+# filtered (dissolved)
 dat_metals_diss <- dat_metals %>%
   filter(result_sample_fraction == "Filtered, lab") %>%
     rename(result_value_diss = result_value,
@@ -1392,13 +1410,7 @@ dat_metals_diss <- dat_metals %>%
 
 z <- inner_join(dat_metals_tot,dat_metals_diss)
 
-# current result has only 5 observations from spring 2023 .. whats up with that?!?!?!
 
-# need to correct intake code in SGS chunk, possibly an issue with sample fraction assignment(s)
-
-# still working on this chunk
-
-# WORK IN PROGRESS
 
 ```
 
@@ -1528,9 +1540,9 @@ A csv file of Relative Percent Difference values organized by site, date, and pa
 
 ```{r echo = F}
 # export & publish dup_diffs csv
-dir <- "other/output/qa_qc_output/rpd_pct.csv"
+dir <- "other/output/2023/qa_qc_output/rpd_pct_2023.csv"
 write.csv(dup_diffs, dir, row.names = F)
-embed_file(dir)
+embed_file(dir, text = "Relative Percent Difference Values for Duplicate Sample Observations, 2023")
 ```
 
 Nomenclature note: "Limit of Quantitation (LOQ)", as used by ADEC and SGS, is equivalent to another term used by EPA CDX, "Lower Quantitation Limit," which is used in this assessment. A memo from SGS detailing nomenclature and interpretation of reporting limits can be downloaded at the link below:
@@ -1612,9 +1624,21 @@ Yes for all, TKA for dissolved zinc
 
 \*\* 25.) Does project meet Completeness Measure A criteria? \*\*
 
-Uffda
+From the QAPP, Completeness Measure A: "the primary number of samples collected divided by the usable number of samples submitted to ADEC, with a goal of 85% completeness." (Note that as of 2023 results are now submitted directly to EPA rather than DEC, per request of DEC).
+
+(Note: metals parameters not specified in the QAPP are excluded from these analyses. In 2021, SGS laboratories provided dissolved metals results for parameters beyond what was originally requested.)
+
+We calculated Completeness Measure A at the following project scales:
+
+-   For individual parameters
+-   For individual sites
+-   As a project whole
+
+
 
 ```{r echo = F}
+
+# need to have flagging decisions complete to do this calculation
 
 ```
 
@@ -1622,7 +1646,19 @@ Uffda
 
 \*\* 26.) Does project meet Completeness Measure B criteria? \*\*
 
+From the QAPP, Completeness Measure B: "the planned number of samples divided by the useable samples (submitted to ADEC) with a goal of 60%."
+
+For these calculations, we will consider "usable" as "unflagged," and will calculate at the following scales:
+
+-   For individual parameters (analysis methods)
+-   For individual sites
+-   As a project whole
+
+
+
 ```{r echo = F}
+
+# need to have flagging decisions complete to do this calculation
 
 ```
 
@@ -1630,57 +1666,132 @@ Uffda
 
 \*\* 27.) Was the QA Officer consulted for any data concerns? \*\*
 
+Kenai Watershed Forum consulted with staff from the Alaska Department of Environmental Conservation and EPA Region 10 Office in order to prepare 2023 field data and confirm field methods and data QA/QC procedures.
+
 <br>
 
 #### Database Prep
 
 \*\* 28.) Are the correct monitoring locations associated with the project? \*\*
 
+We used the leaflet package to generate a map of unique sites from the 2023 dataset:
+
+```{r echo = F, message=FALSE}
+
+# read in locations from exported data (export_dat)
+site_check <- dat %>%
+  distinct(monitoring_location_id,activity_latitude,activity_longitude) %>%
+  remove_empty() 
+
+# generate map
+library(leaflet)
+
+leaflet(site_check) %>%
+  addTiles() %>%
+  addMarkers(~activity_longitude,~activity_latitude,
+             popup = ~as.character(monitoring_location_id),
+             label = ~as.character(monitoring_location_id))
+
+```
+
+
 <br>
 
 \*\* 29.) Are the QAPP and other supporting documents attached? \*\*
+
+The 2023 QAPP is available to download at the link below, and will be attached in the upload to EPA CDX:
+
+```{r echo = F}
+embed_file("other/misc/docs/KenaiWatershedForum_QAPP_v3_2023.pdf")
+```
+
 
 <br>
 
 \*\* 30.) Is all metadata correct? \*\*
 
+TKA
+
 <br>
 
 \*\* 31.) Is the organization ID correct? \*\*
+
+Kenai Watershed Forum's Organization ID in the EPA Water Quality Exchange is "Kenai_WQX." This value is manually confirmed during the upload process.
 
 <br>
 
 \*\* 32.) Are the time zones consistent and correct (AKDT in summer)? \*\*
 
+Orlando time zones?
+
 <br>
 
 \*\* 33.) Are all media types included? Media types appropriate to Characteristic? \*\*
+
+"Water" is the only media type considered in this project. All "Characteristics" (parameters) are measured from water samples or in-situ water conditions.
 
 <br>
 
 \*\* 34.) Check Sample Collection, Preparation and Preservation Methods, Thermal Preservative, Equipment ID, Activity Media. Is supporting information included and correct? \*\*
 
+```{r echo = F}
+# sample collection method
+unique(dat$equipment_id)
+
+```
 <br>
 
 \*\* 35.) Are all expected activity types present and are QC samples correctly identified? \*\*
+
+
 
 <br>
 
 \*\* 36.) Is the Activity media subdivision filled in (if relevant)? \*\*
 
+```{r echo = F}
+
+unique(dat$activity_media_subdivision_name)
+
+```
 <br>
 
 \*\* 37.) For Water activity media, is the relative depth filled in? \*\*
+
+All "Activity Media Subdivision" names are listed as "Surface Water."
 
 <br>
 
 \*\* 38.) Is the number of results for each Characteristic correct? \*\*
 
+Questions #2 and #3 address this topic in detail. A summary table of the total number of observations for each characteristic is available in the downloadable table below.
+
+```{r echo = F}
+# need to remove QA/QC analytes from here
+
+#summarise
+chr_num <- dat %>%
+  group_by(characteristic_name, result_sample_fraction) %>% # group by dissolved status too
+  tally()
+
+# save
+dir <- "other/output/2023/qa_qc_output/characteristic_count_2023.csv"
+write.csv(chr_num,dir)
+```
+
+```{r echo = F}
+# embed for download
+xfun::embed_file(dir, text = "Download Observation Count by Characteristic, 2023 Kenai River Baseline Water Quality")
+```
+
 <br>
 
 \*\* 39.) Do the range of result values make sense? \*\*
 
+Prior to upload to the EPA WQX, the range of results will be evaluated visually and numerically in each characteristic-specific section of the comprehensive report, relative to past results. Likely outliers will be identified and recorded in a dedicated spreadsheet (download below). Each likely outlier will have accompanying notes discussing the choice, and a decisions as to whether a more detailed statistical investigation is warranted.
+
 ```{r echo = F}
+embed_file("other/input/outliers/baseline_outliers.xlsx", text = "Download identified potential outliers for 2023 Kenai River Baseline Water Quality data")
 
 ```
 
@@ -1688,9 +1799,41 @@ Uffda
 
 \*\* 40.) Are units correct and consistent for each parameter? \*\*
 
+```{r echo = F}
+
+z <- dat %>%
+  select(characteristic_name, result_unit) %>%
+  distinct()
+data.frame(unique(z$result_unit))
+
+```
+
+
 <br>
 
 \*\* 41.) Are detection limits and laboratory qualifiers included for analytical results? \*\*
+
+Laboratory qualifiers including "J" (below limit of quantitation; is an estimate), "=", (observed value), "U" (below detection limit), and "ND" (Not Detected) are included in the column titled "result_qualifier."
+
+Detection limits and their corresponding units are included in columns titled "result_detection_limit_type_1" and in "result_detection_limit_unit_1" corresponding to Limit of Quanititation, and in columns titled "result_detection_limit_type_2" and "result_detection_limit_unit_2" corresponding to Method Detection Level.
+
+<br>
+
+**42.) Are results trip blanks and/or field blanks above detection limits, and is any related data flagged as a result?**
+
+In summer 2023, trip blanks were included with those field crews tasked with collection water samples for hydrocarbon analyses. Sites visited by these crews include RM 1.5 - Kenai City Dock, RM 6.5 - Cunningham Park, RM 40 - Bing's Landing, and RM 43 - Upstream of Dow Island.
+
+(any equivalent 2023 concerns?)
+
+On the summer 2021 SGS chain of custody documents, BTEX trip blanks are specified for the above sites. However in the reported results, a single sample named "Trip Blank" is reported. This error resulted from a mis-communication with SGS staff.
+
+In this case, all hydrocarbon results in the Trip Blank are reported as below detection limit, suggesting there is not a need to flag summer 2021 hydrocarbon results.
+
+(true for 2023?)
+
+
+
+
 
 ```{r}
 ### Part E: QA/QC
