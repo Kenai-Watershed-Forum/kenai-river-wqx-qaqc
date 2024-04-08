@@ -1,0 +1,33 @@
+"","characteristic_name","result_sample_fraction","n"
+"1","1,2-Dichloroethane-D4 (surr)","Volatile",14
+"2","4-Bromofluorobenzene (surr)","Volatile",14
+"3","Arsenic","Filtered, lab",15
+"4","Arsenic","Unfiltered",23
+"5","Benzene","Volatile",14
+"6","Cadmium","Filtered, lab",15
+"7","Cadmium","Unfiltered",23
+"8","Calcium","Filtered, lab",11
+"9","Calcium","Unfiltered",76
+"10","Chromium","Filtered, lab",15
+"11","Chromium","Unfiltered",23
+"12","Copper","Filtered, lab",17
+"13","Copper","Unfiltered",59
+"14","Ethylbenzene","Volatile",11
+"15","Fecal Coliform","",54
+"16","Iron","Filtered, lab",11
+"17","Iron","Unfiltered",76
+"18","Lead","Filtered, lab",15
+"19","Lead","Unfiltered",23
+"20","Magnesium","Filtered, lab",11
+"21","Magnesium","Unfiltered",76
+"22","P & M -Xylene","Volatile",11
+"23","Toluene","Volatile",11
+"24","Toluene-d8 (surr)","Volatile",14
+"25","Total Nitrate/Nitrite-N","Total",51
+"26","Total Phosphorus","Total",62
+"27","Total suspended solids","",55
+"28","Xylenes (total)","Volatile",11
+"29","Zinc","Filtered, lab",23
+"30","Zinc","Unfiltered",60
+"31","o-Xylene","Volatile",11
+"32",NA,"Total",40
