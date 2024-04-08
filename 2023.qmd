@@ -1191,7 +1191,7 @@ Download results pre-QA/QC; including lab QA QC info
 
 **1.) Were the appropriate analytical methods used for all parameters?**
 
-Yes. Analytical methods from the approved 2023 QAPP were employed, withj one exception (see below).
+Yes. Analytical methods from the approved 2023 QAPP were employed, with one exception (see below).
 
 One change from the approved 2023 occurred. For spring 2023, a laboratory method used to analyze dissolved metals differed slightly from that specified on the QAPP. EPA method 6010D was employed rather than EPA method 200.8. The project manager at SGS Laboratories in Anchorage, AK describes that no differences are anticipated in how results can be interpreted.
 
@@ -1199,7 +1199,7 @@ One change from the approved 2023 occurred. For spring 2023, a laboratory method
 
 **2.) Were there any deviations from the sampling plan?**
 
-In 2023 there were several small deviations from the sampling plan due to challenging spring field logistics. One site in spring 2023 could not be accessed for sampling due to low water conditions (Kenai River main stem, RM 10.1). As a result there are no samples from this site/date. Additionally, one fecal coliform sample is missing from RM 10.1 on 5/2/2023 due to an on-site loss due to spillage.
+In 2023 there were several small deviations from the sampling plan due to a late ice-out date and  challenging spring field logistics. One site in spring 2023 could not be accessed for sampling due to low water conditions (Kenai River main stem, RM 10.1). As a result there are no samples from this site/date. Additionally, one fecal coliform sample is missing from site RM 40 on 5/2/2023 due to an on-site loss due to spillage.
 
 <br>
 
@@ -1220,12 +1220,14 @@ qa_samples1 <- dat %>%
 # another way
 qa_samples2 <- dat %>%
   group_by(activity_start_date,result_analytical_method_id,sample_type) %>%
-
   count() %>%
   filter(sample_type == "PS")
 
+# there are no 200.7 results for summer 2023 (?!)
+# likely cuplrit: in the SGS intake pipeline, some actual 200.7 results are being designated as 200.8
 
-# more exacting discussion here TBD, but in general pretty close
+
+# more exacting discussion here TBD
 
 ```
 
@@ -1851,6 +1853,8 @@ In this case, all hydrocarbon results in the Trip Blank are reported as below de
 
 
 # are fecal coliform "0" values listed as "NA"? (they should be)
+
+# are metals field blanks clean?
 
 
 ```
