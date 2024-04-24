@@ -127,9 +127,9 @@ summer_batch_sgs23 <- read_excel("other/input/2023/summer_2023_wqx_data/Data/SGS
   select(-PROJECT_ID,-DISSOLVED) 
 
 
-# 3/14/2024: for summer 2023 results, no 200.7 results are present; all metals are 200.8. However, in the "ANALYSIS_GROUP" column, under 200.8 both "Dissolved metals by ICP/MS" AND "Metals by ICP/MS" are listed under 200.8. What gives? Check PDF
+# 3/14/2024: for summer 2023 results, no 200.7 results are present; all metals are 200.8. However, in the "ANALYSIS_GROUP" column, under 200.8 both "Dissolved metals by ICP/MS" AND "Metals by ICP/MS" are listed under 200.8. What gives? 
 
-# discovered: for summer 2023, 200.8 was used for both total and dissolved.
+# Discovered: for summer 2023, 200.8 was used for both total and dissolved.
 
 # later, need to address different categorical results that were in removed "DISSOLVED" column:
 
@@ -166,10 +166,10 @@ sgs23 <- bind_rows(spring_batch_sgs23,summer_batch_sgs23) %>%
   separate(run_date_time, sep = " ", into = c("run_date_time","run_time")) %>%
   separate(extracted_date, sep = " ", into = c("extracted_date","extracted_time"))
 
-# NOTE: in some past years, total metals analyses (method 200.7) have been subcontracted to ALS Laboratories (Seattle). In 2023, SGS Anchorage had the 200.7 methods run by SGS Orlando. Thus, these results are already read in here and not in a seperate ALS dataframe.
+# NOTE: in some past years, total metals analyses (method 200.7) have been subcontracted to ALS Laboratories (Seattle). In spring 2023, SGS Anchorage had the 200.7 methods run by SGS Orlando. Thus, these results are already read in here and not in a seperate ALS dataframe.
 
 
-# remove individual dataframe
+# remove individual dataframes
 rm(spring_batch_sgs23,summer_batch_sgs23)
             
 
@@ -242,7 +242,7 @@ sgs23 %<>%
              grepl("Skilak|SKILAK",sample_id) ~ "10000030",
              TRUE ~ monitoring_location_id))
 
-# all 2023 SGS data joined and present in same dataframe
+# all 2023 SGS data are now joined and present in same dataframe
 
 
 ############### Part A.3: Assign miscellaneous calculated columns for 2023 SGS data (needed for next steps) ############
@@ -282,6 +282,9 @@ sgs23 %<>%
 
 # Result Sample Fraction	
 # CDX domains: "Filtered, field," "Filtered, lab,"  "Unfiltered," "Volatile", "Total"
+
+# WORKING HERE -- NEED TO DISTINGUISH SUMMER VS SPRING TOTAL METALS RESULTS - DONE - USE "ANALYSIS GROUP"
+
 sgs23 %<>%
   mutate(result_sample_fraction = case_when(
     grepl("SW8260D", analytical_method) ~ "Volatile",                   # hydrocarbons
@@ -1191,15 +1194,19 @@ Download results pre-QA/QC; including lab QA QC info
 
 **1.) Were the appropriate analytical methods used for all parameters?**
 
-Yes. Analytical methods from the approved 2023 QAPP were employed, with one exception (see below).
+Yes. Analytical methods from the approved 2023 QAPP were employed, with exceptions that are not anticipated to affect results (see below).
 
-One change from the approved 2023 occurred. For spring 2023, a laboratory method used to analyze dissolved metals differed slightly from that specified on the QAPP. EPA method 6010D was employed rather than EPA method 200.8. The project manager at SGS Laboratories in Anchorage, AK describes that no differences are anticipated in how results can be interpreted.
+Changes from the approved 2023 occurred, including:
+
+-   For spring 2023, a laboratory method used to analyze dissolved metals differed slightly from that specified on the QAPP. EPA method 6010D was employed rather than EPA method 200.8. The project manager at SGS Laboratories in Anchorage, AK describes that no differences are anticipated in how results can be interpreted. Both methods are appropriate for dissolved metals in surface waters.
+
+-   For summer 2023, a laboratory method used to analyze total metals differed slightly from that specified on the QAPP. EPA method 200.8 used for total metals. The project manager at SGS Laboratories in Anchorage, AK describes that no differences are anticipated in how results can be interpreted. Both methods are appropriate for total metals in surface waters.
 
 <br>
 
 **2.) Were there any deviations from the sampling plan?**
 
-In 2023 there were several small deviations from the sampling plan due to a late ice-out date and  challenging spring field logistics. One site in spring 2023 could not be accessed for sampling due to low water conditions (Kenai River main stem, RM 10.1). As a result there are no samples from this site/date. Additionally, one fecal coliform sample is missing from site RM 40 on 5/2/2023 due to an on-site loss due to spillage.
+In 2023 there were several small deviations from the sampling plan due to a late ice-out date and challenging spring field logistics. One site in spring 2023 could not be accessed for sampling due to low water conditions (Kenai River main stem, RM 10.1). As a result there are no samples from this site/date. Additionally, one fecal coliform sample is missing from site RM 40 on 5/2/2023 due to an on-site loss due to bottle spillage.
 
 <br>
 
@@ -1215,7 +1222,8 @@ qa_samples1 <- dat %>%
   filter(!is.na(activity_start_date),
          !is.na(activity_type)) %>%
   arrange(characteristic_name, activity_type) %>%
-  filter(sample_type == "PS")
+  filter(sample_type == "PS") %>%
+  arrange(activity_start_date,characteristic_name,result_analytical_method_id, result_sample_fraction)
 
 # another way
 qa_samples2 <- dat %>%
@@ -1223,13 +1231,9 @@ qa_samples2 <- dat %>%
   count() %>%
   filter(sample_type == "PS")
 
-# there are no 200.7 results for summer 2023 (?!)
-# likely cuplrit: in the SGS intake pipeline, some actual 200.7 results are being designated as 200.8
-
-
-# more exacting discussion here TBD
-
 ```
+
+Yes, all planned field blanks, trip blanks, and duplicate samples were collected as planned.
 
 <br>
 
@@ -1253,7 +1257,7 @@ embed_dir("other/misc/qa_qc/chain_of_custody_2023", text = "Download 2023 Chain 
 
 **6.) Do the laboratory reports match the COC and requested methods throughout?**
 
-Yes, with one exception discussed in question #1. For spring 2023, SGS laboratories used EPA method 6010D for dissolved metals rather than EPA method 200.8. The SGS project manager describes that no change is anticipated for how to interpret results.
+Yes, with the exceptions discussed in question #1. The SGS project manager describes that no change is anticipated for how to interpret results.
 
 <br>
 
@@ -1271,13 +1275,13 @@ SGS laboratory reports include reporting limits in both the electronic data deli
 
 **9.) Are site names, dates, and times correct and as expected?**
 
-Numerous corrections to site names and dates were necessary to prepare data into final form. Original documents were not modified, and corrections are applied throughout the data read-in process using R coding script.
+Numerous corrections to site names and dates were necessary to prepare data into final form. Original documents (Electronic Data Deliverables) were not modified, and corrections are applied throughout the data read-in process using R coding script in this document.
 
 <br>
 
 **10.) Were there any issues with instrument calibration?**
 
-No issues are documented with calibration for KWF's field or labortory instruments. No calibration issues are described in the "Case Narrative" sections of the spring and summer SGS PDF laboratory reports.
+No issues are documented with calibration for KWF's field or laboratory instruments. No calibration issues are described in the "Case Narrative" sections of the spring and summer SGS PDF laboratory reports.
 
 <br>
 
@@ -1295,13 +1299,13 @@ Yes.
 
 **13.) Was instrument verification during the field season performed according to the QAPP and instrument recommendations?**
 
-For water temperature probes, instrument verification rather than calibration is performed. An ice-bath test was performed on all water temperature probes according to methods described in Mauger et al. 2015 prior to field use, and all probes recorded values within 0.25 degress celsius of a NIST certified thermometer.
+For water temperature probes, instrument verification rather than calibration is performed. An ice-bath test was performed on all water temperature probes according to methods described in Mauger et al. 2015 prior to field use, and all probes recorded values within 0.25 degrees Celsius of a NIST certified thermometer.
 
 <br>
 
 **14.) Were instrument calibration verification logs or records kept?**
 
-Calibration and verification records are kepat at Kenai Watershed Forum's office at 44129 Sterling Hwy, Soldotna, AK and are available upon request.
+Yes. Calibration and verification records are kept at Kenai Watershed Forum's office at 44129 Sterling Hwy, Soldotna, AK and are available upon request.
 
 <br>
 
@@ -1313,7 +1317,7 @@ Instrument data files from fieldwork are not generated as part of this project.
 
 **16.) Is any in-situ field data rejected and why?**
 
-TBD
+TBD ... see question ###
 
 <br>
 
@@ -1366,8 +1370,7 @@ embed_file(hold_times_dir, text = "Download 2023 kenai River Baseline Water Qual
 
 #PRIORITY TASK, WORKING HERE
 
-# current result has only 5 observations from spring 2023 .. whats up with that?!?!?!
-# still the case
+# note -- need to distinguish 
 
 # need to correct intake code in SGS chunk, possibly an issue with sample fraction assignment(s)
 
@@ -1395,6 +1398,8 @@ dat_metals <- dat %>%
   )) %>%
   select(-activity_id)
 
+# note that analytical method ID is not included in the above dataframe. This is because in summer 2023, 200.8 was used for both total AND dissolved metals
+
 # create dataframes of filtered vs unfiltered (dissolved vs total)
 # unfiltered (total)
 dat_metals_tot <- dat_metals %>%
@@ -1410,6 +1415,8 @@ dat_metals_diss <- dat_metals %>%
            result_unit_diss = result_unit) %>%
   select(-result_sample_fraction, -result_unit_diss)
 
+
+# results here are nonsensical; missing almost all spring 2023 results
 z <- inner_join(dat_metals_tot,dat_metals_diss)
 
 
@@ -1602,7 +1609,7 @@ Yes, there were. They are listed below:
 
 \*\* 21.) Is any laboratory data rejected and why? \*\*
 
-TKA  _> check out 2021 example discussion
+TKA \_\> check out 2021 example discussion
 
 <br>
 
@@ -1626,18 +1633,15 @@ Yes for all, TKA for dissolved zinc
 
 \*\* 25.) Does project meet Completeness Measure A criteria? \*\*
 
-
 From the QAPP, Completeness Measure A: “the primary number of samples collected divided by the usable number of samples submitted to ADEC, with a goal of 85% completeness.” (Note that as of 2023 results are now submitted directly to EPA rather than DEC, per request of DEC).
 
 From the QAPP, Completeness Measure A: "the primary number of samples collected divided by the usable number of samples submitted to ADEC, with a goal of 85% completeness." (Note that as of 2023 results are now submitted directly to EPA rather than DEC, per request of DEC).
 
-(Note: metals parameters not specified in the QAPP are excluded from these analyses. In 2021, SGS laboratories provided dissolved metals results for parameters beyond what was originally requested.)
->>>>>>> 316dfab7a4e0e74b4522c2c6c0aa1010af44ec8d
+(Note: metals parameters not specified in the QAPP are excluded from these analyses. In 2021, SGS laboratories provided dissolved metals results for parameters beyond what was originally requested.) \>\>\>\>\>\>\> 316dfab7a4e0e74b4522c2c6c0aa1010af44ec8d
 
 We calculated Completeness Measure A at the following project scales:
 
 -   For individual parameters
-
 
 -   For individual sites
 
@@ -1661,8 +1665,6 @@ For these calculations, we will consider "usable" as "unflagged," and will calcu
 -   For individual parameters (analysis methods)
 -   For individual sites
 -   As a project whole
-
-
 
 ```{r echo = F}
 
@@ -1702,7 +1704,6 @@ leaflet(site_check) %>%
 
 ```
 
-
 <br>
 
 \*\* 29.) Are the QAPP and other supporting documents attached? \*\*
@@ -1712,7 +1713,6 @@ The 2023 QAPP is available to download at the link below, and will be attached i
 ```{r echo = F}
 embed_file("other/misc/docs/KenaiWatershedForum_QAPP_v3_2023.pdf")
 ```
-
 
 <br>
 
@@ -1747,11 +1747,10 @@ Orlando time zones?
 unique(dat$equipment_id)
 
 ```
+
 <br>
 
 \*\* 35.) Are all expected activity types present and are QC samples correctly identified? \*\*
-
-
 
 <br>
 
@@ -1762,6 +1761,7 @@ unique(dat$equipment_id)
 unique(dat$activity_media_subdivision_name)
 
 ```
+
 <br>
 
 \*\* 37.) For Water activity media, is the relative depth filled in? \*\*
@@ -1816,7 +1816,6 @@ data.frame(unique(z$result_unit))
 
 ```
 
-
 <br>
 
 \*\* 41.) Are detection limits and laboratory qualifiers included for analytical results? \*\*
@@ -1838,10 +1837,6 @@ On the summer 2021 SGS chain of custody documents, BTEX trip blanks are specifie
 In this case, all hydrocarbon results in the Trip Blank are reported as below detection limit, suggesting there is not a need to flag summer 2021 hydrocarbon results.
 
 (true for 2023?)
-
-
-
-
 
 ```{r}
 ### Part E: QA/QC
