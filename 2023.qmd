@@ -127,7 +127,7 @@ summer_batch_sgs23 <- read_excel("other/input/2023/summer_2023_wqx_data/Data/SGS
   select(-PROJECT_ID,-DISSOLVED) 
 
 
-<<<<<<< HEAD
+
 # Note: for summer 2023 results, no 200.7 results are present; all metals are 200.8. However, in the "ANALYSIS_GROUP" column, under 200.8 both "Dissolved metals by ICP/MS" AND "Metals by ICP/MS" are listed under 200.8. What gives? Check PDF
 
 # discovered: 
@@ -136,7 +136,7 @@ summer_batch_sgs23 <- read_excel("other/input/2023/summer_2023_wqx_data/Data/SGS
 # re-checking this on 5/7/2024, on PDFs and EDD
 
 
-=======
+
 # 3/14/2024: for summer 2023 results, no 200.7 results are present; all metals are 200.8. However, in the "ANALYSIS_GROUP" column, under 200.8 both "Dissolved metals by ICP/MS" AND "Metals by ICP/MS" are listed under 200.8. What gives? 
 
 # Discovered: for summer 2023, 200.8 was used for both total and dissolved.
@@ -1379,15 +1379,15 @@ embed_file(hold_times_dir, text = "Download 2023 kenai River Baseline Water Qual
 
 ```{r echo = F}
 
-# PRIORITY TASK, WORKING HERE
+# PRIORITY TASK, WORKING HERE - sent email to c whisman 5/7/2024
 
-<<<<<<< HEAD
+
 # current result has only 5 observations from spring 2023 .. whats up with that?!?!?!
 
 # still the case
-=======
+
 # note -- need to distinguish 
->>>>>>> 54a8037f98cadbd567d704428b5474bed23e433b
+
 
 # need to correct intake code in SGS chunk, possibly an issue with sample fraction assignment(s)
 
