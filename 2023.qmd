@@ -86,7 +86,7 @@ library("xfun")
 
 xfun::embed_file('other/input/2023/spring_2023_wqx_data/Data/SGS/Revision 1 SGS Data/1231846_FC5912_Rev1.csv', text = "Download Original Spring 2023 Metals/Nutrients Lab Results from SGS - Electronic Data Delivery file")
 
-xfun::embed_file('other/input/2023/spring_2023_wqx_data/Data/SGS/Revision 1 SGS Data/SGS_Spring_2023_data_final.pdf', text = "Download Original Spring 2023 Metals/Nutrients Lab Results from SGS - PDF file")
+xfun::embed_file('other/input/2023/spring_2023_wqx_data/Data/SGS/Revision 1 SGS Data/1231846_SGS_Spring_2023_data_final.pdf', text = "Download Original Spring 2023 Metals/Nutrients Lab Results from SGS - PDF file")
 
 ```
 
@@ -107,40 +107,55 @@ xfun::embed_file('other/input/2023/summer_2023_wqx_data/Data/SGS/1233640_COC.pdf
 #| message: false
 
 
+
+# WORKING HERE - 5/10/2024 - modified read-in here, ensure all subsequent steps can function
+
+
 ############################ Part A.1: SGS 2023 Data Read In #############################
 
 ## Reformat SGS data downloaded from their server client (SGS Engage, full EDD files) to match desired template
 
 # read in
-# address column type issues such that both dataframes can be merged
-spring_batch_sgs23 <- read.csv("other/input/2023/spring_2023_wqx_data/Data/SGS/Revision 1 SGS Data/1231846_FC5912_Rev1.csv") %>%
-  select(-PROJECT_ID,-DISSOLVED) %>%
-  rename(RUN_DATE_TIME = RUN_DATE) %>% # check to see if this column name is consistent
+# address column type issues such that all dataframes can be merged
+
+# read in 200.7 results
+spring_batch_sgs23_part1 <- read.csv("other/input/2023/spring_2023_wqx_data/Data/SGS/Revision 1 SGS Data/1231846_FC5912_Rev1_part1.csv") %>%
+  transform(PROJECT_ID = as.character(PROJECT_ID),
+            DISSOLVED = as.character(DISSOLVED)) %>%
+  rename(RUN_DATE_TIME = RUN_DATE) %>%
   
-# NOTE the receive date/time is incorrect in the EDD. The EDD shows 5/9/23 for all project samples (sample_type = "PS") and time is not specified. The PDF report indicates all samples were in fact received on 5/04/23 08:51, which is consistent with the chain of custody docs.
-# We will apply this correction here
+# NOTE the receive date/time is incomplete in this EDD. The EDD shows 5/9/23 for all project samples (sample_type = "PS") and time is not specified. We will specify samples were received at office open hours, 9:00 AM
   mutate(REC_DATE = case_when(
-    SAMPLE_TYPE == "PS" ~ "5/04/23 08:51",
+    REC_DATE == "05/09/2023 00:00" ~ "05/09/2023 09:00",
     TRUE ~ REC_DATE))
+
+# read in all other results
+spring_batch_sgs23_part2 <- read.csv("other/input/2023/spring_2023_wqx_data/Data/SGS/Revision 1 SGS Data/1231846_FC5912_Rev1_part2.csv") %>%
+  transform(MATRIX = as.character(MATRIX),
+            LAB_SAMPLE_ID = as.character(LAB_SAMPLE_ID),
+            SDG = as.character(SDG))
+
+# join parts 1 and 2 of spring 2023 results
+spring_batch_sgs23 <- bind_rows(spring_batch_sgs23_part1,spring_batch_sgs23_part2)
+rm(spring_batch_sgs23_part1,spring_batch_sgs23_part2)
+
+# prepare spring 2023 batch
+spring_batch_sgs23 %<>%
+  select(-PROJECT_ID,-DISSOLVED) 
+
   
 summer_batch_sgs23 <- read_excel("other/input/2023/summer_2023_wqx_data/Data/SGS/Summer 2023 SGS Agency Baseline.xlsx", sheet = "Sheet9") %>%
   select(-PROJECT_ID,-DISSOLVED) 
 
-
-
 # Note: for summer 2023 results, no 200.7 results are present; all metals are 200.8. However, in the "ANALYSIS_GROUP" column, under 200.8 both "Dissolved metals by ICP/MS" AND "Metals by ICP/MS" are listed under 200.8. What gives? Check PDF
 
 # discovered: 
-# for spring 2023, 200.7 was used for total metals and SW846 3010A for dissolved
 # for summer 2023, 200.8 was used for both total and dissolved.
-# re-checking this on 5/7/2024, on PDFs and EDD
-
 
 
 # 3/14/2024: for summer 2023 results, no 200.7 results are present; all metals are 200.8. However, in the "ANALYSIS_GROUP" column, under 200.8 both "Dissolved metals by ICP/MS" AND "Metals by ICP/MS" are listed under 200.8. What gives? 
 
 # Discovered: for summer 2023, 200.8 was used for both total and dissolved.
->>>>>>> 54a8037f98cadbd567d704428b5474bed23e433b
 
 # later, need to address different categorical results that were in removed "DISSOLVED" column:
 
