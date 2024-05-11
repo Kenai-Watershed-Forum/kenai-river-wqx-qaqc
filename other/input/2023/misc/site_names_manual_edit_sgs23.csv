@@ -1,72 +1,102 @@
 sample_id,site_id
-RM 1.5 Kenai City Dock FB,KBL_m_01.5
-RM1.5-Kenai City Dock,KBL_m_01.5
+RM 1.5 - Kenai City Dock,KBL_m_01.5
+RM 1.5 - Kenai City Dock - DUP,KBL_m_01.5
 RM 1.5- Kenai City Dock,KBL_m_01.5
+RM 1.5 Kenai City Dock FB,KBL_m_01.5
 RM 1.5-KENAI CITY DOCK,KBL_m_01.5
 RM 1.5-KENAI CITY DOCK-DUP,KBL_m_01.5
-RM6.5-Cunningham Park,KBL_m_06.5
+RM1.5-Kenai City Dock,KBL_m_01.5
+RM 6.5 - Cunningham Park,KBL_m_06.5
 RM 6.5- Cunningham Park,KBL_m_06.5
 RM 6.5-CUNNINGHAM PARK,KBL_m_06.5
-RM10.1-Kenai River,KBL_m_10.1
+RM6.5-Cunningham Park,KBL_m_06.5
 RM 10.1 - Kenai River,KBL_m_10.1
-RM12.5-Pillars,KBL_m_12.5
+RM10.1-Kenai River,KBL_m_10.1
 RM 12.5 - Pillars,KBL_m_12.5
+RM 12.5 - Pillars - FieldBlank,KBL_m_12.5
+RM 12.5 Pillars,KBL_m_12.5
 RM 12.5-PILLARS,KBL_m_12.5
 RM 12.5-PILLARS-FIELD BLANK,KBL_m_12.5
-RM18-Poacher's Cove,KBL_m_18.0
+RM12.5-Pillars,KBL_m_12.5
+RM 18 - Poacher's Cove,KBL_m_18.0
 RM 18 - Poacher's Cove,KBL_m_18.0
 RM 18-POACHER'S COVE,KBL_m_18.0
-RM21-Soldotna Bridge,KBL_m_21.0
+RM18-Poacher's Cove,KBL_m_18.0
 RM 21 - Soldotna Bridge,KBL_m_21.0
-RM 21-SOLDOTNA BRIDGE,KBL_m_21.0
+RM 21 - Soldotna Bridge,KBL_m_21.0
 RM 21 - Soldotna Bridge FB,KBL_m_21.0
+RM 21-SOLDOTNA BRIDGE,KBL_m_21.0
+RM21-Soldotna Bridge,KBL_m_21.0
+RM 23 - Swiftwater Park,KBL_m_23.0
 RM 23 - Swiftwater Park,KBL_m_23.0
 RM 23-SWIFTWATER PARK,KBL_m_23.0
 RM 23-Swiftwater Park,KBL_m_23.0
-RM31-Morgan's Landing,KBL_m_31.0
-RM 31-MORGAN'S LANDING,KBL_m_31.0
 RM 31 - Morgan's Landing,KBL_m_31.0
-RM40-Bing's Landing,KBL_m_40.0
+RM 31 - Morgan's Landing,KBL_m_31.0
+RM 31-MORGAN'S LANDING,KBL_m_31.0
+RM31-Morgan's Landing,KBL_m_31.0
+RM 40 - Bing's Landing,KBL_m_40.0
 RM 40 - Bing's Landing,KBL_m_40.0
 RM 40-BING'S LANDING,KBL_m_40.0
-RM43-Upstream of Dow Island,KBL_m_43.0
+RM40-Bing's Landing,KBL_m_40.0
 RM 43 - Upstream of Dow Island,KBL_m_43.0
+RM 43 - Upstream of Dow Island,KBL_m_43.0
+RM43-Upstream of Dow Island,KBL_m_43.0
+RM 50 - Skilak Lake Ourflow,KBL_m_50.0
 RM 50 - Skilak Lake Outflow,KBL_m_50.0
-RM50-Skilak Lake Outflow,KBL_m_50.0
 RM 50-SKILAK LAKE OUTFLOW,KBL_m_50.0
-RM70-Jim's Landing,KBL_m_70.0
+RM50-Skilak Lake Outflow,KBL_m_50.0
+RM 70 - Jim's Landing,KBL_m_70.0
 RM 70 - Jim's Landing,KBL_m_70.0
 RM 70-JIM'S LANDING,KBL_m_70.0
-RM82-Kenai Lake Bridge,KBL_m_82.0
+RM70-Jim's Landing,KBL_m_70.0
+RM 82 - Kenai Lake Bridge,KBL_m_82.0
 RM 82 - Kenai Lake Bridge,KBL_m_82.0
 RM 82-KENAI LAKE BRIDGE,KBL_m_82.0
-RM0-No Name Creek,KBL_t_00.0
+RM82-Kenai Lake Bridge,KBL_m_82.0
 RM 0 - No Name Creek,KBL_t_00.0
+RM 0 - No Name Creek,KBL_t_00.0
+RM 0 - No Name Creek - DUP,KBL_t_00.0
+RM 0 - No Name Creek-FB,KBL_t_00.0
+RM 0-NO NAME CREEK,KBL_t_00.0
+RM 0-NO NAME CREEK-FB,KBL_t_00.0
+RM0-No Name Creek,KBL_t_00.0
 RM0-No Name Creek DUP,KBL_t_00.0
-RM10-Beaver Creek,KBL_t_10.0
-RM 10-BEAVER CREEK,KBL_t_10.0
+RM 10 - Beaver Creek,KBL_t_10.0
 Rm 10 - Beaver Creek,KBL_t_10.0
-RM19-Slikok Creek,KBL_t_19.0
-RM 19-SLIKOK CREEK,KBL_t_19.0
+RM 10-BEAVER CREEK,KBL_t_10.0
+RM 10-BEAVER CREEK,KBL_t_10.0
+RM10-Beaver Creek,KBL_t_10.0
 RM 19 - Slikok Creek,KBL_t_19.0
-RM22-Soldotna Creek,KBL_t_22.0
-RM 22-SOLDOTNA CREEK,KBL_t_22.0
+RM 19 - Slikok Creek,KBL_t_19.0
+RM 19-SLIKOK CREEK,KBL_t_19.0
+RM19-Slikok Creek,KBL_t_19.0
 RM 22 - Soldotna Creek,KBL_t_22.0
+RM 22 - Soldotna Creek,KBL_t_22.0
+RM 22-SOLDOTNA CREEK,KBL_t_22.0
+RM22-Soldotna Creek,KBL_t_22.0
 RM 30 - Funny River,KBL_t_30.0
-RM30-Funny River,KBL_t_30.0
+RM 30 - Funny River,KBL_t_30.0
 RM 30-FUNNY RIVER,KBL_t_30.0
-RM36-Moose River,KBL_t_36.0
-RM36-Moose River DUP,KBL_t_36.0
-RM 36 - Moose River - DUP,KBL_t_36.0
+RM30-Funny River,KBL_t_30.0
 RM 36 - Moose River,KBL_t_36.0
+RM 36 - Moose River,KBL_t_36.0
+RM 36 - Moose River - DUP,KBL_t_36.0
+RM 36 - Moose River-DUP,KBL_t_36.0
 RM 36-MOOSE RIVER,KBL_t_36.0
 RM 36-MOOSE RIVER-DUP,KBL_t_36.0
-RM44-Mouth of Killey River,KBL_t_44.0
+RM36-Moose River,KBL_t_36.0
+RM36-Moose River DUP,KBL_t_36.0
+RM 44 - Mouth of Killey River,KBL_t_44.0
 RM 44 - Mouth of Killey Valley,KBL_t_44.0
 RM 44-MOUTH OF KILLEY RIVER,KBL_t_44.0
+RM44-Mouth of Killey River,KBL_t_44.0
 RM 74 - Russian River,KBL_t_74.0
-RM74-Russian River,KBL_t_74.0
+RM 74 - Russian River,KBL_t_74.0
 RM 74-RUSSIAN RIVER,KBL_t_74.0
+RM74-Russian River,KBL_t_74.0
 RM 79.5 - Juneau Creek,KBL_t_79.5
-RM79.5-Juneau Creek,KBL_t_79.5
+RM 79.5 - Juneau Creek,KBL_t_79.5
 RM 79.5-JUNEAU CREEK,KBL_t_79.5
+RM79.5-Juneau Creek,KBL_t_79.5
+TRIP BLANK,

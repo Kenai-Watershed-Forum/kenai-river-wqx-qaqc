@@ -84,7 +84,9 @@ The code scripts in this document assemble water quality data from the two analy
 ```{r, echo = F, message = F}
 library("xfun")
 
-xfun::embed_file('other/input/2023/spring_2023_wqx_data/Data/SGS/Revision 1 SGS Data/1231846_FC5912_Rev1.csv', text = "Download Original Spring 2023 Metals/Nutrients Lab Results from SGS - Electronic Data Delivery file")
+xfun::embed_file('other/input/2023/spring_2023_wqx_data/Data/SGS/Revision 1 SGS Data/1231846_FC5912_Rev1_part1.csv', text = "Download Original Spring 2023 Metals/Nutrients Lab Results from SGS - Part 1 - Electronic Data Delivery file")
+
+xfun::embed_file('other/input/2023/spring_2023_wqx_data/Data/SGS/Revision 1 SGS Data/1231846_FC5912_Rev1_part2.csv', text = "Download Original Spring 2023 Metals/Nutrients Lab Results from SGS - Part 2 - Electronic Data Delivery file")
 
 xfun::embed_file('other/input/2023/spring_2023_wqx_data/Data/SGS/Revision 1 SGS Data/1231846_SGS_Spring_2023_data_final.pdf', text = "Download Original Spring 2023 Metals/Nutrients Lab Results from SGS - PDF file")
 
@@ -105,10 +107,6 @@ xfun::embed_file('other/input/2023/summer_2023_wqx_data/Data/SGS/1233640_COC.pdf
 
 #| warning: false
 #| message: false
-
-
-
-# WORKING HERE - 5/10/2024 - modified read-in here, ensure all subsequent steps can function
 
 
 ############################ Part A.1: SGS 2023 Data Read In #############################
@@ -204,7 +202,6 @@ rm(spring_batch_sgs23,summer_batch_sgs23)
 # export list of unique sample_id
 sgs_sitenames <- sgs23 %>%
   distinct(sample_id,collect_date)
-colnames(sgs_sitenames) <- c("sample_id","collect_date")
 sgs_sitenames %>% arrange(sample_id)
 write.csv(sgs_sitenames,"other/input/2023/misc/site_names.csv", row.names = F)
 
@@ -226,15 +223,6 @@ colnames(sgs_sitenames) <- c("sample_id","site_id")
 # join site_id to main dataframe
 sgs23 <- left_join(sgs23,sgs_sitenames, by = "sample_id")
 
-# NOTE: the join for the "No Name Creek" sites are not cooperating.
-# After investigating possible reasons, (white spaces, etc) no diagnoses are evident. 
-# For time efficiency, we will instead manually rectify this in script with mutate and case_when
-
-sgs23 %<>%
-  mutate(site_id = 
-           case_when(
-             grepl("No Name|NO NAME", sample_id) ~ "KBL_t_00.0",
-             TRUE ~ site_id)) 
 
 
 # join "monitoring location id" to overall sgs23 dataframe
@@ -283,7 +271,7 @@ sgs23 %<>%
   # designate special activity types
   mutate(activity_type = case_when(
     grepl("DUP|Dup", sample_id) ~ "Quality Control Field Replicate Msr/Obs",
-    grepl("FB", sample_id) ~ "Quality Control Sample-Field Blank",
+    grepl("FB|FieldBlank|FIELD BLANK", sample_id) ~ "Quality Control Sample-Field Blank",
     grepl("TRIP BLANK", sample_id) ~ "Quality Control Sample-Trip Blank",
     TRUE ~ "")) %>%
   # designate all other project samples as project samples (using CDX domain value choices)
@@ -309,19 +297,34 @@ sgs23 %<>%
 # Result Sample Fraction	
 # CDX domains: "Filtered, field," "Filtered, lab,"  "Unfiltered," "Volatile", "Total"
 
-# WORKING HERE -- NEED TO DISTINGUISH SUMMER VS SPRING TOTAL METALS RESULTS - DONE - USE "ANALYSIS GROUP"
+
+# WORKING HERE 5/10/2024 -- NEED TO DISTINGUISH SUMMER VS SPRING TOTAL METALS RESULTS - DONE - USE "ANALYSIS GROUP"
+
+
+# method SW846 6010D pertain to metal digestion and does not have reportable values. It is is included in the SGS records here as project sample ("PS") at select sites for unclear reasons.
+
+z <- sgs23 %>% filter(sample_type == "PS",
+                      collect_date == "2023-07-18")
 
 sgs23 %<>%
+  filter(analytical_method != "SW846 6010D") %>%
   mutate(result_sample_fraction = case_when(
     grepl("SW8260D", analytical_method) ~ "Volatile",                   # hydrocarbons
     grepl("SM21 4500NO3-F|SM21 4500P-B,E", analytical_method) ~ "Total",# total N and P
     grepl("EPA 200.7", analytical_method) ~ "Unfiltered",               # total metals as used in spring 2023
-                                                                       
-    grepl("SW846 6010D", analytical_method) ~ "Filtered, lab",          # dissolved metals method used in Spring 2023
     
-    analytical_method == "EP200.8" &                                    # total metals as used in summer 2023 
+    # WORKING HERE - need to designate spring 2023 as 200.8 = dissolved, and summer 2023 as 200.8 = dissolved WHEN [200.8 + analysis_group = "Dissolved Metals by ICP/MS"]
+    
+    
+    grepl("EP200.8|EP200.8 ", analytical_method)
+            
+    
+    
+    
+    
+    analytical_method == "EP200.8|EP200.8 " &                           # total metals as used in summer 2023 
       analysis_group == "Metals by ICP/MS" ~ "Unfiltered",
-    analytical_method == "EP200.8" &                                    # dissolved metals as used in summer 2023
+    analytical_method == "EP200.8|EP200.8 " &                                    # dissolved metals as used in summer 2023
       analysis_group == "Dissolved Metals by ICP/MS" ~ "Filtered, lab", 
     TRUE ~ "")) %>%
   
@@ -329,6 +332,9 @@ sgs23 %<>%
   mutate(diss_abbrv = case_when(
     result_sample_fraction == "Filtered, lab" ~ "Diss",
     TRUE ~ ""))
+
+z <- sgs23 %>% filter(sample_type == "PS") %>%
+  select(sample_id, collect_date,analytical_method, sample_type,result_sample_fraction)
 
 ```
 
@@ -367,6 +373,10 @@ sgs23 %<>% left_join(analyte_abbrv)
 
 # Activity Start Date	(static, specific to SGS)
 sgs23 %<>% rename(activity_start_date = collect_date)
+
+
+# make consistent to 5/2/2023
+
 
 # Activity Start Time	(static, specific to SGS)
 sgs23 %<>% rename(activity_start_time = collect_time)
@@ -1343,7 +1353,7 @@ Instrument data files from fieldwork are not generated as part of this project.
 
 **16.) Is any in-situ field data rejected and why?**
 
-TBD ... see question ###
+TBD ... see question \###
 
 <br>
 
