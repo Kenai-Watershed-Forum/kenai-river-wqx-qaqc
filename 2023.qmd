@@ -297,44 +297,30 @@ sgs23 %<>%
 # Result Sample Fraction	
 # CDX domains: "Filtered, field," "Filtered, lab,"  "Unfiltered," "Volatile", "Total"
 
+# method SW846 6010D pertain to metal digestion and does not have reportable values. It is is included in the SGS records here as project sample ("PS") at select sites for unclear reasons. We will remove them.
 
-# WORKING HERE 5/10/2024 -- NEED TO DISTINGUISH SUMMER VS SPRING TOTAL METALS RESULTS - DONE - USE "ANALYSIS GROUP"
-
-
-# method SW846 6010D pertain to metal digestion and does not have reportable values. It is is included in the SGS records here as project sample ("PS") at select sites for unclear reasons.
-
-z <- sgs23 %>% filter(sample_type == "PS",
-                      collect_date == "2023-07-18")
-
-sgs23 %<>%
+z <- sgs23 %<>%
   filter(analytical_method != "SW846 6010D") %>%
   mutate(result_sample_fraction = case_when(
     grepl("SW8260D", analytical_method) ~ "Volatile",                   # hydrocarbons
     grepl("SM21 4500NO3-F|SM21 4500P-B,E", analytical_method) ~ "Total",# total N and P
-    grepl("EPA 200.7", analytical_method) ~ "Unfiltered",               # total metals as used in spring 2023
     
-    # WORKING HERE - need to designate spring 2023 as 200.8 = dissolved, and summer 2023 as 200.8 = dissolved WHEN [200.8 + analysis_group = "Dissolved Metals by ICP/MS"]
+    # by analysis_group
+    analysis_group = "Metals by ICP/MS|Metals by ICP/MS (Provisional for Be, Cu 06052023)|Metals", analysis_group ~ "Unfiltered"))
+
+
+# WORKING HERE TO ASSIGN WHICH FRACTION AS DISSOLVED AND WHICH TOTAL !!!!
+
     
+    # this line is not working to asssign
     
-    grepl("EP200.8|EP200.8 ", analytical_method)
-            
-    
-    
-    
-    
-    analytical_method == "EP200.8|EP200.8 " &                           # total metals as used in summer 2023 
-      analysis_group == "Metals by ICP/MS" ~ "Unfiltered",
-    analytical_method == "EP200.8|EP200.8 " &                                    # dissolved metals as used in summer 2023
-      analysis_group == "Dissolved Metals by ICP/MS" ~ "Filtered, lab", 
+    grepl("Diss.|Dissolved", analysis_group) ~ "Filtered, lab",
     TRUE ~ "")) %>%
   
   # designate dissolved vs. total metals (filtered vs. unfiltered) for use in concatenating Activity ID
   mutate(diss_abbrv = case_when(
     result_sample_fraction == "Filtered, lab" ~ "Diss",
     TRUE ~ ""))
-
-z <- sgs23 %>% filter(sample_type == "PS") %>%
-  select(sample_id, collect_date,analytical_method, sample_type,result_sample_fraction)
 
 ```
 
@@ -373,9 +359,14 @@ sgs23 %<>% left_join(analyte_abbrv)
 
 # Activity Start Date	(static, specific to SGS)
 sgs23 %<>% rename(activity_start_date = collect_date)
+# make collect date consistent to 5/2/2023
+sgs23 %<>% mutate(activity_start_date = case_when(
+  sample_type == "PS" ~ as.character(spring23_sample_date),
+  TRUE ~ activity_start_date))
+```
 
 
-# make consistent to 5/2/2023
+```{r}
 
 
 # Activity Start Time	(static, specific to SGS)
@@ -1145,11 +1136,6 @@ dat %<>% mutate(thermal_preservative_used = "Cold Packs (4 deg C)")
 # A typo from the SGS labs resulted in showing multiple incorrect fieldwork dates for spring 2023. Correct this here
 dat %<>%
   
-  # correct typo showing field sampling occurring on 2023-05-03 (day after field event)
-  mutate(activity_start_date = case_when(
-    activity_start_date == "2023-05-03" & sample_type == "PS" ~ "2023-05-02",
-    TRUE ~ activity_start_date)) %>%
-  
   # here we will correct a typo showing lab QA/QC analyses occurring prior to summer field sampling date on 2023-07-18. By definition no activity could have occurred with these project samples beforehand, as they had not yet been collected
   mutate(activity_start_date = case_when(
     ymd(activity_start_date) < ymd("2023-07-18") &  ymd(activity_start_date) > ymd("2023-07-13")
@@ -1166,9 +1152,9 @@ dat %<>%
 ### Make Unit Names Consistent ###
 
 # Are all unit names consistent within each parameter? If not, make correction(s) here
-z <- dat %>%
-  distinct(characteristic_name,result_unit) %>%
-  arrange(characteristic_name)
+#z <- dat %>%
+#  distinct(characteristic_name,result_unit) %>%
+#  arrange(characteristic_name)
 
 # for 2023, we need to consolidate "ug/l" and "ug/L" throughout the dataframe (results and detection limits)
 dat[dat == "ug/L"] <- 'ug/l'
@@ -1234,15 +1220,13 @@ Yes. Analytical methods from the approved 2023 QAPP were employed, with exceptio
 
 Changes from the approved 2023 occurred, including:
 
--   For spring 2023, a laboratory method used to analyze dissolved metals differed slightly from that specified on the QAPP. EPA method 6010D was employed rather than EPA method 200.8. The project manager at SGS Laboratories in Anchorage, AK describes that no differences are anticipated in how results can be interpreted. Both methods are appropriate for dissolved metals in surface waters.
-
--   For summer 2023, a laboratory method used to analyze total metals differed slightly from that specified on the QAPP. EPA method 200.8 used for total metals. The project manager at SGS Laboratories in Anchorage, AK describes that no differences are anticipated in how results can be interpreted. Both methods are appropriate for total metals in surface waters.
+-   For summer 2023, a laboratory method used to analyze total metals differed slightly from that specified on the QAPP. EPA method 200.8 was used for total metals rather than 200.7. The project manager at SGS Laboratories in Anchorage, AK describes that no differences are anticipated in how results can be interpreted. Both methods are appropriate for total metals in surface waters.
 
 <br>
 
 **2.) Were there any deviations from the sampling plan?**
 
-In 2023 there were several small deviations from the sampling plan due to a late ice-out date and challenging spring field logistics. One site in spring 2023 could not be accessed for sampling due to low water conditions (Kenai River main stem, RM 10.1). As a result there are no samples from this site/date. Additionally, one fecal coliform sample is missing from site RM 40 on 5/2/2023 due to an on-site loss due to bottle spillage.
+In 2023 there were several small deviations from the sampling plan due to a late ice-out date and challenging spring field logistics. One site in spring 2023 could not be accessed for sampling due to low water conditions (Kenai River main stem, RM 10.1). As a result there are no samples from this site/date. Additionally, one fecal coliform sample result is missing from site RM 40 (Killey River) on 5/2/2023 due to an on-site loss from bottle spillage.
 
 <br>
 
@@ -1383,9 +1367,9 @@ hold_times <- left_join(hold_times,sample_holding_times) %>%
 
 ```
 
-We calculated time from sample field collection to lab receipt as documented in 2023 lab reports. All samples were within holding times specified in the QAPP.
+We calculated time from sample field collection to lab receipt as documented in 2023 lab reports. All 2023 samples were within holding times specified in the QAPP.
 
-In the field, all samples were stored in coolers with ice packs at 4 degrees C until arrival at the laboratory. In the results from SGS laboratories, two individual observations include the asterisk "\*" in the "result_qualifier" column. This indicates that "the sample was warm when received." These observations correspond not to sample handling in the field, but rather to internal laboratory procedures used for method blank measurements. The laboratory case narrative does not indicate that any individual sample results would be affected.
+In the field, all samples were stored in coolers with ice packs at 4 degrees C until arrival at the laboratory. In the results from SGS laboratories, two individual observations include the asterisk "\*" in the "result_qualifier" column. This indicates that "the sample was warm when received." These observations correspond not to sample handling in the field and delivery to the laboratories, but rather to internal laboratory procedures used for method blank measurements. The laboratory case narrative does not indicate that any individual sample results would be affected.
 
 Hold time result calculations are available in the downloadable table below in the right-most columns.
 
@@ -1404,7 +1388,7 @@ embed_file(hold_times_dir, text = "Download 2023 kenai River Baseline Water Qual
 
 ```{r echo = F}
 
-# PRIORITY TASK, WORKING HERE - sent email to c whisman 5/7/2024
+# PRIORITY TASK, WORKING HERE - sent email to c whisman 5/13/2024
 
 
 # current result has only 5 observations from spring 2023 .. whats up with that?!?!?!
@@ -1421,8 +1405,6 @@ embed_file(hold_times_dir, text = "Download 2023 kenai River Baseline Water Qual
 # WORK IN PROGRESS
 
 
-
-
 # choose characteristics
 metals <- c("Calcium","Iron","Magnesium","Copper","Zinc")
 cols1 <- c("activity_id","characteristic_name", "activity_start_date", "monitoring_location_id","result_sample_fraction", "result_value","result_unit")
@@ -1436,11 +1418,10 @@ dat_metals <- dat %>%
   # designate column to identify field blanks and field duplicates
   mutate(field_sample_type = case_when(
     grepl("FB", activity_id) ~ "FB",
-    grepl("DUP", activity_id) ~ "DUP"
-  )) %>%
+    grepl("DUP", activity_id) ~ "DUP")) %>%
   select(-activity_id)
 
-# note that analytical method ID is not included in the above dataframe. This is because in summer 2023, 200.8 was used for both total AND dissolved metals
+# NOTE that analytical method ID is not included in the above dataframe. This is because in summer 2023, 200.8 was used for both total AND dissolved metals. May choose to modify in future emplates
 
 # create dataframes of filtered vs unfiltered (dissolved vs total)
 # unfiltered (total)
@@ -1463,6 +1444,7 @@ z <- inner_join(dat_metals_tot,dat_metals_diss)
 
 
 
+# issue: lots of spring results where tot < diss. incorrectly assigned method likely. also dup obs ?!?
 ```
 
 <br>
