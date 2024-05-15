@@ -297,26 +297,29 @@ sgs23 %<>%
 # Result Sample Fraction	
 # CDX domains: "Filtered, field," "Filtered, lab,"  "Unfiltered," "Volatile", "Total"
 
-# method SW846 6010D pertain to metal digestion and does not have reportable values. It is is included in the SGS records here as project sample ("PS") at select sites for unclear reasons. We will remove them.
+# method SW846 6010D pertains to metal digestion and does not have reportable values. It is is included in the SGS records here as project sample ("PS") at select sites for unclear reasons. We will remove them.
 
-z <- sgs23 %<>%
+sgs23 %<>%
   filter(analytical_method != "SW846 6010D") %>%
+  
+  # assign by analytical method
   mutate(result_sample_fraction = case_when(
     grepl("SW8260D", analytical_method) ~ "Volatile",                   # hydrocarbons
     grepl("SM21 4500NO3-F|SM21 4500P-B,E", analytical_method) ~ "Total",# total N and P
     
-    # by analysis_group
-    analysis_group = "Metals by ICP/MS|Metals by ICP/MS (Provisional for Be, Cu 06052023)|Metals", analysis_group ~ "Unfiltered"))
-
-
-# WORKING HERE TO ASSIGN WHICH FRACTION AS DISSOLVED AND WHICH TOTAL !!!!
-
+    # assign by by analysis_group
+    # unfiltered (total metals)
+    analysis_group == "Metals by ICP/MS" |
+      analysis_group == "Metals" |
+      analysis_group == "Metals by ICP/MS (Provisional for Be, Cu 06052023)"
+    ~ "Unfiltered",
     
-    # this line is not working to asssign
-    
-    grepl("Diss.|Dissolved", analysis_group) ~ "Filtered, lab",
-    TRUE ~ "")) %>%
-  
+     # filtered (dissolved metals)
+    analysis_group == "Dissolved Metals by ICP/MS" |
+      analysis_group == "Diss. Metals by ICP/MS (Provisional Be,Cu 652023)" 
+    ~ "Filtered, lab",
+    TRUE ~ "" )) %>%
+
   # designate dissolved vs. total metals (filtered vs. unfiltered) for use in concatenating Activity ID
   mutate(diss_abbrv = case_when(
     result_sample_fraction == "Filtered, lab" ~ "Diss",
@@ -1388,26 +1391,32 @@ embed_file(hold_times_dir, text = "Download 2023 kenai River Baseline Water Qual
 
 ```{r echo = F}
 
-# PRIORITY TASK, WORKING HERE - sent email to c whisman 5/13/2024
+# PRIORITY TASK, WORKING HERE - sent email to c whisman 5/14/2024
 
 
-# current result has only 5 observations from spring 2023 .. whats up with that?!?!?!
+# WORKING HERE TO DIAGNOSE JOIN ISSUE(S), WHY 3 OBS PER PARAMETER PER SITE/DATE...?
 
-# still the case
+# something with SGS read in is getting mis-assigned. compare 1-parameter/site read results here (3x) vs in intial read in (2x; in obs and one dup ...) where is the extra one coming from? compare results here vs @ read in to diagnose. Goal: 5:30 AM.
 
-# note -- need to distinguish 
+# issue might not be just join - why the odd number of observations per site/date
+
+# tangential possible issue -- are there multiple times associated with sampling events? find out
+
+# result_analytical_method_id missing for many metals observations
+
+z <- dat %>%
+  filter(sample_type == "PS",
+         characteristic_name == "Iron") %>%
+  select(activity_id,monitoring_location_id,activity_start_date,activity_type,characteristic_name,result_value,result_unit,result_sample_fraction) 
+  distinct(activity_start_time)
+  
 
 
-# need to correct intake code in SGS chunk, possibly an issue with sample fraction assignment(s)
-
-# still working on this chunk
-
-# WORK IN PROGRESS
 
 
 # choose characteristics
 metals <- c("Calcium","Iron","Magnesium","Copper","Zinc")
-cols1 <- c("activity_id","characteristic_name", "activity_start_date", "monitoring_location_id","result_sample_fraction", "result_value","result_unit")
+cols1 <- c("activity_id","characteristic_name", "activity_start_date", "activity_type", "monitoring_location_id","result_sample_fraction", "result_value","result_unit")
 
 dat_metals <- dat %>%
   # select field observations only
@@ -1421,7 +1430,11 @@ dat_metals <- dat %>%
     grepl("DUP", activity_id) ~ "DUP")) %>%
   select(-activity_id)
 
-# NOTE that analytical method ID is not included in the above dataframe. This is because in summer 2023, 200.8 was used for both total AND dissolved metals. May choose to modify in future emplates
+
+# see screenshot
+
+
+# NOTE that analytical method ID is not included in the above dataframe. This is because in summer 2023, 200.8 was used for both total AND dissolved metals. May choose to modify in future templates
 
 # create dataframes of filtered vs unfiltered (dissolved vs total)
 # unfiltered (total)
@@ -1438,13 +1451,21 @@ dat_metals_diss <- dat_metals %>%
            result_unit_diss = result_unit) %>%
   select(-result_sample_fraction, -result_unit_diss)
 
+# bad results
+z <- inner_join(dat_metals_tot,dat_metals_diss,
+                by = c("characteristic_name","activity_start_date","monitoring_location_id","field_sample_type")) %>%
+  distinct() %>%
+  arrange(monitoring_location_id,characteristic_name)
 
-# results here are nonsensical; missing almost all spring 2023 results
-z <- inner_join(dat_metals_tot,dat_metals_diss)
+
+# nonsensical replicates apparent after join
+# no FB results present
+
+# issue: lots of spring results where tot < diss. incorrectly assigned method likely. also dup obs ?!? (many to many)
+
+# check pdfs to verify not crazy
 
 
-
-# issue: lots of spring results where tot < diss. incorrectly assigned method likely. also dup obs ?!?
 ```
 
 <br>
