@@ -195,13 +195,14 @@ sgs23 <- bind_rows(spring_batch_sgs23,summer_batch_sgs23) %>%
 
 # remove individual dataframes
 rm(spring_batch_sgs23,summer_batch_sgs23)
-            
+
 
 ################### Part A.2: Create Consistent Sample Location Names for SGS data #####################
 
 # export list of unique sample_id
 sgs_sitenames <- sgs23 %>%
-  distinct(sample_id,collect_date)
+  filter(sample_type == "PS") %>%
+  distinct(sample_id)
 sgs_sitenames %>% arrange(sample_id)
 write.csv(sgs_sitenames,"other/input/2023/misc/site_names.csv", row.names = F)
 
@@ -211,18 +212,15 @@ write.csv(sgs_sitenames,"other/input/2023/misc/site_names.csv", row.names = F)
 # read in manually edited csv
 sgs_sitenames <- read_csv("other/input/2023/misc/site_names_manual_edit_sgs23.csv") %>%
   filter(!is.na(site_id)) %>%
+  select(sample_id,site_id) %>%
   # remove trailing spaces
-  mutate(sample_id = str_trim(sample_id, side = "right")) %>%
-  rename(`site_id  ` = site_id)
-colnames(sgs_sitenames) <- c("sample_id","site_id")
+  mutate(sample_id = str_trim(sample_id, side = "right"))
 
 
-#write.csv(sgs_sitenames, "other/input/2023/misc/site_names_manual_edit.csv", row.names = F)
+# write.csv(sgs_sitenames, "other/input/2023/misc/site_names_manual_edit.csv", row.names = F)
   
-
 # join site_id to main dataframe
 sgs23 <- left_join(sgs23,sgs_sitenames, by = "sample_id")
-
 
 
 # join "monitoring location id" to overall sgs23 dataframe
@@ -235,6 +233,11 @@ location_ids <- read.csv("other/output/example_output/results_activities_2021.cs
 
 # join
 sgs23 <- left_join(sgs23,location_ids, by = "site_id") 
+
+
+```
+
+```{r}
 
 # NOTE: the join for several sites are not cooperating.
 # These sites include "Skilak Lake Outflow," and "Jim's Landing
@@ -360,17 +363,20 @@ sgs23 %<>% left_join(analyte_abbrv)
 # create Activity ID column
 # note: this step will be performed last in the sgs block, because corrections to date and/or date format may be made throughout subsequent steps here
 
+
+
 # Activity Start Date	(static, specific to SGS)
 sgs23 %<>% rename(activity_start_date = collect_date)
+
+
 # make collect date consistent to 5/2/2023
 sgs23 %<>% mutate(activity_start_date = case_when(
-  sample_type == "PS" ~ as.character(spring23_sample_date),
+  sample_type == "PS" & activity_start_date == "2023-05-03" ~ as.character(spring23_sample_date),
   TRUE ~ activity_start_date))
 ```
 
 
 ```{r}
-
 
 # Activity Start Time	(static, specific to SGS)
 sgs23 %<>% rename(activity_start_time = collect_time)
@@ -521,6 +527,13 @@ sgs23 %<>%
   mutate(activity_id = case_when(
     diss_abbrv == "" ~ activity_id,
     TRUE ~ paste0(activity_id,"-",diss_abbrv)))
+
+# diagnosing
+z <- sgs23 %>%
+  filter(characteristic_name == "Iron",
+         sample_type == "PS")
+
+# see: lab_sample_id = 1233640028 has collect date in spring and receive date in summer. fix me 
 
 ```
 
@@ -1410,8 +1423,8 @@ z <- dat %>%
   select(activity_id,monitoring_location_id,activity_start_date,activity_type,characteristic_name,result_value,result_unit,result_sample_fraction) 
   distinct(activity_start_time)
   
-
-
+  # WORKING HERE new mystery: some field blanks have no result_analytical_method_id
+  
 
 
 # choose characteristics
@@ -1431,9 +1444,6 @@ dat_metals <- dat %>%
   select(-activity_id)
 
 
-# see screenshot
-
-
 # NOTE that analytical method ID is not included in the above dataframe. This is because in summer 2023, 200.8 was used for both total AND dissolved metals. May choose to modify in future templates
 
 # create dataframes of filtered vs unfiltered (dissolved vs total)
@@ -1451,9 +1461,9 @@ dat_metals_diss <- dat_metals %>%
            result_unit_diss = result_unit) %>%
   select(-result_sample_fraction, -result_unit_diss)
 
-# bad results
+# results here fit the lego-join, but if correct, at least 50% of instances show diss > tot. check back in pdfs.
 z <- inner_join(dat_metals_tot,dat_metals_diss,
-                by = c("characteristic_name","activity_start_date","monitoring_location_id","field_sample_type")) %>%
+                by = c("characteristic_name","activity_start_date","monitoring_location_id","field_sample_type","activity_type")) %>%
   distinct() %>%
   arrange(monitoring_location_id,characteristic_name)
 
