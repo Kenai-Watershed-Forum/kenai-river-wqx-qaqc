@@ -1510,11 +1510,11 @@ write.csv(dup_sites,dir, row.names = F)
   # 1.) one or both of the measurements must be above the parameter's limit of quantitation (LOQ), AND
   # 2.) one or both of the measurements must be at least two times the LOQ."
 
-z <- dat %<>%
+dat %<>%
   # do units match for detection limits and result values?
   mutate(unit_match = case_when(
     result_detection_limit_unit_1 == result_unit ~ "Y",
-    TRUE ~ "N"  )) %>%
+    TRUE ~ "N")) %>%
   # are result values greater than LOQ?
   mutate(loq_pass = case_when(
     as.numeric(result_detection_limit_value_1) < result_value ~ "Y",
@@ -1611,15 +1611,15 @@ Yes, there were. They are listed below:
 
 -   Sample collection date
 
-    -   The SGS PDF report shows some samples as collected on 5/3/2022. All samples were in fact collected on 5/2/2023. An error of pre-printed dates on page 1 of the SGS chain of custody was responsible for this error. We applied the time/date correction as part of the intake script.
+    -   The SGS PDF report shows some samples as collected on 5/3/2022. All field samples were in fact collected on 5/2/2023. An error of pre-printed dates on page 1 of the SGS chain of custody was responsible for this error. We applied the time/date correction as part of the data read-in script.
 
 -   Sample receipt time/date to SGS laboratories
 
-    -   The SGS Electronic Data Deliverable (EDD; spreadsheet) of results shows 5/9/2023 as the receival date for all project samples (sample_type = "PS"), and time of day is not specified. However, the PDF report for these same results indicates all samples were in fact received on 5/04/23 08:51, which is consistent with the chain of custody docs. We applied the time/date correction as part of the intake script.
+    -   The SGS Electronic Data Deliverable (EDD; spreadsheet) of results shows 5/9/2023 as the receival date for all spring project samples (sample_type = "PS"), and time of day is not specified. However, the PDF report for these same results indicates all samples were in fact received on 5/04/23 08:51, which is consistent with the chain of custody docs. We applied the time/date correction as part of the intake script.
 
 -   Field site names
 
-    -   Both of the laboratry's results contained miscellaneous spellings and formats of site names that were inconsistent with of the needs of preparing data for the EPA CDX. These were corrected in the intake script by use of matching tables csv files, which can be viewed in the project GitHub repository under the directory"other/input/2023/misc".
+    -   Both of the laboratory's results contained miscellaneous spellings and formats of site names that were inconsistent with of the needs of preparing data for the EPA CDX. These were corrected in the intake script by use of matching tables csv files, which can be viewed in the project GitHub repository under the directory"other/input/2023/misc".
 
 *Data qualifiers, QC failures (review laboratory duplicates, matrix spikes and blanks)*
 
@@ -1635,7 +1635,7 @@ Yes, there were. They are listed below:
 
         -   Spring 2023
 
-            -   Zinc: Two dissolved zinc method blanks (200.8) (MB) are above the Limit of Quantitation of 10.0 ug/L. One MB is at 11.3 ug/L, the other at 15.9 ug/L. **As a result, dissolved zinc results from spring 2023 may need to be flagged for QC failure.** PLAN: review 2021 ADEC report.
+            -   Zinc: Two dissolved zinc method blanks (200.8) (MB) are above the Limit of Quantitation of 10.0 ug/L. One method blank (MB) is at 11.3 ug/L, the other at 15.9 ug/L. **As a result, dissolved zinc results from spring 2023 may need to be flagged for QC failure.** PLAN: review 2021 ADEC report.
 
             -   Total Nitrate/Nitrite: One matrix spike duplicate sample for total nitrate/nitrite is outside of QC criteria. The range of permissible recovery values includes the range from 90% - 110%, and the value is listed at 89%. This QC failure does not suggest a mechanism by which sample values are not still representative of environmental conditions, and will not result in spring 2023 total nitrate/nitrate values being flagged for QC failure.
 
@@ -1647,7 +1647,7 @@ Yes, there were. They are listed below:
 
 \*\* 21.) Is any laboratory data rejected and why? \*\*
 
-TKA \_\> check out 2021 example discussion
+TKA \_\> check out 2021 example discussion, probably dissolved Cu and Zn
 
 <br>
 
@@ -1665,7 +1665,7 @@ Yes, we received the anticipated number of results.
 
 \*\* 24.) Was the data collected representative of environmental conditions? \*\*
 
-Yes for all, TKA for dissolved zinc
+Data that is unlikely to represent environmental conditions is identified and flagged as part of this data QA/QC review process.
 
 <br>
 
@@ -1675,7 +1675,7 @@ From the QAPP, Completeness Measure A: “the primary number of samples collecte
 
 From the QAPP, Completeness Measure A: "the primary number of samples collected divided by the usable number of samples submitted to ADEC, with a goal of 85% completeness." (Note that as of 2023 results are now submitted directly to EPA rather than DEC, per request of DEC).
 
-(Note: metals parameters not specified in the QAPP are excluded from these analyses. In 2021, SGS laboratories provided dissolved metals results for parameters beyond what was originally requested.) \>\>\>\>\>\>\> 316dfab7a4e0e74b4522c2c6c0aa1010af44ec8d
+(Note: metals parameters not specified in the QAPP are excluded from these analyses. In 2021, SGS laboratories provided dissolved metals results for parameters beyond what was originally requested.) 
 
 We calculated Completeness Measure A at the following project scales:
 
@@ -1768,7 +1768,7 @@ Kenai Watershed Forum's Organization ID in the EPA Water Quality Exchange is "Ke
 
 \*\* 32.) Are the time zones consistent and correct (AKDT in summer)? \*\*
 
-Orlando time zones?
+Yes.
 
 <br>
 
@@ -1782,7 +1782,11 @@ Orlando time zones?
 
 ```{r echo = F}
 # sample collection method
-unique(dat$equipment_id)
+unique_methods <- dat %>%
+  distinct(result_analytical_method_id,result_sample_fraction,sample_container_type,sample_collection_equipment_name,thermal_preservative_used)
+dir <- "other/misc/qa_qc/unique_methods.csv"
+write.csv(unique_methods,dir, row.names = F)
+embed_file(dir, text = "Download supporting info on 2023 sample collecion & preservation")
 
 ```
 
@@ -1790,21 +1794,29 @@ unique(dat$equipment_id)
 
 \*\* 35.) Are all expected activity types present and are QC samples correctly identified? \*\*
 
+```{r echo = F}
+# generate count table
+activity_types <- dat %>%
+  count(activity_type) %>%
+  filter(activity_type != "")
+dir <- "other/misc/qa_qc/activity_types.csv"
+write.csv(activity_types,dir, row.names = F)
+embed_file(dir, text = "Download supporting info on 2023 activity types")
+
+```
+
+
 <br>
 
 \*\* 36.) Is the Activity media subdivision filled in (if relevant)? \*\*
 
-```{r echo = F}
-
-unique(dat$activity_media_subdivision_name)
-
-```
+"Activity media subdivision" is solely "Surface water" in the 2023 dataset.
 
 <br>
 
 \*\* 37.) For Water activity media, is the relative depth filled in? \*\*
 
-All "Activity Media Subdivision" names are listed as "Surface Water."
+Yes, all samples are listed at an approximate depth of 15 cm.
 
 <br>
 
@@ -1815,10 +1827,16 @@ Questions #2 and #3 address this topic in detail. A summary table of the total n
 ```{r echo = F}
 # need to remove QA/QC analytes from here
 
+z <- dat 
+
+# WORKING HERE
+
+
 #summarise
 chr_num <- dat %>%
+  filter(characteristic_name != "" | !is.na(characteristic_name)) %>%
   group_by(characteristic_name, result_sample_fraction) %>% # group by dissolved status too
-  tally()
+  tally() 
 
 # save
 dir <- "other/output/2023/qa_qc_output/characteristic_count_2023.csv"
