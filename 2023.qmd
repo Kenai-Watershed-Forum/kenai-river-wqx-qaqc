@@ -378,6 +378,11 @@ sgs23 %<>% mutate(activity_start_date = case_when(
 
 ```{r}
 
+# join near line 409 is not properly joining result_analytical_method_id for spring 2023 field blanks
+
+
+
+
 # Activity Start Time	(static, specific to SGS)
 sgs23 %<>% rename(activity_start_time = collect_time)
 
@@ -404,7 +409,10 @@ sgs23 %<>% rename(characteristic_name = analyte)
 analytical_methods_contexts <- read.csv("other/input/2023/misc/analytical_method_id_and_context_matching_table.csv") %>%
   select(-comments,-EPA.name) %>%
   filter(analytical_method != "") %>%
-  mutate(analytical_method = str_trim(analytical_method)) # remove white spaces !
+  mutate(analytical_method = str_trim(analytical_method)) # remove white spaces from read in table
+## remove white spaces from overall sgs23 dataframe
+sgs23 %<>% mutate(analytical_method = str_trim(analytical_method))
+
 
 # join to sgs23
 sgs23 %<>% left_join(analytical_methods_contexts)
@@ -1285,7 +1293,7 @@ Yes. Chain of custody documents from SGS laboratories are included in the result
 
 ```{r echo = F}
 
-embed_dir("other/misc/qa_qc/chain_of_custody_2023", text = "Download 2023 Chain of Custody Documents from Soldotna Wastewater Treatment Plant")
+embed_file("other/misc/qa_qc/chain_of_custody_2023/swwtp CoC summer 2023.zip", text = "Download 2023 Chain of Custody Documents from Soldotna Wastewater Treatment Plant")
 
 ```
 
@@ -1404,29 +1412,6 @@ embed_file(hold_times_dir, text = "Download 2023 kenai River Baseline Water Qual
 
 ```{r echo = F}
 
-# PRIORITY TASK, WORKING HERE - sent email to c whisman 5/14/2024
-
-
-# WORKING HERE TO DIAGNOSE JOIN ISSUE(S), WHY 3 OBS PER PARAMETER PER SITE/DATE...?
-
-# something with SGS read in is getting mis-assigned. compare 1-parameter/site read results here (3x) vs in intial read in (2x; in obs and one dup ...) where is the extra one coming from? compare results here vs @ read in to diagnose. Goal: 5:30 AM.
-
-# issue might not be just join - why the odd number of observations per site/date
-
-# tangential possible issue -- are there multiple times associated with sampling events? find out
-
-# result_analytical_method_id missing for many metals observations
-
-z <- dat %>%
-  filter(sample_type == "PS",
-         characteristic_name == "Iron") %>%
-  select(activity_id,monitoring_location_id,activity_start_date,activity_type,characteristic_name,result_value,result_unit,result_sample_fraction) 
-  distinct(activity_start_time)
-  
-  # WORKING HERE new mystery: some field blanks have no result_analytical_method_id
-  
-
-
 # choose characteristics
 metals <- c("Calcium","Iron","Magnesium","Copper","Zinc")
 cols1 <- c("activity_id","characteristic_name", "activity_start_date", "activity_type", "monitoring_location_id","result_sample_fraction", "result_value","result_unit")
@@ -1450,33 +1435,36 @@ dat_metals <- dat %>%
 # unfiltered (total)
 dat_metals_tot <- dat_metals %>%
   filter(result_sample_fraction == "Unfiltered") %>%
-  rename(result_value_tot = result_value,
-         result_unit_tot = result_unit) %>%
-  select(-result_sample_fraction, -result_unit_tot)
+  rename(result_value_total = result_value,
+         result_unit_total = result_unit) %>%
+  select(-result_sample_fraction, -result_unit_total)
 
 # filtered (dissolved)
 dat_metals_diss <- dat_metals %>%
   filter(result_sample_fraction == "Filtered, lab") %>%
-    rename(result_value_diss = result_value,
-           result_unit_diss = result_unit) %>%
-  select(-result_sample_fraction, -result_unit_diss)
+    rename(result_value_dissolved = result_value,
+           result_unit_dissolved = result_unit) %>%
+  select(-result_sample_fraction, -result_unit_dissolved)
 
 # results here fit the lego-join, but if correct, at least 50% of instances show diss > tot. check back in pdfs.
-z <- inner_join(dat_metals_tot,dat_metals_diss,
-                by = c("characteristic_name","activity_start_date","monitoring_location_id","field_sample_type","activity_type")) %>%
+dat_metals_diss_tot <- inner_join(dat_metals_tot,dat_metals_diss,
+                by = c("characteristic_name","activity_start_date",
+                       "monitoring_location_id","field_sample_type","activity_type")) %>%
   distinct() %>%
-  arrange(monitoring_location_id,characteristic_name)
-
-
-# nonsensical replicates apparent after join
-# no FB results present
-
-# issue: lots of spring results where tot < diss. incorrectly assigned method likely. also dup obs ?!? (many to many)
-
-# check pdfs to verify not crazy
+  arrange(monitoring_location_id,characteristic_name) %>%
+  mutate(result_unit = "ug/l") %>%
+  # are dissolved metals lower that total metals?
+  mutate(tot_less_diss = case_when(
+    result_value_total > result_value_dissolved ~ "Y",
+    TRUE ~ "N")) %>%
+  arrange(tot_less_diss)
 
 
 ```
+
+Dissolved metals observations are not consistently lower that total metals observations in 2023 data. For 2023 results, a total of 52 instances exist where dissolved metals observations are paired with total metals observations. These consist exclusively of copper and zinc observations. Of the the 52 paired observations, in 32 instances dissolved metals valules are greater than total metals values. 
+
+These results may have important implications for data-flagging decisions as final results are prepared for upload to the EPA Water Quality Exchange. 
 
 <br>
 
@@ -1486,15 +1474,15 @@ In 2023, field duplicate samples were collected at two sites on both 5/2/2023 an
 
 -   5/2/2023
 
-    -   Kenai City Docks (RM 1.5)
+    -   Kenai City Docks (RM 1.5) (ID #10000002)
 
-    -   Moose River (RM 36.0)
+    -   Moose River (RM 36.0) (ID #10000026)
 
 -   7/18/2023
 
-    -   No Name Creek (RM 00.0)
+    -   No Name Creek (RM 00.0) (ID #10000008)
 
-    -   Moose River (RM 36.0)
+    -   Moose River (RM 36.0) (ID #10000026)
 
 Only results that are meaningfully representative of the physical sample may be used for RPD calculations. Following the example in the Alaska Department of Environmental Conservation 2021 Kenai River Metals Field Report [@apsens2022]: “… a set of paired samples was evaluated for RPD only if:
 
@@ -1510,16 +1498,11 @@ dup_sites <- dat %>%
   distinct(monitoring_location_id,activity_start_date)
 write.csv(dup_sites,dir, row.names = F)
 
-embed_file(dir, text = "Duplicate Sampling Events 2023")
 ```
 
 ```{r echo = F}
 
 # calculate limitations on what can and can't be used for RPD calculations: are samples are above LOQ and/or 2xLOQ?
-
-# WORKING HERE
-
-# RE DO ???? (why)
 
 # check if script conforms to following:
 
@@ -1527,7 +1510,7 @@ embed_file(dir, text = "Duplicate Sampling Events 2023")
   # 1.) one or both of the measurements must be above the parameter's limit of quantitation (LOQ), AND
   # 2.) one or both of the measurements must be at least two times the LOQ."
 
-dat %<>%
+z <- dat %<>%
   # do units match for detection limits and result values?
   mutate(unit_match = case_when(
     result_detection_limit_unit_1 == result_unit ~ "Y",
