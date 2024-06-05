@@ -1675,6 +1675,8 @@ dat %<>%
     grepl("Copper|Zinc",characteristic_name) & result_sample_fraction == "Filtered, lab" ~ "Y",
     TRUE ~ ""
   ))
+
+# inqury to EPA CDX - is it best practices to flag bad results, or just exclude them all together?
 ```
 
 
