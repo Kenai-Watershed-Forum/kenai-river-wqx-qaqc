@@ -1,0 +1,82 @@
+"activity_start_date","activity_type","characteristic_name","result_analytical_method_id","sample_type","result_sample_fraction","n"
+2023-05-02,"Field Msr/Obs","Arsenic","200.8","PS","Filtered, lab",12
+2023-05-02,"Quality Control Field Replicate Msr/Obs","Arsenic","200.8","PS","Filtered, lab",1
+2023-05-02,"Quality Control Sample-Field Blank","Arsenic","200.8","PS","Filtered, lab",2
+2023-05-02,"Field Msr/Obs","Cadmium","200.8","PS","Filtered, lab",12
+2023-05-02,"Quality Control Field Replicate Msr/Obs","Cadmium","200.8","PS","Filtered, lab",1
+2023-05-02,"Quality Control Sample-Field Blank","Cadmium","200.8","PS","Filtered, lab",2
+2023-05-02,"Field Msr/Obs","Calcium","200.7","PS","Unfiltered",17
+2023-05-02,"Quality Control Field Replicate Msr/Obs","Calcium","200.7","PS","Unfiltered",2
+2023-05-02,"Field Msr/Obs","Chromium","200.8","PS","Filtered, lab",12
+2023-05-02,"Quality Control Field Replicate Msr/Obs","Chromium","200.8","PS","Filtered, lab",1
+2023-05-02,"Quality Control Sample-Field Blank","Chromium","200.8","PS","Filtered, lab",2
+2023-05-02,"Field Msr/Obs","Copper","200.7","PS","Unfiltered",12
+2023-05-02,"Quality Control Field Replicate Msr/Obs","Copper","200.7","PS","Unfiltered",1
+2023-05-02,"Field Msr/Obs","Copper","200.8","PS","Filtered, lab",12
+2023-05-02,"Quality Control Field Replicate Msr/Obs","Copper","200.8","PS","Filtered, lab",1
+2023-05-02,"Quality Control Sample-Field Blank","Copper","200.8","PS","Filtered, lab",2
+2023-05-02,"Field Msr/Obs","Fecal Coliform","9222D","PS","",20
+2023-05-02,"Quality Control Field Replicate Msr/Obs","Fecal Coliform","9222D","PS","",2
+2023-05-02,"Field Msr/Obs","Iron","200.7","PS","Unfiltered",17
+2023-05-02,"Quality Control Field Replicate Msr/Obs","Iron","200.7","PS","Unfiltered",2
+2023-05-02,"Field Msr/Obs","Lead","200.8","PS","Filtered, lab",12
+2023-05-02,"Quality Control Field Replicate Msr/Obs","Lead","200.8","PS","Filtered, lab",1
+2023-05-02,"Quality Control Sample-Field Blank","Lead","200.8","PS","Filtered, lab",2
+2023-05-02,"Field Msr/Obs","Magnesium","200.7","PS","Unfiltered",17
+2023-05-02,"Quality Control Field Replicate Msr/Obs","Magnesium","200.7","PS","Unfiltered",2
+2023-05-02,"Field Msr/Obs","Total Nitrate/Nitrite-N","4500-NO3(F)","PS","Total",21
+2023-05-02,"Quality Control Field Replicate Msr/Obs","Total Nitrate/Nitrite-N","4500-NO3(F)","PS","Total",2
+2023-05-02,"Field Msr/Obs","Total Phosphorus","4500-P-E","PS","Total",21
+2023-05-02,"Quality Control Field Replicate Msr/Obs","Total Phosphorus","4500-P-E","PS","Total",2
+2023-05-02,"Field Msr/Obs","Total suspended solids","2540-D","PS","",21
+2023-05-02,"Quality Control Field Replicate Msr/Obs","Total suspended solids","2540-D","PS","",2
+2023-05-02,"Field Msr/Obs","Zinc","200.7","PS","Unfiltered",12
+2023-05-02,"Quality Control Field Replicate Msr/Obs","Zinc","200.7","PS","Unfiltered",1
+2023-05-02,"Field Msr/Obs","Zinc","200.8","PS","Filtered, lab",12
+2023-05-02,"Quality Control Field Replicate Msr/Obs","Zinc","200.8","PS","Filtered, lab",1
+2023-05-02,"Quality Control Sample-Field Blank","Zinc","200.8","PS","Filtered, lab",2
+2023-07-18,"Field Msr/Obs","1,2-Dichloroethane-D4 (surr)","8260D","PS","Volatile",4
+2023-07-18,"Field Msr/Obs","4-Bromofluorobenzene (surr)","8260D","PS","Volatile",4
+2023-07-18,"Field Msr/Obs","Arsenic","200.8","PS","Filtered, lab",12
+2023-07-18,"Quality Control Field Replicate Msr/Obs","Arsenic","200.8","PS","Filtered, lab",1
+2023-07-18,"Quality Control Sample-Field Blank","Arsenic","200.8","PS","Filtered, lab",2
+2023-07-18,"Field Msr/Obs","Benzene","8260D","PS","Volatile",4
+2023-07-18,"Field Msr/Obs","Cadmium","200.8","PS","Filtered, lab",12
+2023-07-18,"Quality Control Field Replicate Msr/Obs","Cadmium","200.8","PS","Filtered, lab",1
+2023-07-18,"Quality Control Sample-Field Blank","Cadmium","200.8","PS","Filtered, lab",2
+2023-07-18,"Field Msr/Obs","Calcium","200.8","PS","Unfiltered",22
+2023-07-18,"Quality Control Field Replicate Msr/Obs","Calcium","200.8","PS","Unfiltered",2
+2023-07-18,"Field Msr/Obs","Chromium","200.8","PS","Filtered, lab",12
+2023-07-18,"Quality Control Field Replicate Msr/Obs","Chromium","200.8","PS","Filtered, lab",1
+2023-07-18,"Quality Control Sample-Field Blank","Chromium","200.8","PS","Filtered, lab",2
+2023-07-18,"Field Msr/Obs","Copper","200.8","PS","Filtered, lab",12
+2023-07-18,"Quality Control Field Replicate Msr/Obs","Copper","200.8","PS","Filtered, lab",1
+2023-07-18,"Quality Control Sample-Field Blank","Copper","200.8","PS","Filtered, lab",2
+2023-07-18,"Field Msr/Obs","Copper","200.8","PS","Unfiltered",13
+2023-07-18,"Quality Control Field Replicate Msr/Obs","Copper","200.8","PS","Unfiltered",1
+2023-07-18,"Field Msr/Obs","Ethylbenzene","8260D","PS","Volatile",4
+2023-07-18,"Field Msr/Obs","Fecal Coliform","9222D","PS","",22
+2023-07-18,"Quality Control Field Replicate Msr/Obs","Fecal Coliform","9222D","PS","",2
+2023-07-18,"Field Msr/Obs","Iron","200.8","PS","Unfiltered",22
+2023-07-18,"Quality Control Field Replicate Msr/Obs","Iron","200.8","PS","Unfiltered",2
+2023-07-18,"Field Msr/Obs","Lead","200.8","PS","Filtered, lab",12
+2023-07-18,"Quality Control Field Replicate Msr/Obs","Lead","200.8","PS","Filtered, lab",1
+2023-07-18,"Quality Control Sample-Field Blank","Lead","200.8","PS","Filtered, lab",2
+2023-07-18,"Field Msr/Obs","Magnesium","200.8","PS","Unfiltered",22
+2023-07-18,"Quality Control Field Replicate Msr/Obs","Magnesium","200.8","PS","Unfiltered",2
+2023-07-18,"Field Msr/Obs","P & M -Xylene","8260D","PS","Volatile",4
+2023-07-18,"Field Msr/Obs","Toluene","8260D","PS","Volatile",4
+2023-07-18,"Field Msr/Obs","Toluene-d8 (surr)","8260D","PS","Volatile",4
+2023-07-18,"Field Msr/Obs","Total Nitrate/Nitrite-N","4500-NO3(F)","PS","Total",22
+2023-07-18,"Quality Control Field Replicate Msr/Obs","Total Nitrate/Nitrite-N","4500-NO3(F)","PS","Total",2
+2023-07-18,"Field Msr/Obs","Total Phosphorus","4500-P-E","PS","Total",22
+2023-07-18,"Quality Control Field Replicate Msr/Obs","Total Phosphorus","4500-P-E","PS","Total",2
+2023-07-18,"Field Msr/Obs","Total suspended solids","2540-D","PS","",22
+2023-07-18,"Quality Control Field Replicate Msr/Obs","Total suspended solids","2540-D","PS","",2
+2023-07-18,"Field Msr/Obs","Xylenes (total)","8260D","PS","Volatile",4
+2023-07-18,"Field Msr/Obs","Zinc","200.8","PS","Filtered, lab",12
+2023-07-18,"Quality Control Field Replicate Msr/Obs","Zinc","200.8","PS","Filtered, lab",1
+2023-07-18,"Quality Control Sample-Field Blank","Zinc","200.8","PS","Filtered, lab",2
+2023-07-18,"Field Msr/Obs","Zinc","200.8","PS","Unfiltered",13
+2023-07-18,"Quality Control Field Replicate Msr/Obs","Zinc","200.8","PS","Unfiltered",1
+2023-07-18,"Field Msr/Obs","o-Xylene","8260D","PS","Volatile",4

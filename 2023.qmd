@@ -1240,7 +1240,7 @@ Download results pre-QA/QC; including lab QA QC info
 
 **1.) Were the appropriate analytical methods used for all parameters?**
 
-Yes. Analytical methods from the approved 2023 QAPP were employed, with exceptions that are not anticipated to affect results (see below).
+Yes. Analytical methods from the approved 2023 QAPP were employed, with certain exceptions which are not anticipated to affect results (see below).
 
 Changes from the approved 2023 occurred, including:
 
@@ -1268,12 +1268,16 @@ qa_samples1 <- dat %>%
   arrange(characteristic_name, activity_type) %>%
   filter(sample_type == "PS") %>%
   arrange(activity_start_date,characteristic_name,result_analytical_method_id, result_sample_fraction)
+write.csv(qa_samples1,"other/output/2023/qa_qc_output/qa_samples_2023_table1.csv", row.names = F)
 
 # another way
 qa_samples2 <- dat %>%
   group_by(activity_start_date,result_analytical_method_id,sample_type) %>%
   count() %>%
   filter(sample_type == "PS")
+write.csv(qa_samples2,"other/output/2023/qa_qc_output/qa_samples_2023_table2.csv", row.names = F)
+
+embed_file("other/output/2023/qa_qc_output/qa_samples_2023_table1.csv", text = "Download count table of 2023 field duplicates, blanks, and/or other field QC samples")
 
 ```
 
@@ -1301,7 +1305,7 @@ embed_file("other/misc/qa_qc/chain_of_custody_2023/swwtp CoC summer 2023.zip", t
 
 **6.) Do the laboratory reports match the COC and requested methods throughout?**
 
-Yes, with the exceptions discussed in question #1. The SGS project manager describes that no change is anticipated for how to interpret results.
+Yes, with the exceptions discussed in question #1. 
 
 <br>
 
