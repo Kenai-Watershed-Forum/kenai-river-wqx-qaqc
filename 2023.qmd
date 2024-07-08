@@ -375,7 +375,6 @@ sgs23 %<>% mutate(activity_start_date = case_when(
   TRUE ~ activity_start_date))
 ```
 
-
 ```{r}
 
 # join near line 409 is not properly joining result_analytical_method_id for spring 2023 field blanks
@@ -1240,7 +1239,11 @@ Download results pre-QA/QC; including lab QA QC info
 
 **1.) Were the appropriate analytical methods used for all parameters?**
 
+<<<<<<< HEAD
 Yes. Analytical methods from the approved 2023 QAPP were employed, with certain exceptions which are not anticipated to affect results (see below).
+=======
+Yes. Analytical methods from the approved 2023 QAPP were employed, with exceptions (described below) that are not anticipated to affect results (see below).
+>>>>>>> 6e87f4015787b031ea97436752441cc371a37141
 
 Changes from the approved 2023 occurred, including:
 
@@ -1259,6 +1262,7 @@ In 2023 there were several small deviations from the sampling plan due to a late
 ```{r echo = F}
 # lets look at this question from a few perspectives
 
+# qa samples count table A
 qa_samples1 <- dat %>%
   group_by(activity_start_date,activity_type,characteristic_name,result_analytical_method_id,sample_type, result_sample_fraction) %>%
   count() %>%
@@ -1268,20 +1272,38 @@ qa_samples1 <- dat %>%
   arrange(characteristic_name, activity_type) %>%
   filter(sample_type == "PS") %>%
   arrange(activity_start_date,characteristic_name,result_analytical_method_id, result_sample_fraction)
+<<<<<<< HEAD
 write.csv(qa_samples1,"other/output/2023/qa_qc_output/qa_samples_2023_table1.csv", row.names = F)
+=======
+# write file
+dir_a <- "other/output/2023/qa_qc_output/qa_qc_sample_count_a.csv"
+write.csv(qa_samples1, dir_a, row.names = F)
+>>>>>>> 6e87f4015787b031ea97436752441cc371a37141
 
-# another way
+# qa samples count table B
 qa_samples2 <- dat %>%
   group_by(activity_start_date,result_analytical_method_id,sample_type) %>%
   count() %>%
   filter(sample_type == "PS")
+<<<<<<< HEAD
 write.csv(qa_samples2,"other/output/2023/qa_qc_output/qa_samples_2023_table2.csv", row.names = F)
 
 embed_file("other/output/2023/qa_qc_output/qa_samples_2023_table1.csv", text = "Download count table of 2023 field duplicates, blanks, and/or other field QC samples")
+=======
+# write file
+dir_b <- "other/output/2023/qa_qc_output/qa_qc_sample_count_b.csv"
+write.csv(qa_samples2, dir_b, row.names = F)
+>>>>>>> 6e87f4015787b031ea97436752441cc371a37141
 
 ```
 
-Yes, all planned field blanks, trip blanks, and duplicate samples were collected as planned.
+Yes, all planned field blanks, trip blanks, and duplicate samples were collected as planned. See the two downloadable tables below for further details on sample types and analysis types for all 2023 samples:
+
+```{r echo = F}
+embed_file(dir_a,name = "2023 QA/QC Samples Table A")
+embed_file(dir_b,name = "2023 QA/QC Samples Table B")
+
+```
 
 <br>
 
@@ -1296,7 +1318,6 @@ The laboratory reports from both labs provide results corresponding with the cha
 Yes. Chain of custody documents from SGS laboratories are included in the results PDFs linked above. Chain of custody documents from the Soldotna Wastewater Treatment Plant are linked below:
 
 ```{r echo = F}
-
 embed_file("other/misc/qa_qc/chain_of_custody_2023/swwtp CoC summer 2023.zip", text = "Download 2023 Chain of Custody Documents from Soldotna Wastewater Treatment Plant")
 
 ```
@@ -1323,7 +1344,7 @@ SGS laboratory reports include reporting limits in both the electronic data deli
 
 **9.) Are site names, dates, and times correct and as expected?**
 
-Numerous corrections to site names and dates were necessary to prepare data into final form. Original documents (Electronic Data Deliverables) were not modified, and corrections are applied throughout the data read-in process using R coding script in this document.
+Numerous corrections to site names and dates were necessary to prepare data into final form. Original documents (Electronic Data Deliverables) were not modified, and corrections are applied throughout the data read-in process using R coding script embedded in this document.
 
 <br>
 
@@ -1335,7 +1356,7 @@ No issues are documented with calibration for KWF's field or laboratory instrume
 
 **11.) Did the instrument perform as expected?**
 
-TBD with KWF results.
+TBD with KWF lab results.
 
 <br>
 
@@ -1365,7 +1386,7 @@ Instrument data files from fieldwork are not generated as part of this project.
 
 **16.) Is any in-situ field data rejected and why?**
 
-TBD ... see question \###
+No, no in-situ field data is rejected. Water temperature was the sole parameter measured in-situ in 2023. Other applicable intrinsic water quality parameters were measured in the KWF Office (pH, conductivity, turbidity).
 
 <br>
 
@@ -1466,9 +1487,9 @@ dat_metals_diss_tot <- inner_join(dat_metals_tot,dat_metals_diss,
 
 ```
 
-Dissolved metals observations are not consistently lower that total metals observations in 2023 data. For 2023 results, a total of 52 instances exist where dissolved metals observations are paired with total metals observations. These consist exclusively of copper and zinc observations. Of the the 52 paired observations, in 32 instances dissolved metals valules are greater than total metals values. 
+Dissolved metals observations are ***not*** consistently lower that total metals observations in 2023 data. For 2023 results, a total of 52 instances exist where dissolved metals observations are paired with total metals observations. These consist exclusively of copper and zinc observations. Of the the 52 paired observations, in 32 instances dissolved metals valules are greater than total metals values.
 
-These results may have important implications for data-flagging decisions as final results are prepared for upload to the EPA Water Quality Exchange. 
+These results may have important implications for data-flagging decisions as final results are prepared for upload to the EPA Water Quality Exchange.
 
 <br>
 
@@ -1585,6 +1606,10 @@ dup_diffs <- left_join(dup_vals2,dup_vals1) %>%
     loq_both_pass == "Y" | `2xloq_both_pass` == "Y" ~ "Y",
     TRUE ~ "N")) %>%
   mutate(rpd_pct = abs((result_value - result_value1)/result_value1)*100) 
+
+
+# the table currently includes all instances where both observation values are zero. does this follow the rules?
+
 ```
 
 A csv file of Relative Percent Difference values organized by site, date, and parameter may be downloaded below:
@@ -1600,10 +1625,11 @@ Nomenclature note: "Limit of Quantitation (LOQ)", as used by ADEC and SGS, is eq
 
 ```{r echo = F}
 embed_file("other/misc/docs/DL, LOD, LOQ Interpretation.pdf")
-
 ```
 
-TKA interpretation of RPD values
+*Discussion on 2023 Relative Percent Difference (RPD) Values* In 2023, we had a total of 23 pairs (of 44 total pairs) instances where parameter observations met the Limit of Quantitation (LOQ) criteria described above. In all other cases, the paired observations did not meet criteria for inclusion in RPD analyses.
+
+Among the 23 value pairs included in RPD analyses, RPD values ranged from 0% to 45.6%. A total of five eligible value pairs exceeded 20% RPD, all of which were from the spring sampling event (5/2/2023). Each of the parameters included in the five RPD exceedences have another paired observation where RPD does not exceed 20%. This suggests that the variability among replicate samples is not systematic, and is likely associated with individual crew sampling techniques. Thus, at this stage we will not exclude any specific results based on RPD analyses.
 
 <br>
 
@@ -1615,7 +1641,7 @@ Yes, there were. They are listed below:
 
 -   Sample collection date
 
-    -   The SGS PDF report shows some samples as collected on 5/3/2022. All field samples were in fact collected on 5/2/2023. An error of pre-printed dates on page 1 of the SGS chain of custody was responsible for this error. We applied the time/date correction as part of the data read-in script.
+    -   The SGS PDF report shows some samples as collected on 5/3/2022. All spring field samples were in fact collected on 5/2/2023, and none on 5/3/2023. An error of pre-printed dates on page 1 of the SGS chain of custody was responsible for this error. We applied the time/date correction as part of the data read-in script integrated into this document.
 
 -   Sample receipt time/date to SGS laboratories
 
@@ -1649,9 +1675,24 @@ Yes, there were. They are listed below:
 
 <br>
 
-\*\* 21.) Is any laboratory data rejected and why? \*\*
+\*\* 21.) Is any laboratory data rejected (flagged) and why? \*\*
 
-TKA \_\> check out 2021 example discussion, probably dissolved Cu and Zn
+Based on the above discussion, as of 6/5/2024 ***we will be flagging 2023 dissolved copper and zinc results*** as not representative of environmental conditions. The primary QA/QC not of concern for these two parameters is that dissolved metals values were frequently greater than total metals values, which is not physically realistic. With this decision, a total of 60 observations are flagged (30 dissolved Cu and 30 dissolved Zn observations).
+
+Diagnosis is in progress of this issue for future sampling events and QAPP updates.
+
+
+```{r echo = F}
+# flag parameters based on discussion in question #21
+dat %<>%
+  mutate(flag = case_when(
+    grepl("Copper|Zinc",characteristic_name) & result_sample_fraction == "Filtered, lab" ~ "Y",
+    TRUE ~ ""
+  ))
+
+# inqury to EPA CDX - is it best practices to flag bad results, or just exclude them all together?
+```
+
 
 <br>
 
@@ -1679,7 +1720,7 @@ From the QAPP, Completeness Measure A: “the primary number of samples collecte
 
 From the QAPP, Completeness Measure A: "the primary number of samples collected divided by the usable number of samples submitted to ADEC, with a goal of 85% completeness." (Note that as of 2023 results are now submitted directly to EPA rather than DEC, per request of DEC).
 
-(Note: metals parameters not specified in the QAPP are excluded from these analyses. In 2021, SGS laboratories provided dissolved metals results for parameters beyond what was originally requested.) 
+(Note: metals parameters not specified in the QAPP are excluded from these analyses. In 2021, SGS laboratories provided dissolved metals results for parameters beyond what was originally requested.)
 
 We calculated Completeness Measure A at the following project scales:
 
@@ -1809,7 +1850,6 @@ embed_file(dir, text = "Download supporting info on 2023 activity types")
 
 ```
 
-
 <br>
 
 \*\* 36.) Is the Activity media subdivision filled in (if relevant)? \*\*
@@ -1848,6 +1888,8 @@ write.csv(chr_num,dir)
 ```
 
 ```{r echo = F}
+# same directory as previous chunk
+dir <- "other/output/2023/qa_qc_output/characteristic_count_2023.csv"
 # embed for download
 xfun::embed_file(dir, text = "Download Observation Count by Characteristic, 2023 Kenai River Baseline Water Quality")
 ```
@@ -1859,7 +1901,7 @@ xfun::embed_file(dir, text = "Download Observation Count by Characteristic, 2023
 Prior to upload to the EPA WQX, the range of results will be evaluated visually and numerically in each characteristic-specific section of the comprehensive report, relative to past results. Likely outliers will be identified and recorded in a dedicated spreadsheet (download below). Each likely outlier will have accompanying notes discussing the choice, and a decisions as to whether a more detailed statistical investigation is warranted.
 
 ```{r echo = F}
-embed_file("other/input/outliers/baseline_outliers.xlsx", text = "Download identified potential outliers for 2023 Kenai River Baseline Water Quality data")
+#embed_file("other/input/outliers/baseline_outliers.xlsx", text = "Download identified potential outliers for 2023 Kenai River Baseline Water Quality data")
 
 ```
 
