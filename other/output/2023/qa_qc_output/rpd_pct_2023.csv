@@ -1,45 +1,45 @@
-monitoring_location_id,activity_start_date,characteristic_name,result_value,result_unit,result_qualifier,result_sample_fraction,loq_pass,2xloq_pass,result_value1,result_qualifier1,loq_pass1,2xloq_pass1,loq_both_pass,2xloq_both_pass,rpd_eligible,rpd_pct
-10000008,7/18/2023,Copper,1.16,ug/l,J,Unfiltered,N,N,1.19,J,N,N,N,N,N,2.521008403
-10000008,7/18/2023,Zinc,7.16,ug/l,J,"Filtered, lab",N,N,6.93,J,N,N,N,N,N,3.318903319
-10000008,7/18/2023,Arsenic,2.92,ug/l,J,"Filtered, lab",N,N,2.78,J,N,N,N,N,N,5.035971223
-10000002,5/2/2023,Zinc,9.97,ug/l,J ,"Filtered, lab",N,N,9.46,J ,N,N,N,N,N,5.391120507
-10000002,5/2/2023,Chromium,3.47,ug/l,J ,"Filtered, lab",N,N,3.26,J ,N,N,N,N,N,6.441717791
-10000008,7/18/2023,Copper,1.29,ug/l,J,"Filtered, lab",N,N,1.21,J,N,N,N,N,N,6.611570248
-10000008,7/18/2023,Total Phosphorus,0.0255,mg/L,J,Total,N,N,0.0276,J,N,N,N,N,N,7.608695652
-10000026,7/18/2023,Total Phosphorus,0.0123,mg/L,J,Total,N,N,0.0137,J,N,N,N,N,N,10.2189781
-10000008,7/18/2023,Total Nitrate/Nitrite-N,0.109,mg/L,J,Total,N,N,0.0802,J,N,N,N,N,N,35.91022444
-34 instances ,5/2/2023,Lead,0,ug/l,U ,"Filtered, lab",N,N,0.576,J ,N,N,N,N,N,100
-10000002,5/2/2023,Copper,0,ug/l,U,Unfiltered,N,N,0,U,N,N,N,N,N,NA
-10000002,5/2/2023,Zinc,0,ug/l,U,Unfiltered,N,N,0,U,N,N,N,N,N,NA
-10000026,5/2/2023,Magnesium,0,ug/l,U,Unfiltered,N,N,0,U,N,N,N,N,N,NA
-10000002,5/2/2023,Arsenic,0,ug/l,U ,"Filtered, lab",N,N,0,U ,N,N,N,N,N,NA
-10000002,5/2/2023,Cadmium,0,ug/l,U ,"Filtered, lab",N,N,0,U ,N,N,N,N,N,NA
-10000026,5/2/2023,Total Nitrate/Nitrite-N,0,mg/L,U ,Total,N,N,0,U ,N,N,N,N,N,NA
-10000008,7/18/2023,Cadmium,0,ug/l,U,"Filtered, lab",N,N,0,U,N,N,N,N,N,NA
-10000008,7/18/2023,Chromium,0,ug/l,U,"Filtered, lab",N,N,0,U,N,N,N,N,N,NA
-10000008,7/18/2023,Lead,0,ug/l,U,"Filtered, lab",N,N,0,U,N,N,N,N,N,NA
-10000026,7/18/2023,Total Nitrate/Nitrite-N,0,mg/L,U,Total,N,N,0,U,N,N,N,N,N,NA
-10000026,7/18/2023,Total suspended solids,1.333333333,mg/L,NA,,Y,N,1.333333333,NA,Y,N,Y,N,Y,0
-10000026,7/18/2023,Iron,581,ug/l,=,Unfiltered,Y,Y,577,=,Y,Y,Y,Y,Y,0.693240901
-10000026,5/2/2023,Calcium,11800,ug/l,,Unfiltered,Y,Y,11700,,Y,Y,Y,Y,Y,0.854700855
-10000002,5/2/2023,Iron,12200,ug/l,,Unfiltered,Y,Y,12000,,Y,Y,Y,Y,Y,1.666666667
-10000008,7/18/2023,Fecal Coliform,168,cfu/100ml,=,,Y,Y,164,=,Y,Y,Y,Y,Y,2.43902439
-10000008,7/18/2023,Zinc,16.4,ug/l,=,Unfiltered,Y,N,16,=,Y,N,Y,N,Y,2.5
-10000026,7/18/2023,Calcium,21400,ug/l,=,Unfiltered,Y,Y,22100,=,Y,Y,Y,Y,Y,3.167420814
-10000008,7/18/2023,Iron,5350,ug/l,=,Unfiltered,Y,Y,5530,=,Y,Y,Y,Y,Y,3.254972875
-10000026,7/18/2023,Magnesium,2880,ug/l,=,Unfiltered,Y,Y,3010,=,Y,Y,Y,Y,Y,4.318936877
-10000008,7/18/2023,Calcium,6020,ug/l,=,Unfiltered,Y,Y,6400,=,Y,Y,Y,Y,Y,5.9375
-10000002,5/2/2023,Total suspended solids,403,mg/L,NA,,Y,Y,377,NA,Y,Y,Y,Y,Y,6.896551724
-10000002,5/2/2023,Total Phosphorus,0.339,mg/L,= ,Total,Y,Y,0.315,= ,Y,Y,Y,Y,Y,7.619047619
-10000002,5/2/2023,Calcium,291000,ug/l,,Unfiltered,Y,Y,316000,,Y,Y,Y,Y,Y,7.911392405
-10000002,5/2/2023,Magnesium,906000,ug/l,,Unfiltered,Y,Y,991000,,Y,Y,Y,Y,Y,8.577194753
-10000008,7/18/2023,Magnesium,1540,ug/l,=,Unfiltered,Y,Y,1720,=,Y,Y,Y,Y,Y,10.46511628
-10000026,5/2/2023,Total Phosphorus,0.0882,mg/L,= ,Total,Y,Y,0.0781,= ,Y,N,Y,Y,Y,12.93213828
-10000026,7/18/2023,Fecal Coliform,33,cfu/100ml,=,,Y,Y,29,=,Y,Y,Y,Y,Y,13.79310345
-10000002,5/2/2023,Fecal Coliform,10,cfu/100ml,=,,Y,Y,12,=,Y,Y,Y,Y,Y,16.66666667
-10000008,7/18/2023,Total suspended solids,12.66666667,mg/L,NA,,Y,Y,10.66666667,NA,Y,Y,Y,Y,Y,18.75
-10000026,5/2/2023,Iron,2140,ug/l,,Unfiltered,Y,Y,1770,,Y,Y,Y,Y,Y,20.9039548
-10000026,5/2/2023,Fecal Coliform,48,cfu/100ml,=,,Y,Y,64,=,Y,Y,Y,Y,Y,25
-10000002,5/2/2023,Total Nitrate/Nitrite-N,0.345,mg/L,= ,Total,Y,N,0.466,= ,Y,Y,Y,Y,Y,25.96566524
-10000026,5/2/2023,Total suspended solids,42,mg/L,NA,,Y,Y,31.33333333,NA,Y,Y,Y,Y,Y,34.04255319
-10000002,5/2/2023,Copper,150,ug/l,= ,"Filtered, lab",Y,Y,276,= ,Y,Y,Y,Y,Y,45.65217391
+"monitoring_location_id","activity_start_date","characteristic_name","result_value","result_unit","result_qualifier","result_sample_fraction","loq_pass","2xloq_pass","result_value1","result_qualifier1","loq_pass1","2xloq_pass1","loq_both_pass","2xloq_both_pass","rpd_eligible","rpd_pct"
+"10000002",2023-05-02,"Calcium",291000,"ug/l","","Unfiltered","Y","Y",316000,"","Y","Y","Y","Y","Y",7.91139240506329
+"10000002",2023-05-02,"Copper",0,"ug/l","U","Unfiltered","N","N",0,"U","N","N","N","N","N",NA
+"10000002",2023-05-02,"Iron",12200,"ug/l","","Unfiltered","Y","Y",12000,"","Y","Y","Y","Y","Y",1.66666666666667
+"10000002",2023-05-02,"Magnesium",906000,"ug/l","","Unfiltered","Y","Y",991000,"","Y","Y","Y","Y","Y",8.57719475277498
+"10000002",2023-05-02,"Zinc",0,"ug/l","U","Unfiltered","N","N",0,"U","N","N","N","N","N",NA
+"10000026",2023-05-02,"Calcium",11800,"ug/l","","Unfiltered","Y","Y",11700,"","Y","Y","Y","Y","Y",0.854700854700855
+"10000026",2023-05-02,"Iron",2140,"ug/l","","Unfiltered","Y","Y",1770,"","Y","Y","Y","Y","Y",20.9039548022599
+"10000026",2023-05-02,"Magnesium",0,"ug/l","U","Unfiltered","N","N",0,"U","N","N","N","N","N",NA
+"10000002",2023-05-02,"Total Nitrate/Nitrite-N",0.345,"mg/L","= ","Total","Y","N",0.466,"= ","Y","Y","Y","Y","Y",25.9656652360515
+"10000002",2023-05-02,"Total Phosphorus",0.339,"mg/L","= ","Total","Y","Y",0.315,"= ","Y","Y","Y","Y","Y",7.61904761904763
+"10000002",2023-05-02,"Arsenic",0,"ug/l","U ","Filtered, lab","N","N",0,"U ","N","N","N","N","N",NA
+"10000002",2023-05-02,"Cadmium",0,"ug/l","U ","Filtered, lab","N","N",0,"U ","N","N","N","N","N",NA
+"10000002",2023-05-02,"Chromium",3.47,"ug/l","J ","Filtered, lab","N","N",3.26,"J ","N","N","N","N","N",6.44171779141106
+"10000002",2023-05-02,"Copper",150,"ug/l","= ","Filtered, lab","Y","Y",276,"= ","Y","Y","Y","Y","Y",45.6521739130435
+"10000002",2023-05-02,"Lead",0,"ug/l","U ","Filtered, lab","N","N",0.576,"J ","N","N","N","N","N",100
+"10000002",2023-05-02,"Zinc",9.97,"ug/l","J ","Filtered, lab","N","N",9.46,"J ","N","N","N","N","N",5.39112050739957
+"10000026",2023-05-02,"Total Nitrate/Nitrite-N",0,"mg/L","U ","Total","N","N",0,"U ","N","N","N","N","N",NA
+"10000026",2023-05-02,"Total Phosphorus",0.0882,"mg/L","= ","Total","Y","Y",0.0781,"= ","Y","N","Y","Y","Y",12.932138284251
+"10000008",2023-07-18,"Cadmium",0,"ug/l","U","Filtered, lab","N","N",0,"U","N","N","N","N","N",NA
+"10000008",2023-07-18,"Chromium",0,"ug/l","U","Filtered, lab","N","N",0,"U","N","N","N","N","N",NA
+"10000008",2023-07-18,"Lead",0,"ug/l","U","Filtered, lab","N","N",0,"U","N","N","N","N","N",NA
+"10000008",2023-07-18,"Copper",1.16,"ug/l","J","Unfiltered","N","N",1.19,"J","N","N","N","N","N",2.52100840336135
+"10000008",2023-07-18,"Zinc",7.16,"ug/l","J","Filtered, lab","N","N",6.93,"J","N","N","N","N","N",3.31890331890333
+"10000008",2023-07-18,"Arsenic",2.92,"ug/l","J","Filtered, lab","N","N",2.78,"J","N","N","N","N","N",5.03597122302159
+"10000008",2023-07-18,"Copper",1.29,"ug/l","J","Filtered, lab","N","N",1.21,"J","N","N","N","N","N",6.61157024793389
+"10000008",2023-07-18,"Calcium",6020,"ug/l","=","Unfiltered","Y","Y",6400,"=","Y","Y","Y","Y","Y",5.9375
+"10000008",2023-07-18,"Iron",5350,"ug/l","=","Unfiltered","Y","Y",5530,"=","Y","Y","Y","Y","Y",3.25497287522604
+"10000008",2023-07-18,"Magnesium",1540,"ug/l","=","Unfiltered","Y","Y",1720,"=","Y","Y","Y","Y","Y",10.4651162790698
+"10000008",2023-07-18,"Zinc",16.4,"ug/l","=","Unfiltered","Y","N",16,"=","Y","N","Y","N","Y",2.49999999999999
+"10000026",2023-07-18,"Calcium",21400,"ug/l","=","Unfiltered","Y","Y",22100,"=","Y","Y","Y","Y","Y",3.16742081447964
+"10000026",2023-07-18,"Iron",581,"ug/l","=","Unfiltered","Y","Y",577,"=","Y","Y","Y","Y","Y",0.693240901213172
+"10000026",2023-07-18,"Magnesium",2880,"ug/l","=","Unfiltered","Y","Y",3010,"=","Y","Y","Y","Y","Y",4.31893687707641
+"10000026",2023-07-18,"Total Nitrate/Nitrite-N",0,"mg/L","U","Total","N","N",0,"U","N","N","N","N","N",NA
+"10000008",2023-07-18,"Total Nitrate/Nitrite-N",0.109,"mg/L","J","Total","N","N",0.0802,"J","N","N","N","N","N",35.9102244389028
+"10000008",2023-07-18,"Total Phosphorus",0.0255,"mg/L","J","Total","N","N",0.0276,"J","N","N","N","N","N",7.60869565217392
+"10000026",2023-07-18,"Total Phosphorus",0.0123,"mg/L","J","Total","N","N",0.0137,"J","N","N","N","N","N",10.2189781021898
+"10000002",2023-05-02,"Fecal Coliform",10,"cfu/100ml","=","","Y","Y",12,"=","Y","Y","Y","Y","Y",16.6666666666667
+"10000026",2023-05-02,"Fecal Coliform",48,"cfu/100ml","=","","Y","Y",64,"=","Y","Y","Y","Y","Y",25
+"10000008",2023-07-18,"Fecal Coliform",168,"cfu/100ml","=","","Y","Y",164,"=","Y","Y","Y","Y","Y",2.4390243902439
+"10000026",2023-07-18,"Fecal Coliform",33,"cfu/100ml","=","","Y","Y",29,"=","Y","Y","Y","Y","Y",13.7931034482759
+"10000002",2023-05-02,"Total suspended solids",403,"mg/L",NA,"","Y","Y",377,NA,"Y","Y","Y","Y","Y",6.89655172413789
+"10000026",2023-05-02,"Total suspended solids",42,"mg/L",NA,"","Y","Y",31.3333333333333,NA,"Y","Y","Y","Y","Y",34.0425531914893
+"10000008",2023-07-18,"Total suspended solids",12.6666666666667,"mg/L",NA,"","Y","Y",10.6666666666667,NA,"Y","Y","Y","Y","Y",18.7499999999996
+"10000026",2023-07-18,"Total suspended solids",1.33333333333333,"mg/L",NA,"","Y","N",1.33333333333333,NA,"Y","N","Y","N","Y",0

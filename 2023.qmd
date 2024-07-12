@@ -1239,7 +1239,6 @@ Download results pre-QA/QC; including lab QA QC info
 
 **1.) Were the appropriate analytical methods used for all parameters?**
 
-
 Yes. Analytical methods from the approved 2023 QAPP were employed, with certain exceptions which are not anticipated to affect results (see below).
 
 Yes. Analytical methods from the approved 2023 QAPP were employed, with exceptions (described below) that are not anticipated to affect results (see below).
@@ -1283,7 +1282,10 @@ qa_samples2 <- dat %>%
   group_by(activity_start_date,result_analytical_method_id,sample_type) %>%
   count() %>%
   filter(sample_type == "PS")
-write.csv(qa_samples2,"other/output/2023/qa_qc_output/qa_samples_2023_table2.csv", row.names = F)
+
+# write file
+dir_b <- "other/output/2023/qa_qc_output/qa_samples_2023_table2.csv"
+write.csv(qa_samples2,dir_b, row.names = F)
 
 embed_file("other/output/2023/qa_qc_output/qa_samples_2023_table1.csv", text = "Download count table of 2023 field duplicates, blanks, and/or other field QC samples")
 
@@ -1318,7 +1320,7 @@ embed_file("other/misc/qa_qc/chain_of_custody_2023/swwtp CoC summer 2023.zip", t
 
 **6.) Do the laboratory reports match the COC and requested methods throughout?**
 
-Yes, with the exceptions discussed in question #1. 
+Yes, with the exceptions discussed in question #1.
 
 <br>
 
@@ -1348,7 +1350,7 @@ No issues are documented with calibration for KWF's field or laboratory instrume
 
 **11.) Did the instrument perform as expected?**
 
-TBD with KWF lab results.
+TBD with KWF lab results. (Check ranges to decide if including conductivity & turbidity results)
 
 <br>
 
@@ -1360,7 +1362,7 @@ Yes.
 
 **13.) Was instrument verification during the field season performed according to the QAPP and instrument recommendations?**
 
-For water temperature probes, instrument verification rather than calibration is performed. An ice-bath test was performed on all water temperature probes according to methods described in Mauger et al. 2015 prior to field use, and all probes recorded values within 0.25 degrees Celsius of a NIST certified thermometer.
+For water temperature probes, instrument verification rather than calibration is performed. An ice-bath test was performed on all water temperature probes according to methods described in [@mauger2015] prior to field use, and all probes recorded values within 0.25 degrees Celsius of a NIST certified thermometer.
 
 <br>
 
@@ -1479,9 +1481,9 @@ dat_metals_diss_tot <- inner_join(dat_metals_tot,dat_metals_diss,
 
 ```
 
-Dissolved metals observations are ***not*** consistently lower that total metals observations in 2023 data. For 2023 results, a total of 52 instances exist where dissolved metals observations are paired with total metals observations. These consist exclusively of copper and zinc observations. Of the the 52 paired observations, in 32 instances dissolved metals valules are greater than total metals values.
+Dissolved metals observations are ***not*** consistently lower that total metals observations in 2023 data. For 2023 results, a total of 52 instances exist where dissolved metals observations are paired with total metals observations. These consist exclusively of copper and zinc observations. Of the the 52 paired observations, in 32 instances dissolved metals values are greater than total metals values.
 
-These results may have important implications for data-flagging decisions as final results are prepared for upload to the EPA Water Quality Exchange.
+These results will have important implications for data-flagging decisions as final results are prepared for upload to the EPA Water Quality Exchange.
 
 <br>
 
@@ -1619,9 +1621,9 @@ Nomenclature note: "Limit of Quantitation (LOQ)", as used by ADEC and SGS, is eq
 embed_file("other/misc/docs/DL, LOD, LOQ Interpretation.pdf")
 ```
 
-*Discussion on 2023 Relative Percent Difference (RPD) Values* In 2023, we had a total of 23 pairs (of 44 total pairs) instances where parameter observations met the Limit of Quantitation (LOQ) criteria described above. In all other cases, the paired observations did not meet criteria for inclusion in RPD analyses.
+*Discussion on 2023 Relative Percent Difference (RPD) Values* In 2023, we had a total of 23 pairs (out of 44 total pairs) of instances where parameter observations met the Limit of Quantitation (LOQ) criteria described above. In all other cases, the paired observations did not meet criteria for inclusion in RPD analyses.
 
-Among the 23 value pairs included in RPD analyses, RPD values ranged from 0% to 45.6%. A total of five eligible value pairs exceeded 20% RPD, all of which were from the spring sampling event (5/2/2023). Each of the parameters included in the five RPD exceedences have another paired observation where RPD does not exceed 20%. This suggests that the variability among replicate samples is not systematic, and is likely associated with individual crew sampling techniques. Thus, at this stage we will not exclude any specific results based on RPD analyses.
+Among the 23 value pairs included in RPD analyses, RPD values ranged from 0% to 45.6%. A total of five eligible value pairs exceeded 20% RPD, all of which were from the spring sampling event (5/2/2023). Each of the parameters that constitute the five RPD exceedences have another paired observation where RPD does not exceed 20%. This suggests that the variability among replicate samples is not systematic, and is likely associated with individual crew sampling techniques. Thus, at this stage we will not exclude any specific results based on RPD analyses.
 
 <br>
 
@@ -1659,20 +1661,21 @@ Yes, there were. They are listed below:
 
             -   Zinc: Two dissolved zinc method blanks (200.8) (MB) are above the Limit of Quantitation of 10.0 ug/L. One method blank (MB) is at 11.3 ug/L, the other at 15.9 ug/L. **As a result, dissolved zinc results from spring 2023 may need to be flagged for QC failure.** PLAN: review 2021 ADEC report.
 
-            -   Total Nitrate/Nitrite: One matrix spike duplicate sample for total nitrate/nitrite is outside of QC criteria. The range of permissible recovery values includes the range from 90% - 110%, and the value is listed at 89%. This QC failure does not suggest a mechanism by which sample values are not still representative of environmental conditions, and will not result in spring 2023 total nitrate/nitrate values being flagged for QC failure.
+            -   Total Nitrate/Nitrite: One matrix spike duplicate sample for total nitrate/nitrite is outside of QC criteria. The range of permissible recovery values includes the range from 90% - 110%, and the value is listed at 89%. This QC failure does not suggest a mechanism by which sample values are not still broadly representative of environmental conditions, and will not result in spring 2023 total nitrate/nitrate values being flagged for QC failure.
 
         -   Summer 2023
 
-            -   One matrix spike sample for total nitrate/nitrite is outside of QC criteria. The range of permissible recovery values includes the range from 90% - 110%, and the value is listed at 112%. This QC failure does not suggest a mechanism by which sample values are not still representative of environmental conditions, and will not result in spring 2023 total nitrate/nitrate values being flagged for QC failure.
+            -   One matrix spike sample for total nitrate/nitrite is outside of QC criteria. The range of permissible recovery values includes the range from 90% - 110%, and the value is listed at 112%. This QC failure does not suggest a mechanism by which sample values are not still broadly representative of environmental conditions, and will not result in spring 2023 total nitrate/nitrate values being flagged for QC failure.
 
 <br>
 
 \*\* 21.) Is any laboratory data rejected (flagged) and why? \*\*
 
-Based on the above discussion, as of 6/5/2024 ***we will be flagging 2023 dissolved copper and zinc results*** as not representative of environmental conditions. The primary QA/QC not of concern for these two parameters is that dissolved metals values were frequently greater than total metals values, which is not physically realistic. With this decision, a total of 60 observations are flagged (30 dissolved Cu and 30 dissolved Zn observations).
+Based on the above discussion, as of 6/5/2024 ***we will be flagging 2023 dissolved copper and zinc results*** as not representative of in-situ environmental conditions. The primary QA/QC not of concern for these two parameters is that a) dissolved metals values were frequently greater than total metals values, which is not physically realistic. Detections of dissolved zinc in the pring 2023 method blanks also indicate that some dissolved zinc samples may not be representative of environmental conditions. 
 
-Diagnosis is in progress of this issue for future sampling events and QAPP updates.
+With this decision, a total of 60 observations are flagged (30 dissolved Cu and 30 dissolved Zn observations).
 
+Diagnosis is in progress of this issue for future sampling events (2024 and beyond) and QAPP updates.
 
 ```{r echo = F}
 # flag parameters based on discussion in question #21
@@ -1682,9 +1685,8 @@ dat %<>%
     TRUE ~ ""
   ))
 
-# inqury to EPA CDX - is it best practices to flag bad results, or just exclude them all together?
+# inquiry to EPA CDX - is it best practices to flag bad results, or just exclude them all together?
 ```
-
 
 <br>
 
@@ -1716,18 +1718,17 @@ From the QAPP, Completeness Measure A: "the primary number of samples collected 
 
 We calculated Completeness Measure A at the following project scales:
 
--   For individual parameters
-
--   For individual sites
-
 -   As a project whole
 
 ```{r echo = F}
 
 # need to have data flagging decisions complete to answer this
-
+z <- dat %>%
+  count(flag)
 
 ```
+
+60 of 1280 total observations are flagged, resulting in a Completeness Measure A value of 95.3%.
 
 <br>
 
@@ -1737,8 +1738,6 @@ From the QAPP, Completeness Measure B: "the planned number of samples divided by
 
 For these calculations, we will consider "usable" as "unflagged," and will calculate at the following scales:
 
--   For individual parameters (analysis methods)
--   For individual sites
 -   As a project whole
 
 ```{r echo = F}
@@ -1746,6 +1745,9 @@ For these calculations, we will consider "usable" as "unflagged," and will calcu
 # need to have flagging decisions complete to do this calculation
 
 ```
+
+As noted in question #2, one site (RM 10.1) was not visited in spring 2023, and in addition one fecal coliform sample was not collected in spring 2023. These planned sample constitute a total of 
+
 
 <br>
 
