@@ -1712,10 +1712,6 @@ Data that is unlikely to represent environmental conditions is identified and fl
 
 From the QAPP, Completeness Measure A: “the primary number of samples collected divided by the usable number of samples submitted to ADEC, with a goal of 85% completeness.” (Note that as of 2023 results are now submitted directly to EPA rather than DEC, per request of DEC).
 
-From the QAPP, Completeness Measure A: "the primary number of samples collected divided by the usable number of samples submitted to ADEC, with a goal of 85% completeness." (Note that as of 2023 results are now submitted directly to EPA rather than DEC, per request of DEC).
-
-(Note: metals parameters not specified in the QAPP are excluded from these analyses. In 2021, SGS laboratories provided dissolved metals results for parameters beyond what was originally requested.)
-
 We calculated Completeness Measure A at the following project scales:
 
 -   As a project whole
@@ -1724,11 +1720,18 @@ We calculated Completeness Measure A at the following project scales:
 
 # need to have data flagging decisions complete to answer this
 z <- dat %>%
+  filter(
+    # filter out lab method observations
+    characteristic_name != "",
+    !is.na(characteristic_name),
+    !is.na(monitoring_location_id),
+    # filter out hydrocarbon surrogate observations
+    !grepl("surr",characteristic_name)) %>%
   count(flag)
 
 ```
 
-60 of 1280 total observations are flagged, resulting in a Completeness Measure A value of 95.3%.
+60 of 574 total observations are flagged, resulting in an overall Completeness Measure A value of 89.5%, satisfying Completeness Measure A requirements for overall project considerations.
 
 <br>
 
@@ -1736,18 +1739,21 @@ z <- dat %>%
 
 From the QAPP, Completeness Measure B: "the planned number of samples divided by the useable samples (submitted to ADEC) with a goal of 60%."
 
-For these calculations, we will consider "usable" as "unflagged," and will calculate at the following scales:
+(Note: The description for Completeness Measure B appears to be a typo and should instead read as, "... the number of usable samples divided by the number of planned samples ..."; it is calculated here as such.)
 
--   As a project whole
+For these calculations, we will consider "usable" as "unflagged," and will calculate the value for the project whole:
 
 ```{r echo = F}
-
 # need to have flagging decisions complete to do this calculation
 
+# how many results per hydrocarbon test? (6)
+# benzene, ethylbenzene, o-xylene, P&M xylene, toluene, xylenes (total)
+
+embed_file("other/input/2023/misc/planned_samples_2023.xlsx")
+
+#616 planned samples
 ```
-
-As noted in question #2, one site (RM 10.1) was not visited in spring 2023, and in addition one fecal coliform sample was not collected in spring 2023. These planned sample constitute a total of 
-
+60 of 616 total planned samples are flagged, resulting in an overal Completeness Measure B value of 90.2%, satisfying Completeness Measure B requirements for overall project considerations. As noted in question #2, one site (RM 10.1) was not visited in spring 2023, and in addition one fecal coliform sample was not collected in spring 2023. 
 
 <br>
 
@@ -1865,15 +1871,19 @@ Questions #2 and #3 address this topic in detail. A summary table of the total n
 ```{r echo = F}
 # need to remove QA/QC analytes from here
 
-z <- dat 
-
-# WORKING HERE
 
 
 #summarise
 chr_num <- dat %>%
-  filter(characteristic_name != "" | !is.na(characteristic_name)) %>%
-  group_by(characteristic_name, result_sample_fraction) %>% # group by dissolved status too
+filter(
+    # filter out lab method observations
+    characteristic_name != "",
+    !is.na(characteristic_name),
+    !is.na(monitoring_location_id),
+    # filter out hydrocarbon surrogate observations
+    !grepl("surr",characteristic_name)) %>%
+  
+  group_by(activity_start_date,characteristic_name, result_sample_fraction) %>% # group by dissolved status too
   tally() 
 
 # save
@@ -1928,7 +1938,7 @@ In summer 2023, trip blanks were included with those field crews tasked with col
 
 (any equivalent 2023 concerns?)
 
-On the summer 2021 SGS chain of custody documents, BTEX trip blanks are specified for the above sites. However in the reported results, a single sample named "Trip Blank" is reported. This error resulted from a mis-communication with SGS staff.
+On the summer 2021 SGS chain of custody documents, BTEX trip blanks are specified for the above sites. However in the reported results, a single sample named "Trip Blank" is reported. This error resulted from a miscommunication with SGS Laboratories staff.
 
 In this case, all hydrocarbon results in the Trip Blank are reported as below detection limit, suggesting there is not a need to flag summer 2021 hydrocarbon results.
 
