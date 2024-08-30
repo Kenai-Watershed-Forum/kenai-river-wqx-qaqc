@@ -51,6 +51,8 @@ activity_year <- as.character(year(spring23_sample_date))
 
 ## Introduction
 
+\[8/30/24Working to make this script in to a year-less template\]
+
 Prior to publishing analysis and interpretation of water quality data, we will ensure that all data that meets QA/QC standards outlined in the current project [Quality Assurance Project Plan (QAPP)](https://www.kenaiwatershed.org/news-media/qapp-revisions-completed-2023/) and is accessible in the appropriate public repository.
 
 Water quality data from this project is ultimately destined for public archival in the Environmental Protection Agency's Water Quality Exchange (EPA WQX).
