@@ -1,4 +1,4 @@
-# 2023 QA/QC {.unnumbered}
+# \[Year\] QA/QC {.unnumbered}
 
 ---
 execute:
@@ -11,11 +11,10 @@ format:
     code-summary: "Show the code"
 ---
 
-```{r, 2023 WQX formatting for SGS, echo = F, message = F}
+```{r, Annual WQX formatting for SGS, echo = F, message = F}
 
 #| warning: false
 #| message: false
-
 
 # clear environment
 rm(list=ls())
@@ -35,33 +34,26 @@ library(stringi)
 
 xfun::pkg_load2(c("htmltools", "mime"))
 
+# assign project year and sampling dates, modify to annual dates
+activity_year <- as.character("####")
+spring_sample_date <-  ymd("1999-09-19")
+summer_sample_date <- ymd("1999-09-19")
 
-# Assign 2023 Field Sample Dates 
-# future scripts: make object names generalized and not year specific
-
-# Spring 2023 sampling date
-spring23_sample_date <- ymd("2023-05-02")
-
-# Summer 2023 Sampling Date
-summer23_sample_date <- ymd("2023-07-18")
-
-# assign activity year
-activity_year <- as.character(year(spring23_sample_date))
 ```
 
 ## Introduction
 
-\[8/30/24Working to make this script in to a year-less template\]
+\[10/23/2024: Working to make this script in to a year-less template\]
 
 Prior to publishing analysis and interpretation of water quality data, we will ensure that all data that meets QA/QC standards outlined in the current project [Quality Assurance Project Plan (QAPP)](https://www.kenaiwatershed.org/news-media/qapp-revisions-completed-2023/) and is accessible in the appropriate public repository.
 
 Water quality data from this project is ultimately destined for public archival in the Environmental Protection Agency's Water Quality Exchange (EPA WQX).
 
-The QAPP for this project describes data management details and responsible parties for each step of the data pipeline from observation to repository. The 2023 data preparation and review process is published here.
+The QAPP for this project describes data management details and responsible parties for each step of the data pipeline from observation to repository. The `r activity_year` data preparation and review process is published here.
 
-### Year 2023 Water Quality Data
+### Year `r activity_year` Water Quality Data
 
-In this chapter we will collate 2023 laboratory data from several sources into a single spreadsheet document with a consistent format. The desired end format is a spreadsheet template provided by the EPA Water Quality Exchange. These template files are available to download from the EPA at <https://www.epa.gov/waterdata/water-quality-exchange-web-template-files>.
+In this chapter we will collate `r activity_year` laboratory data from several sources into a single spreadsheet document with a consistent format. The desired end format is a spreadsheet template provided by the EPA Water Quality Exchange. These template files are available to download from the EPA at <https://www.epa.gov/waterdata/water-quality-exchange-web-template-files>.
 
 Once the data is collated, it will be evaluated according to a Quality Assurance Checklist (template example provided by the Alaska Department of Environmental Conservation Soldotna office). Field observations that do not meet the quality assurance standards described in the evaluation checklist will be flagged as "Rejected" before being uploaded to the EPA WQX.
 
@@ -69,38 +61,50 @@ Data that has been uploaded to the EPA WQX is evaluated biannually by the Alaska
 
 [^annual-qa-qc-template-1]: https://dec.alaska.gov/water/water-quality/integrated-report/
 
-#### 2023 Water Quality Data Formatting
+#### `r activity_year` Water Quality Data Formatting
 
-The code scripts in this document assemble water quality data from the two analytical laboratories that partnered with Kenai Watershed Forum for this project in 2023:
 
--   SGS Laboratories (Anchorage, AK)
 
--   Soldotna Wastewater Treatment Plant (Soldotna, AK)
+The code scripts in this document assemble water quality data from the two analytical laboratories that partnered with Kenai Watershed Forum for this project in `r activity_year`:
+
+-   LABORATORY NAME A (CITY, STATE)
+
+-   LABORATORY NAME B (CITY, STATE)
 
 <br>
 
 ------------------------------------------------------------------------
 
-##### 2023 Metals/Nutrients Lab Results (SGS Labs)
+##### `r activity_year` Metals/Nutrients Lab Results (SGS Labs)
 
 ```{r, echo = F, message = F}
 library("xfun")
 
-xfun::embed_file('other/input/2023/spring_2023_wqx_data/Data/SGS/Revision 1 SGS Data/1231846_FC5912_Rev1_part1.csv', text = "Download Original Spring 2023 Metals/Nutrients Lab Results from SGS - Part 1 - Electronic Data Delivery file")
+# specify directories for spring/summer metals & nutrients results; EDD and PDF
+dir_edd_spring_results <- paste0("other/input/",activity_year)
+dir_edd_summer_results <- paste0("other/input/",activity_year)
 
-xfun::embed_file('other/input/2023/spring_2023_wqx_data/Data/SGS/Revision 1 SGS Data/1231846_FC5912_Rev1_part2.csv', text = "Download Original Spring 2023 Metals/Nutrients Lab Results from SGS - Part 2 - Electronic Data Delivery file")
+xfun::embed_file(dir_spring_edd_results, text = paste("Download Original Spring",activity_year,"Metals/Nutrients Lab Results - Electronic Data Delivery file"))
 
-xfun::embed_file('other/input/2023/spring_2023_wqx_data/Data/SGS/Revision 1 SGS Data/1231846_SGS_Spring_2023_data_final.pdf', text = "Download Original Spring 2023 Metals/Nutrients Lab Results from SGS - PDF file")
+xfun::embed_file(dir_summer_edd_results, text = paste("Download Original Summer",activity_year,"Metals/Nutrients Lab Results - Electronic Data Delivery file"))
 
 ```
 
 ```{r, echo = F}
-xfun::embed_file('other/input/2023/summer_2023_wqx_data/Data/SGS/Summer 2023 SGS Agency Baseline.xlsx', text = "Download Original Summer 2023 Metals/Nutrients Lab Results from SGS - Electronic Data Delivery file")
+# specify directories for spring/summer metals & nutrients results; PDF
+dir_pdf_spring_results <- paste0("other/input/",activity_year)
+dir_pdf_summer_results <- paste0("other/input/",activity_year)
 
-xfun::embed_file('other/input/2023/summer_2023_wqx_data/Data/SGS/1233640.pdf', text = "Download Original Summer 2023 Metals/Nutrients Lab Results from SGS - PDF file")
+xfun::embed_file(dir_spring_pdf_results, text = paste("Download Original Spring",activity_year,"Metals/Nutrients Lab Results - PDF file"))
 
-xfun::embed_file('other/input/2023/summer_2023_wqx_data/Data/SGS/1233640_COC.pdf', text = "Download Original Summer 2023 Metals/Nutrients Chain of Custody docs from SGS - PDF file")
+xfun::embed_file(dir_summer_pdf_results, text = paste("Download Original Summer",activity_year,"Metals/Nutrients Lab Results - PDF file"))
 
+```
+
+```{r}
+knitr::knit_exit()
+
+# working to generalize steps below here 10/24/2024
 ```
 
 <br>
@@ -111,7 +115,7 @@ xfun::embed_file('other/input/2023/summer_2023_wqx_data/Data/SGS/1233640_COC.pdf
 #| message: false
 
 
-############################ Part A.1: SGS 2023 Data Read In #############################
+############################ Part A.1: Metals/Nutrients Data Read In #############################
 
 ## Reformat SGS data downloaded from their server client (SGS Engage, full EDD files) to match desired template
 
@@ -380,8 +384,6 @@ sgs23 %<>% mutate(activity_start_date = case_when(
 ```{r}
 
 # join near line 409 is not properly joining result_analytical_method_id for spring 2023 field blanks
-
-
 
 
 # Activity Start Time	(static, specific to SGS)

@@ -13,7 +13,7 @@ format:
 ---
 
 ::: {.content-visible when-format="html"}
-This document is the online work-in-progress for preparation of data that will be used in the upcoming report, [Water Quality Assessment of the Kenai River Watershed, 2000 - 2023](https://kenai-watershed-forum.github.io/kenai-river-wqx/).
+This document is the online work-in-progress for preparation of data that will be used in the upcoming report, [Water Quality Assessment of the Kenai River Watershed, 2000 - 2021](https://kenai-watershed-forum.github.io/kenai-river-wqx/).
 
 *Downloads*
 

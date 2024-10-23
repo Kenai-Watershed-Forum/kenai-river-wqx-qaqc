@@ -1,30 +1,37 @@
-"","characteristic_name","result_sample_fraction","n"
-"1","","Total",44
-"2","1,2-Dichloroethane-D4 (surr)","Volatile",14
-"3","4-Bromofluorobenzene (surr)","Volatile",14
-"4","Arsenic","Filtered, lab",30
-"5","Arsenic","Unfiltered",40
-"6","Benzene","Volatile",14
-"7","Cadmium","Filtered, lab",30
-"8","Cadmium","Unfiltered",40
-"9","Calcium","Unfiltered",76
-"10","Chromium","Filtered, lab",30
-"11","Chromium","Unfiltered",40
-"12","Copper","Filtered, lab",30
-"13","Copper","Unfiltered",76
-"14","Ethylbenzene","Volatile",11
-"15","Fecal Coliform","",54
-"16","Iron","Unfiltered",76
-"17","Lead","Filtered, lab",30
-"18","Lead","Unfiltered",40
-"19","Magnesium","Unfiltered",76
-"20","P & M -Xylene","Volatile",11
-"21","Toluene","Volatile",11
-"22","Toluene-d8 (surr)","Volatile",14
-"23","Total Nitrate/Nitrite-N","Total",104
-"24","Total Phosphorus","Total",117
-"25","Total suspended solids","",55
-"26","Xylenes (total)","Volatile",11
-"27","Zinc","Filtered, lab",30
-"28","Zinc","Unfiltered",111
-"29","o-Xylene","Volatile",11
+"","activity_start_date","characteristic_name","result_sample_fraction","n"
+"1",2023-05-02,"Arsenic","Filtered, lab",15
+"2",2023-05-02,"Cadmium","Filtered, lab",15
+"3",2023-05-02,"Calcium","Unfiltered",19
+"4",2023-05-02,"Chromium","Filtered, lab",15
+"5",2023-05-02,"Copper","Filtered, lab",15
+"6",2023-05-02,"Copper","Unfiltered",13
+"7",2023-05-02,"Fecal Coliform","",22
+"8",2023-05-02,"Iron","Unfiltered",19
+"9",2023-05-02,"Lead","Filtered, lab",15
+"10",2023-05-02,"Magnesium","Unfiltered",19
+"11",2023-05-02,"Total Nitrate/Nitrite-N","Total",23
+"12",2023-05-02,"Total Phosphorus","Total",23
+"13",2023-05-02,"Total suspended solids","",23
+"14",2023-05-02,"Zinc","Filtered, lab",15
+"15",2023-05-02,"Zinc","Unfiltered",13
+"16",2023-07-18,"Arsenic","Filtered, lab",15
+"17",2023-07-18,"Benzene","Volatile",4
+"18",2023-07-18,"Cadmium","Filtered, lab",15
+"19",2023-07-18,"Calcium","Unfiltered",24
+"20",2023-07-18,"Chromium","Filtered, lab",15
+"21",2023-07-18,"Copper","Filtered, lab",15
+"22",2023-07-18,"Copper","Unfiltered",14
+"23",2023-07-18,"Ethylbenzene","Volatile",4
+"24",2023-07-18,"Fecal Coliform","",24
+"25",2023-07-18,"Iron","Unfiltered",24
+"26",2023-07-18,"Lead","Filtered, lab",15
+"27",2023-07-18,"Magnesium","Unfiltered",24
+"28",2023-07-18,"P & M -Xylene","Volatile",4
+"29",2023-07-18,"Toluene","Volatile",4
+"30",2023-07-18,"Total Nitrate/Nitrite-N","Total",24
+"31",2023-07-18,"Total Phosphorus","Total",24
+"32",2023-07-18,"Total suspended solids","",24
+"33",2023-07-18,"Xylenes (total)","Volatile",4
+"34",2023-07-18,"Zinc","Filtered, lab",15
+"35",2023-07-18,"Zinc","Unfiltered",14
+"36",2023-07-18,"o-Xylene","Volatile",4
