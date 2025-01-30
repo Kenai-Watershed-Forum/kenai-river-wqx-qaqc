@@ -10,5 +10,3 @@ format:
     code-tools: true
     code-summary: "Show the code"
 ---
-
-
