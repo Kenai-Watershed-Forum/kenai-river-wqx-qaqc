@@ -1230,8 +1230,6 @@ xfun::embed_file('other/misc/qa_qc/Kenai_Baseline_Data_Evaluation_Checklist_2023
 
 ```
 
-
-
 #### Pre-database
 
 ##### Overall project success
@@ -1670,7 +1668,7 @@ Yes, there were. They are listed below:
 
 **21.) Is any laboratory data rejected (flagged) and why?**
 
-Based on the above discussion, as of 6/5/2024 ***we will be flagging 2023 dissolved copper and zinc results*** as not representative of in-situ environmental conditions. The primary QA/QC not of concern for these two parameters is that a) dissolved metals values were frequently greater than total metals values, which is not physically realistic. Detections of dissolved zinc in the pring 2023 method blanks also indicate that some dissolved zinc samples may not be representative of environmental conditions. 
+Based on the above discussion, as of 6/5/2024 ***we will be flagging 2023 dissolved copper and zinc results*** as not representative of in-situ environmental conditions. The primary QA/QC not of concern for these two parameters is that a) dissolved metals values were frequently greater than total metals values, which is not physically realistic. Detections of dissolved zinc in the pring 2023 method blanks also indicate that some dissolved zinc samples may not be representative of environmental conditions.
 
 With this decision, a total of 60 observations are flagged (30 dissolved Cu and 30 dissolved Zn observations).
 
@@ -1752,7 +1750,8 @@ embed_file("other/input/2023/misc/planned_samples_2023.xlsx")
 
 #616 planned samples
 ```
-60 of 616 total planned samples are flagged, resulting in an overal Completeness Measure B value of 90.2%, satisfying Completeness Measure B requirements for overall project considerations. As noted in question #2, one site (RM 10.1) was not visited in spring 2023, and in addition one fecal coliform sample was not collected in spring 2023. 
+
+60 of 616 total planned samples are flagged, resulting in an overal Completeness Measure B value of 90.2%, satisfying Completeness Measure B requirements for overall project considerations. As noted in question #2, one site (RM 10.1) was not visited in spring 2023, and in addition one fecal coliform sample was not collected in spring 2023.
 
 <br>
 
