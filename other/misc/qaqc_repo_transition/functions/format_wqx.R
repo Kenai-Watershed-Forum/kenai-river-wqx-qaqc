@@ -32,7 +32,9 @@
 site_coords <- read_excel(
   file.path(cfg$templates_dir, "wqx_template_matching_table.xlsx"),
   sheet = "site_coordinates"
-) %>% remove_empty()
+) %>%
+  remove_empty() %>%
+  mutate(monitoring_location_id = as.character(monitoring_location_id))
 dat <- left_join(dat, site_coords)
 
 

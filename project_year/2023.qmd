@@ -1,0 +1,1028 @@
+---
+execute:
+  echo: false
+  cache: false
+date: today
+format:
+  html:
+    code-fold: true
+    code-tools: true
+    code-summary: "Show code"
+---
+
+# 2023 {.unnumbered}
+
+## Introduction
+
+Prior to publishing analysis and interpretation of water quality data, we will ensure that all data that meets QA/QC standards outlined in the current project [Quality Assurance Project Plan (QAPP)](https://www.kenaiwatershed.org/news-media/qapp-revisions-completed-2023/) and is accessible in the appropriate public repository.
+
+Water quality data from this project is ultimately destined for public archival in the Environmental Protection Agency's Water Quality Exchange (EPA WQX).
+
+The QAPP for this project describes data management details and responsible parties for each step of the data pipeline from observation to repository. The 2023 data preparation and review process is published here.
+
+### Year 2023 Water Quality Data
+
+In this chapter we will collate 2023 laboratory data from several sources into a single spreadsheet document with a consistent format. The desired end format is a spreadsheet template provided by the EPA Water Quality Exchange.
+
+Once the data is collated, it will be evaluated according to a Quality Assurance Checklist (template example provided by the Alaska Department of Environmental Conservation Soldotna office). Field observations that do not meet the quality assurance standards described in the evaluation checklist will be flagged as "Rejected" before being uploaded to the EPA WQX.
+
+Data that has been uploaded to the EPA WQX is evaluated biannually by the Alaska Department of Environmental Conservation (ADEC) in their [Integrated Water Quality Monitoring and Assessment Report](https://dec.alaska.gov/water/water-quality/integrated-report/)[^2023-1]. The integrated report evaluates available water quality data from the previous five years against Alaska water quality standards and regulations [@adec2020].
+
+[^2023-1]: https://dec.alaska.gov/water/water-quality/integrated-report/
+
+The code scripts in this document assemble water quality data from two analytical laboratories that partnered with Kenai Watershed Forum for 2023:
+
+- SGS Laboratories (Anchorage, AK)
+- Soldotna Wastewater Treatment Plant (Soldotna, AK)
+
+------------------------------------------------------------------------
+
+## Year Configuration
+
+```{r year-config-2023, message=FALSE, warning=FALSE}
+#| eval: false
+
+# ── YEAR CONFIGURATION ──────────────────────────────────────────────────────
+# Update this block when actively rebuilding the 2023 pipeline.
+# All downstream chunks read from the `cfg` list below.
+
+library(tidyverse)
+library(readxl)
+library(openxlsx)
+library(data.table)
+library(stringr)
+library(magrittr)
+library(janitor)
+library(hms)
+library(lubridate)
+library(anytime)
+library(leaflet)
+library(here)
+library(xfun)
+
+year <- 2023
+
+# Field sampling dates
+spring_sample_date <- ymd("2023-05-02")
+summer_sample_date <- ymd("2023-07-18")
+
+spring_data_dir <- here("other/input/2023/spring_2023_wqx_data")
+summer_data_dir <- here("other/input/2023/summer_2023_wqx_data")
+misc_dir        <- here("other/input/2023/misc")
+output_qaqc_dir <- here("other/output/intermediate", year)
+
+cfg <- list(
+  year               = year,
+  spring_sample_date = spring_sample_date,
+  summer_sample_date = summer_sample_date,
+  spring_data_dir    = spring_data_dir,
+  summer_data_dir    = summer_data_dir,
+  misc_dir           = misc_dir,
+  output_qaqc_dir    = output_qaqc_dir,
+  # shared templates (analyte abbreviations)
+  templates_dir      = here("other/input/wqx_templates"),
+  wqx_downloads_dir  = here("other/input/WQX_downloads"),
+  wqx_intermediate_path = here("other/output",
+                                paste0(year, "_kwf_baseline_results_wqx.csv")),
+  flagged_export_path   = here("other/output",
+                                paste0(year, "_export_data_flagged.csv"))
+)
+
+dir.create(output_qaqc_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(here("other/output/intermediate/field_qa_qc_data/metals_total_diss"),
+           recursive = TRUE, showWarnings = FALSE)
+dir.create(here("other/output/intermediate/field_qa_qc_data/completeness_measures"),
+           recursive = TRUE, showWarnings = FALSE)
+```
+
+------------------------------------------------------------------------
+
+## Part A: Data Ingestion
+
+**2023-specific notes:**
+
+- Spring sampling: May 2, 2023. Summer sampling: July 18, 2023.
+- SGS spring data delivered as two CSV files (Revision 1): `part1` (200.7 results) and `part2` (all others). Spring 200.7 was subcontracted to SGS Orlando (not ALS).
+- SGS summer data delivered as XLSX (Sheet9). In summer 2023, EPA 200.8 was used for **both total and dissolved metals** (no 200.7). The `ANALYSIS_GROUP` column distinguishes total vs. dissolved.
+- Spring SGS EDD shows receipt date 05/09/2023 for all project samples; PDF and COC indicate actual receipt was 05/04/2023 08:51. Corrected in ingestion code.
+- Some spring SGS samples show collect date 2023-05-03 (lab typo on pre-printed COC); corrected to 2023-05-02.
+- `SW846 6010D` rows appear in SGS project samples but have no reportable values — filtered out.
+- Spring 2023: RM 10.1 was not visited due to low water conditions; one RM 40 FC sample was spilled on-site.
+- Field duplicates — spring: RM 1.5 and RM 36; summer: RM 0 and RM 36.
+- TSS spring receipt times from Chain of Custody ReadMe: RM_1.5 = 15:30, all others = 12:44. Summer receipt time = 12:25. TSS LOD = 0.31 mg/L.
+- No YSI/field parameter data processed in 2023. Water temperature was measured in-situ; pH, conductivity, and turbidity were measured at the KWF office.
+- Dissolved copper and zinc flagged as not representative: dissolved \> total in 32 of 52 paired observations; two spring dissolved zinc method blanks above LOQ (11.3 and 15.9 µg/L).
+
+### SGS Lab Results
+
+```{r part-a-sgs-2023, message=FALSE, warning=FALSE}
+#| eval: false
+
+# ── Spring 2023 SGS: two-part CSV EDD (Revision 1) ──────────────────────────
+spring_sgs_part1 <- read.csv(
+  file.path(cfg$spring_data_dir,
+            "Data/SGS/Revision 1 SGS Data/1231846_FC5912_Rev1_part1.csv")) |>
+  transform(PROJECT_ID = as.character(PROJECT_ID),
+            DISSOLVED  = as.character(DISSOLVED)) |>
+  rename(RUN_DATE_TIME = RUN_DATE) |>
+  # Receipt date/time is incomplete in this EDD (shows 5/9/23 for all PS).
+  # PDF and COC confirm actual receipt was 05/04/2023 08:51.
+  mutate(REC_DATE = case_when(
+    REC_DATE == "05/09/2023 00:00" ~ "05/04/2023 08:51",
+    TRUE ~ REC_DATE))
+
+spring_sgs_part2 <- read.csv(
+  file.path(cfg$spring_data_dir,
+            "Data/SGS/Revision 1 SGS Data/1231846_FC5912_Rev1_part2.csv")) |>
+  transform(MATRIX      = as.character(MATRIX),
+            LAB_SAMPLE_ID = as.character(LAB_SAMPLE_ID),
+            SDG         = as.character(SDG))
+
+spring_sgs_raw <- bind_rows(spring_sgs_part1, spring_sgs_part2) |>
+  select(-PROJECT_ID, -DISSOLVED)
+
+# ── Summer 2023 SGS: XLSX Sheet9 ────────────────────────────────────────────
+# Note: summer 2023 uses 200.8 for BOTH total and dissolved metals.
+# ANALYSIS_GROUP column distinguishes: "Metals by ICP/MS" (total) vs.
+# "Dissolved metals by ICP/MS" (dissolved).
+summer_sgs_raw <- read_excel(
+  file.path(cfg$summer_data_dir, "Data/SGS/Summer 2023 SGS Agency Baseline.xlsx"),
+  sheet = "Sheet9") |>
+  select(-PROJECT_ID, -DISSOLVED)
+
+# ── Combine and clean ────────────────────────────────────────────────────────
+sgs23 <- bind_rows(spring_sgs_raw, summer_sgs_raw) |>
+  clean_names() |>
+  remove_empty() |>
+  mutate(lab_name = "SGS North America, Anchorage, Alaska",
+         matrix   = "Water") |>
+  transform(
+    collect_date   = mdy_hm(collect_date),
+    rec_date       = mdy_hm(rec_date),
+    run_date       = mdy_hm(run_date_time),
+    extracted_date = mdy_hm(extracted_date)) |>
+  separate(collect_date,   sep = " ", into = c("collect_date",   "collect_time")) |>
+  separate(rec_date,       sep = " ", into = c("rec_date",       "rec_time")) |>
+  separate(run_date_time,  sep = " ", into = c("run_date_time",  "run_time")) |>
+  separate(extracted_date, sep = " ", into = c("extracted_date", "extracted_time"))
+
+rm(spring_sgs_part1, spring_sgs_part2, spring_sgs_raw, summer_sgs_raw)
+
+# ── Site name matching ────────────────────────────────────────────────────────
+sgs_sitenames <- read_csv(
+  file.path(cfg$misc_dir, "site_names_manual_edit_sgs23.csv")) |>
+  filter(!is.na(site_id)) |>
+  select(sample_id, site_id) |>
+  mutate(sample_id = str_trim(sample_id))
+
+sgs23 <- left_join(sgs23, sgs_sitenames, by = "sample_id")
+
+# ── Monitoring location IDs (manual fixes for join failures) ─────────────────
+location_ids <- read_csv(file.path(cfg$misc_dir, "lat_long.csv")) |>
+  select(site_id, monitoring_location_id) |>
+  mutate(monitoring_location_id = as.character(monitoring_location_id))
+
+sgs23 <- left_join(sgs23, location_ids, by = "site_id") |>
+  # Fix Jim's Landing and Skilak Outlet (join failures)
+  mutate(monitoring_location_id = case_when(
+    grepl("JIM'S|Jim's", sample_id) ~ "10000031",
+    grepl("Skilak|SKILAK", sample_id) ~ "10000030",
+    TRUE ~ monitoring_location_id))
+
+# ── Activity type ────────────────────────────────────────────────────────────
+sgs23 <- sgs23 |>
+  mutate(
+    activity_type = case_when(
+      grepl("DUP|Dup",          sample_id) ~ "Quality Control Field Replicate Msr/Obs",
+      grepl("FB|FieldBlank|FIELD BLANK", sample_id) ~ "Quality Control Sample-Field Blank",
+      grepl("TRIP BLANK",       sample_id) ~ "Quality Control Sample-Trip Blank",
+      sample_type == "PS"                  ~ "Field Msr/Obs",
+      TRUE ~ ""),
+    activity_type_abbrv = case_when(
+      grepl("Replicate",     activity_type) ~ "DUP",
+      grepl("Field Blank",   activity_type) ~ "FB",
+      grepl("Trip Blank",    activity_type) ~ "TB",
+      TRUE ~ ""))
+
+# ── Result sample fraction ───────────────────────────────────────────────────
+# SW846 6010D: metal digestion — no reportable values; remove
+sgs23 <- sgs23 |>
+  filter(analytical_method != "SW846 6010D") |>
+  mutate(result_sample_fraction = case_when(
+    grepl("SW8260D",                analytical_method) ~ "Volatile",
+    grepl("SM21 4500NO3-F|SM21 4500P-B,E", analytical_method) ~ "Total",
+    analysis_group %in% c("Metals by ICP/MS",
+                           "Metals",
+                           "Metals by ICP/MS (Provisional for Be, Cu 06052023)")
+                                                        ~ "Unfiltered",
+    analysis_group %in% c("Dissolved Metals by ICP/MS",
+                           "Diss. Metals by ICP/MS (Provisional Be,Cu 652023)")
+                                                        ~ "Filtered, lab",
+    TRUE ~ ""),
+    diss_abbrv = if_else(result_sample_fraction == "Filtered, lab", "Diss", ""))
+
+# ── Activity start date corrections ─────────────────────────────────────────
+# Some spring samples show 2023-05-03 due to a pre-printed COC typo; correct to 05-02.
+sgs23 <- sgs23 |>
+  rename(activity_start_date = collect_date,
+         activity_start_time = collect_time) |>
+  mutate(activity_start_date = case_when(
+    sample_type == "PS" & activity_start_date == "2023-05-03" ~
+      as.character(cfg$spring_sample_date),
+    TRUE ~ activity_start_date))
+
+# ── Analyte abbreviations + Activity ID ────────────────────────────────────
+analyte_abbrv <- read_csv(
+  file.path(cfg$misc_dir, "analytes_list_manual_edit.csv")) |>
+  filter(analyte_abbreviation != "")
+colnames(analyte_abbrv) <- c("analyte", "analyte_abbrv")
+sgs23 <- left_join(sgs23, analyte_abbrv)
+
+sgs23 <- sgs23 |>
+  mutate(activity_id = case_when(
+    diss_abbrv == "" & activity_type_abbrv == "" ~
+      paste0(site_id, "-", activity_start_date, "-", analyte_abbrv),
+    diss_abbrv != "" & activity_type_abbrv == "" ~
+      paste0(site_id, "-", activity_start_date, "-", analyte_abbrv, "-", diss_abbrv),
+    diss_abbrv == "" ~
+      paste0(site_id, "-", activity_start_date, "-", analyte_abbrv, "-", activity_type_abbrv),
+    TRUE ~
+      paste0(site_id, "-", activity_start_date, "-", analyte_abbrv, "-",
+             activity_type_abbrv, "-", diss_abbrv)))
+
+cat("SGS 2023 rows:", nrow(sgs23), "\n")
+```
+
+### Fecal Coliform Results
+
+```{r part-a-fc-2023, message=FALSE, warning=FALSE}
+#| eval: false
+
+# ── Spring 2023 FC ────────────────────────────────────────────────────────────
+spring_23_fc_dir <- file.path(cfg$spring_data_dir,
+                              "Data/SWWTP/KRWF Fecal 05-02-23.xlsx")
+
+spring_23_fc <- read_excel(spring_23_fc_dir, skip = 11, col_types = "text") |>
+  mutate(rec_date = cfg$spring_sample_date)
+
+# ── Summer 2023 FC ────────────────────────────────────────────────────────────
+summer_23_fc_dir <- file.path(cfg$summer_data_dir,
+                              "Data/SWWTP/KRWF Fecal 07-18-23.xlsx")
+
+summer_23_fc <- read_excel(summer_23_fc_dir, skip = 11, col_types = "text") |>
+  mutate(rec_date = cfg$summer_sample_date)
+
+# ── Combine ───────────────────────────────────────────────────────────────────
+fc23 <- bind_rows(spring_23_fc, summer_23_fc) |>
+  clean_names() |>
+  mutate(across(c(time_sampled, time_in, time_out, rec_time), ~ {
+    format(as.POSIXct(Sys.Date() + as.numeric(.x)), "%H:%M", tz = "UTC")
+  }))
+
+# ── Site names ────────────────────────────────────────────────────────────────
+fc23_site_names <- read_csv(file.path(cfg$misc_dir,
+                                      "site_names_manual_edit_fc23.csv")) |>
+  remove_empty()
+
+fc23 <- left_join(fc23, fc23_site_names) |>
+  mutate(
+    activity_type = case_when(
+      grepl("DUP",      sample_location_rm) ~ "Quality Control Field Replicate Msr/Obs",
+      grepl("BLANK",    sample_location_rm) ~ "Quality Control Sample-Lab Blank",
+      grepl("POSITIVE", sample_location_rm) ~ "Sample-Positive Control",
+      TRUE ~ "Field Msr/Obs"),
+    activity_type_abbrv = case_when(
+      grepl("Replicate",  activity_type) ~ "DUP",
+      grepl("Lab Blank",  activity_type) ~ "LB",
+      grepl("Positive",   activity_type) ~ "POS",
+      TRUE ~ ""),
+    analyte_abbrv        = "FC",
+    characteristic_name  = "Fecal Coliform",
+    result_sample_fraction = "None",
+    result_analytical_method_id      = "9222D",
+    result_analytical_method_context = "APHA",
+    result_unit          = "cfu/100ml",
+    activity_start_date  = rec_date,
+    activity_start_time  = time_sampled,
+    activity_id = case_when(
+      grepl("POS|LB", activity_type_abbrv) ~ "",
+      activity_type_abbrv == "" ~
+        paste0(site_id, "-", activity_start_date, "-", analyte_abbrv),
+      TRUE ~
+        paste0(site_id, "-", activity_start_date, "-", analyte_abbrv,
+               "-", activity_type_abbrv)))
+
+cat("FC 2023 rows:", nrow(fc23), "\n")
+```
+
+### Total Suspended Solids Results
+
+```{r part-a-tss-2023, message=FALSE, warning=FALSE}
+#| eval: false
+
+# ── Spring 2023 TSS ───────────────────────────────────────────────────────────
+spring_23_tss_dir <- file.path(cfg$spring_data_dir,
+                               "Data/SWWTP/KRWF TSS MONITORING 05-02-23.xlsx")
+
+spring_23_tss <- read_excel(spring_23_tss_dir,
+                             sheet = "Updated_Formatting",
+                             skip = 1, col_types = "text") |>
+  # Receipt times from Chain of Custody ReadMe
+  mutate(rec_time = case_when(
+    grepl("RM_1.5", Sample_Location) ~ as_hms("15:30:00"),
+    TRUE                             ~ as_hms("12:44:00")),
+    rec_date = cfg$spring_sample_date)
+
+# ── Summer 2023 TSS ───────────────────────────────────────────────────────────
+summer_23_tss_dir <- file.path(cfg$summer_data_dir,
+                               "Data/SWWTP/KRWF TSS MONITORING 07-18-23.xlsx")
+
+summer_23_tss <- read_excel(summer_23_tss_dir,
+                             sheet = "Updated_Formatting",
+                             skip = 1, col_types = "text") |>
+  mutate(rec_time = as_hms("12:25:00"),
+         rec_date = cfg$summer_sample_date)
+
+# ── Combine ───────────────────────────────────────────────────────────────────
+tss23 <- bind_rows(spring_23_tss, summer_23_tss) |>
+  clean_names() |>
+  transform(
+    field_sample_date = excel_numeric_to_date(as.numeric(field_sample_date)),
+    date_of_analysis  = excel_numeric_to_date(as.numeric(date_of_analysis))) |>
+  mutate(
+    time_sampled  = format(as.POSIXct(Sys.Date() + as.numeric(sample_time)), "%H:%M", tz = "UTC"),
+    time_analysis = format(as.POSIXct(Sys.Date() + as.numeric(time)),        "%H:%M", tz = "UTC")) |>
+  select(-sample_time, -time, -qc1, -data_entry, -qc2)
+
+tss23_site_names <- read_csv(
+  file.path(cfg$misc_dir, "site_names_manual_edit_tss23.csv")) |>
+  remove_empty()
+
+tss23 <- left_join(tss23, tss23_site_names) |>
+  mutate(
+    activity_type = case_when(
+      grepl("DUP",   sample_location) ~ "Quality Control Field Replicate Msr/Obs",
+      grepl("BLANK", sample_location) ~ "Quality Control Sample-Lab Blank",
+      TRUE ~ "Field Msr/Obs"),
+    activity_type_abbrv = case_when(
+      grepl("Replicate", activity_type) ~ "DUP",
+      grepl("Lab Blank", activity_type) ~ "LB",
+      TRUE ~ ""),
+    analyte_abbrv       = "TSS",
+    characteristic_name = "Total suspended solids",
+    result_sample_fraction       = "Suspended",
+    result_analytical_method_id  = "2540-D",
+    result_analytical_method_context = "APHA",
+    result_unit          = "mg/L",
+    # LOD = 0.31 mg/L per SWWTP lab
+    result_detection_limit_type_2  = "Method Detection Level",
+    result_detection_limit_value_2 = 0.31,
+    activity_start_date = field_sample_date,
+    activity_start_time = time_sampled,
+    activity_id = case_when(
+      grepl("LB",  activity_type_abbrv) ~ "",
+      grepl("DUP", activity_type_abbrv) ~
+        paste0(site_id, "-", activity_start_date, "-", analyte_abbrv, "-DUP"),
+      TRUE ~
+        paste0(site_id, "-", activity_start_date, "-", analyte_abbrv)))
+
+cat("TSS 2023 rows:", nrow(tss23), "\n")
+```
+
+### Bind All Sources → `dat`
+
+```{r part-a-bind-2023, message=FALSE, warning=FALSE}
+#| eval: false
+
+# Read in shared column names from 2021 example output
+col_names <- read_csv(
+  here("other/output/intermediate/misc/col_names_manual_edit.csv")) |>
+  clean_names() |>
+  mutate(sample_type = "", rec_time = "", rec_date = "") |>
+  colnames()
+
+# Subset each dataframe and coerce to character
+sgs23 <- sgs23 |>
+  select(one_of(col_names)) |>
+  mutate(across(everything(), as.character))
+
+fc23 <- fc23 |>
+  select(one_of(col_names)) |>
+  mutate(across(everything(), as.character))
+
+tss23 <- tss23 |>
+  select(one_of(col_names)) |>
+  mutate(across(everything(), as.character))
+
+dat <- bind_rows(sgs23, fc23, tss23)
+
+# ── Common fields ────────────────────────────────────────────────────────────
+lat_long <- read_csv(file.path(cfg$misc_dir, "lat_long.csv")) |>
+  transform(monitoring_location_id = as.character(monitoring_location_id))
+
+dat <- dat |>
+  mutate(
+    project_id                         = "10000007",
+    activity_media_name                = "Water",
+    activity_media_subdivision_name    = "Surface Water",
+    activity_start_time_zone           = "AKST",
+    activity_depth_height_measure      = "15",
+    activity_depth_height_unit         = "cm",
+    activity_comment                   = "",
+    activity_horizontal_collection_method  = "GPS-Unspecified",
+    activity_horizontal_reference_datum    = "NAD83",
+    result_weight_basis                = "Sampled",
+    result_value_type                  = "Actual",
+    sample_collection_equipment_name   = "Water Bottle",
+    thermal_preservative_used          = "Cold Packs (4 deg C)") |>
+  mutate(monitoring_location_id = str_trim(monitoring_location_id)) |>
+  left_join(lat_long)
+
+# ── Miscellaneous corrections ────────────────────────────────────────────────
+# Summer date typo: samples showing collect date before summer sampling date
+dat <- dat |>
+  mutate(activity_start_date = case_when(
+    ymd(activity_start_date) < cfg$summer_sample_date &
+      ymd(activity_start_date) > ymd("2023-07-13") &
+      sample_type == "PS" ~ as.character(cfg$summer_sample_date),
+    TRUE ~ activity_start_date))
+
+# Remove rows with no result (RM 10.1 not visited spring; RM 40 FC spilled)
+dat <- dat |>
+  filter(result_value != "N/A", !is.na(result_value))
+
+# Consolidate unit names: "ug/L" → "ug/l"
+dat[dat == "ug/L"] <- "ug/l"
+
+# ── Flag dissolved Cu and Zn ─────────────────────────────────────────────────
+# 32 of 52 paired observations show dissolved > total; two spring dissolved Zn
+# method blanks above LOQ. Flag all dissolved Cu and Zn results.
+dat <- dat |>
+  mutate(flag = case_when(
+    grepl("Copper|Zinc", characteristic_name) &
+      result_sample_fraction == "Filtered, lab" ~ "Y",
+    TRUE ~ ""))
+
+cat("2023 combined dat rows:", nrow(dat), "\n")
+cat("Sites:", n_distinct(dat$monitoring_location_id), "\n")
+```
+
+------------------------------------------------------------------------
+
+## Part B: WQX Formatting
+
+::: callout-note
+Part B (WQX formatting via `format_wqx.R`) is pending migration for 2023. Before enabling, verify that the `sgs_site_names_matching_table.xlsx` covers all 2023 SGS sample IDs and that the 2023 analyte abbreviations in `analytes_list_manual_edit.csv` are complete.
+:::
+
+```{r part-b-2023, message=FALSE, warning=FALSE}
+#| eval: false
+
+# Source shared WQX formatting function (same as 2025)
+source(here("other/misc/qaqc_repo_transition/functions/format_wqx.R"))
+```
+
+------------------------------------------------------------------------
+
+## Part C: QA/QC Checklist
+
+Prior to upload to the EPA WQX, all water quality data must be checked against a series of standard questions in order to evaluate how quality assurance / quality check (QA/QC) requirements are met.
+
+```{r part-c-checklist-download, message=FALSE, warning=FALSE}
+#| eval: false
+xfun::embed_file(
+  here("other/misc/qa_qc/Kenai_Baseline_Data_Evaluation_Checklist_2023.xlsx"),
+  text = "Download 2023 Draft Kenai Baseline Data Evaluation Checklist Template")
+```
+
+#### Pre-database
+
+##### Overall project success
+
+**1.) Were the appropriate analytical methods used for all parameters?**
+
+Yes. Analytical methods from the approved 2023 QAPP were employed, with exceptions (described below) that are not anticipated to affect results.
+
+Changes from the approved 2023 QAPP:
+
+- For summer 2023, EPA method 200.8 was used for total metals rather than 200.7. The project manager at SGS Laboratories describes that no differences are anticipated in how results can be interpreted. Both methods are appropriate for total metals in surface waters.
+
+<br>
+
+**2.) Were there any deviations from the sampling plan?**
+
+In 2023 there were several small deviations from the sampling plan due to a late ice-out date and challenging spring field logistics. One site in spring 2023 could not be accessed for sampling due to low water conditions (Kenai River main stem, RM 10.1). Additionally, one fecal coliform sample result is missing from site RM 40 (Killey River) on 5/2/2023 due to an on-site loss from bottle spillage.
+
+<br>
+
+**3.) Were field duplicates, blanks, and/or other field QC samples collected as planned?**
+
+```{r part-c-q3, message=FALSE, warning=FALSE}
+#| eval: false
+qa_samples1 <- dat |>
+  group_by(activity_start_date, activity_type, characteristic_name,
+           result_analytical_method_id, sample_type, result_sample_fraction) |>
+  count() |>
+  filter(!is.na(activity_start_date), !is.na(activity_type),
+         sample_type == "PS") |>
+  arrange(activity_start_date, characteristic_name,
+          result_analytical_method_id, result_sample_fraction)
+
+write.csv(qa_samples1,
+          file.path(cfg$output_qaqc_dir, "qa_samples_2023_table1.csv"),
+          row.names = FALSE)
+
+qa_samples2 <- dat |>
+  group_by(activity_start_date, result_analytical_method_id, sample_type) |>
+  count() |>
+  filter(sample_type == "PS")
+
+write.csv(qa_samples2,
+          file.path(cfg$output_qaqc_dir, "qa_samples_2023_table2.csv"),
+          row.names = FALSE)
+```
+
+Yes, all planned field blanks, trip blanks, and duplicate samples were collected as planned.
+
+<br>
+
+**4.) Do the laboratory reports provide results for all sites and parameters?**
+
+The laboratory reports from both labs provide results corresponding with the chain of custody documents provided, within the parameters of what is described in questions #1–#3.
+
+<br>
+
+**5.) Is a copy of the COC included with the laboratory reports?**
+
+Yes. Chain of custody documents from SGS laboratories are included in the results PDFs. Chain of custody documents from the Soldotna Wastewater Treatment Plant are available upon request.
+
+```{r part-c-q5, message=FALSE, warning=FALSE}
+#| eval: false
+xfun::embed_file(
+  here("other/misc/qa_qc/chain_of_custody_2023/swwtp CoC summer 2023.zip"),
+  text = "Download 2023 Chain of Custody Documents from Soldotna Wastewater Treatment Plant")
+```
+
+<br>
+
+**6.) Do the laboratory reports match the COC and requested methods throughout?**
+
+Yes, with the exceptions discussed in question #1.
+
+<br>
+
+**7.) Are the number of samples on the laboratory reports the same as on the COC?**
+
+Yes, no loss of samples occurred in the process of generating laboratory results.
+
+<br>
+
+**8.) Was all supporting info provided in the laboratory report, such as reporting limits for all analyses and definitions?**
+
+SGS laboratory reports include reporting limits in both the electronic data deliverables as well as the PDF reports. Results from the Soldotna Wastewater Treatment Plant do not contain reporting limits. Reporting limits and other QA/QC data considerations are provided in the 2023 QAPP.
+
+<br>
+
+**9.) Are site names, dates, and times correct and as expected?**
+
+Numerous corrections to site names and dates were necessary to prepare data into final form. Original documents (Electronic Data Deliverables) were not modified, and corrections are applied throughout the data read-in process.
+
+<br>
+
+**10.) Were there any issues with instrument calibration?**
+
+No issues are documented with calibration for KWF's field or laboratory instruments. No calibration issues are described in the "Case Narrative" sections of the spring and summer SGS PDF laboratory reports.
+
+<br>
+
+**11.) Did the instrument perform as expected?**
+
+TBD — check ranges to decide if including conductivity & turbidity results.
+
+<br>
+
+**12.) Was instrument calibration performed according to the QAPP and instrument recommendations?**
+
+Yes.
+
+<br>
+
+**13.) Was instrument verification during the field season performed according to the QAPP and instrument recommendations?**
+
+For water temperature probes, instrument verification rather than calibration is performed. An ice-bath test was performed on all water temperature probes according to methods described in [@mauger2015] prior to field use, and all probes recorded values within 0.25 degrees Celsius of a NIST certified thermometer.
+
+<br>
+
+**14.) Were instrument calibration verification logs or records kept?**
+
+Yes. Calibration and verification records are kept at Kenai Watershed Forum's office at 44129 Sterling Hwy, Soldotna, AK and are available upon request.
+
+<br>
+
+**15.) Do the instrument data files site IDs, time stamps and file names match?**
+
+Instrument data files from fieldwork are not generated as part of this project.
+
+<br>
+
+**16.) Is any in-situ field data rejected and why?**
+
+No in-situ field data is rejected. Water temperature was the sole parameter measured in-situ in 2023. Other applicable intrinsic water quality parameters (pH, conductivity, turbidity) were measured at the KWF office.
+
+<br>
+
+**17.) Were preservation, hold time, and temperature requirements met?**
+
+```{r part-c-q17, message=FALSE, warning=FALSE}
+#| eval: false
+hold_times <- dat |>
+  mutate(
+    hold_time         = as_hms(rec_datetime - activity_start_datetime),
+    hold_time_minutes = as.numeric(seconds(hold_time)) / 60,
+    hold_time_hours   = hold_time_minutes / 60) |>
+  filter(sample_type == "PS") |>
+  select(-hold_time, -hold_time_minutes)
+
+sample_holding_times <- read_csv(
+  here("other/input/wqx_templates/sample_holding_times.csv")) |>
+  filter(!is.na(max_holding_time_hours)) |>
+  transform(max_holding_time_hours = as.numeric(max_holding_time_hours)) |>
+  select(-max_holding_time_text)
+
+hold_times <- left_join(hold_times, sample_holding_times) |>
+  mutate(hold_time_pass = if_else(
+    max_holding_time_hours < hold_time_hours, "N", "Y"))
+
+write.csv(hold_times,
+          file.path(cfg$output_qaqc_dir, "hold_times_2023.csv"),
+          row.names = FALSE)
+```
+
+All 2023 samples were within holding times specified in the QAPP. Two individual observations include the asterisk "\*" in the "result_qualifier" column (sample was warm when received). These correspond to internal laboratory method blank procedures, not field sample handling, and do not affect individual sample results.
+
+<br>
+
+**18.) Are dissolved metal quantities less than total metals quantities?**
+
+```{r part-c-q18, message=FALSE, warning=FALSE}
+#| eval: false
+metals <- c("Calcium", "Iron", "Magnesium", "Copper", "Zinc")
+cols1  <- c("activity_id", "characteristic_name", "activity_start_date",
+            "activity_type", "monitoring_location_id",
+            "result_sample_fraction", "result_value", "result_unit")
+
+dat_metals <- dat |>
+  filter(sample_type == "PS", characteristic_name %in% metals) |>
+  select(all_of(cols1)) |>
+  mutate(field_sample_type = case_when(
+    grepl("FB",  activity_id) ~ "FB",
+    grepl("DUP", activity_id) ~ "DUP",
+    TRUE ~ NA_character_)) |>
+  select(-activity_id)
+
+dat_metals_tot  <- dat_metals |>
+  filter(result_sample_fraction == "Unfiltered") |>
+  rename(result_value_total = result_value) |>
+  select(-result_sample_fraction, -result_unit)
+
+dat_metals_diss <- dat_metals |>
+  filter(result_sample_fraction == "Filtered, lab") |>
+  rename(result_value_dissolved = result_value) |>
+  select(-result_sample_fraction, -result_unit)
+
+dat_metals_diss_tot <- inner_join(
+  dat_metals_tot, dat_metals_diss,
+  by = c("characteristic_name", "activity_start_date",
+         "monitoring_location_id", "field_sample_type", "activity_type")) |>
+  distinct() |>
+  mutate(tot_less_diss = if_else(
+    result_value_total > result_value_dissolved, "Y", "N")) |>
+  arrange(tot_less_diss)
+
+write.csv(dat_metals_diss_tot,
+          here("other/output/intermediate/field_qa_qc_data/metals_total_diss",
+               "metals_total_diss_2023.csv"),
+          row.names = FALSE)
+```
+
+Dissolved metals observations are ***not*** consistently lower than total metals observations in 2023 data. Of 52 paired observations (exclusively copper and zinc), in 32 instances dissolved metals values are greater than total metals values. This has important implications for data-flagging decisions.
+
+<br>
+
+**19.) Are the duplicate sample(s) RPD within range described in QAPP?**
+
+In 2023, field duplicate samples were collected at:
+
+- 5/2/2023: Kenai City Docks (RM 1.5, #10000002) and Moose River (RM 36.0, #10000026)
+- 7/18/2023: No Name Creek (RM 0.0, #10000008) and Moose River (RM 36.0, #10000026)
+
+Following the ADEC 2021 Kenai River Metals Field Report: a set of paired samples was evaluated for RPD only if (a) one or both samples were above the LOQ, AND (b) one or both were at least two times the LOQ.
+
+```{r part-c-q19, message=FALSE, warning=FALSE}
+#| eval: false
+dup_sites <- dat |>
+  filter(grepl("DUP", activity_id)) |>
+  distinct(monitoring_location_id, activity_start_date)
+
+dat <- dat |>
+  mutate(
+    loq_pass    = if_else(
+      as.numeric(result_detection_limit_value_1) < result_value, "Y", "N"),
+    `2xloq_pass` = if_else(
+      as.numeric(result_detection_limit_value_1) * 2 < result_value, "Y", "N"))
+
+cols_rpd <- c("activity_id", "monitoring_location_id", "activity_start_date",
+              "characteristic_name", "result_value", "result_unit",
+              "result_qualifier", "result_sample_fraction",
+              "loq_pass", "2xloq_pass")
+
+dup_values <- dat |>
+  inner_join(dup_sites) |>
+  select(all_of(cols_rpd))
+
+dup_vals1 <- dup_values |>
+  filter(grepl("DUP", activity_id)) |>
+  rename(result_value1    = result_value,
+         result_qualifier1 = result_qualifier,
+         loq_pass1        = loq_pass,
+         `2xloq_pass1`    = `2xloq_pass`) |>
+  select(-activity_id)
+
+dup_vals2 <- dup_values |>
+  filter(!grepl("DUP", activity_id)) |>
+  select(-activity_id)
+
+dup_diffs <- left_join(dup_vals2, dup_vals1) |>
+  mutate(
+    loq_both_pass    = if_else(loq_pass == "Y" | loq_pass1 == "Y", "Y", "N"),
+    `2xloq_both_pass` = if_else(`2xloq_pass` == "Y" | `2xloq_pass1` == "Y", "Y", "N"),
+    rpd_eligible     = if_else(
+      loq_both_pass == "Y" | `2xloq_both_pass` == "Y", "Y", "N"),
+    rpd_pct          = abs((result_value - result_value1) / result_value1) * 100)
+
+write.csv(dup_diffs,
+          file.path(cfg$output_qaqc_dir, "rpd_pct_2023.csv"),
+          row.names = FALSE)
+```
+
+In 2023 there were 23 eligible pairs (out of 44 total). RPD values ranged from 0% to 45.6%. Five eligible pairs exceeded 20% RPD, all from the spring event (5/2/2023). Each parameter with an exceedance had another paired observation within 20%. This suggests variability is not systematic, and no results are excluded based on RPD analysis.
+
+<br>
+
+**20.) Were there any laboratory discrepancies, errors, data qualifiers, or QC failures?**
+
+*Laboratory discrepancies:*
+
+- Sample collection date: SGS PDF shows some samples as collected 5/3/2023. All spring samples were collected 5/2/2023. A pre-printed COC date error was responsible; corrected in the ingestion script.
+- Sample receipt date: SGS EDD shows 5/9/2023 for all spring project samples; PDF and COC indicate actual receipt was 5/4/2023 08:51. Corrected in ingestion script.
+- Field site names: corrected via matching table CSVs in `other/input/2023/misc/`.
+
+*QC failures:*
+
+- No QC failures reported from Soldotna Wastewater Treatment Plant.
+- Spring 2023 SGS failures (from PDF, page 2):
+  - Zinc: two dissolved zinc method blanks (200.8) above LOQ of 10.0 µg/L (11.3 and 15.9 µg/L). **Dissolved zinc results from spring 2023 may need to be flagged.**
+  - Total Nitrate/Nitrite: one MSD outside QC criteria (89% recovery; range 90–110%). Does not suggest sample values are unrepresentative; will not trigger flagging.
+- Summer 2023 SGS failures:
+  - One total nitrate/nitrite matrix spike at 112% recovery (range 90–110%). Does not suggest sample values are unrepresentative; will not trigger flagging.
+
+<br>
+
+**21.) Is any laboratory data rejected (flagged) and why?**
+
+As of 6/5/2024: ***dissolved copper and zinc results are flagged*** as not representative. Primary QA/QC concern: dissolved metals values frequently exceed total metals (physically unrealistic), and two spring dissolved zinc method blanks were above LOQ.
+
+60 observations flagged (30 dissolved Cu + 30 dissolved Zn).
+
+**22.) During the field season, review raw data files (EDDs, instrument records) as they are received. Document changes and corrections to methods as needed.**
+
+Changes and corrections to EDDs are documented and described throughout this series of questions.
+
+<br>
+
+**23.) Is the dataset complete and did you receive the expected number of results?**
+
+Yes, we received the anticipated number of results.
+
+<br>
+
+**24.) Was the data collected representative of environmental conditions?**
+
+Data that is unlikely to represent environmental conditions is identified and flagged as part of this data QA/QC review process.
+
+<br>
+
+**25.) Does project meet Completeness Measure A criteria?**
+
+From the QAPP, Completeness Measure A: "the primary number of samples collected divided by the usable number of samples submitted to ADEC, with a goal of 85% completeness."
+
+```{r part-c-q25, message=FALSE, warning=FALSE}
+#| eval: false
+z <- dat |>
+  filter(
+    characteristic_name != "",
+    !is.na(characteristic_name),
+    !is.na(monitoring_location_id),
+    !grepl("surr", characteristic_name)) |>
+  count(flag)
+
+write.csv(z,
+          here("other/output/intermediate/field_qa_qc_data/completeness_measures",
+               "completeness_a_2023.csv"),
+          row.names = FALSE)
+```
+
+60 of 574 total observations are flagged, resulting in an overall Completeness Measure A value of **89.5%**, satisfying the 85% threshold.
+
+<br>
+
+**26.) Does project meet Completeness Measure B criteria?**
+
+From the QAPP, Completeness Measure B: "the planned number of samples divided by the usable samples, with a goal of 60%." (Interpreted here as usable / planned.)
+
+```{r part-c-q26, message=FALSE, warning=FALSE}
+#| eval: false
+xfun::embed_file(
+  file.path(cfg$misc_dir, "planned_samples_2023.xlsx"),
+  text = "Download Planned Samples 2023")
+# 616 planned samples
+```
+
+60 of 616 planned samples are flagged, resulting in Completeness Measure B of **90.2%**, satisfying the 60% threshold. As noted in question #2, RM 10.1 was not visited in spring 2023, and one FC sample was not collected.
+
+<br>
+
+**27.) Was the QA Officer consulted for any data concerns?**
+
+Kenai Watershed Forum consulted with staff from the Alaska Department of Environmental Conservation and EPA Region 10 Office to prepare 2023 field data and confirm field methods and data QA/QC procedures.
+
+<br>
+
+#### Database Prep
+
+**28.) Are the correct monitoring locations associated with the project?**
+
+```{r part-c-q28, message=FALSE, warning=FALSE}
+#| eval: false
+library(leaflet)
+site_check <- dat |>
+  distinct(monitoring_location_id, activity_latitude, activity_longitude) |>
+  remove_empty()
+
+leaflet(site_check) |>
+  addTiles() |>
+  addMarkers(~activity_longitude, ~activity_latitude,
+             popup = ~as.character(monitoring_location_id),
+             label  = ~as.character(monitoring_location_id))
+```
+
+<br>
+
+**29.) Are the QAPP and other supporting documents attached?**
+
+```{r part-c-q29, message=FALSE, warning=FALSE}
+#| eval: false
+xfun::embed_file(
+  here("other/misc/docs/KenaiWatershedForum_QAPP_v3_2023.pdf"),
+  text = "Download 2023 QAPP")
+```
+
+<br>
+
+**30.) Is all metadata correct?**
+
+TBD.
+
+<br>
+
+**31.) Is the organization ID correct?**
+
+Kenai Watershed Forum's Organization ID in the EPA Water Quality Exchange is "Kenai_WQX." This value is manually confirmed during the upload process.
+
+<br>
+
+**32.) Are the time zones consistent and correct (AKDT in summer)?**
+
+Yes.
+
+<br>
+
+**33.) Are all media types included? Media types appropriate to Characteristic?**
+
+"Water" is the only media type in this project. All characteristics are measured from water samples or in-situ water conditions.
+
+<br>
+
+**34.) Check Sample Collection, Preparation and Preservation Methods, Thermal Preservative, Equipment ID, Activity Media.**
+
+```{r part-c-q34, message=FALSE, warning=FALSE}
+#| eval: false
+unique_methods <- dat |>
+  distinct(result_analytical_method_id, result_sample_fraction,
+           sample_container_type, sample_collection_equipment_name,
+           thermal_preservative_used)
+
+write.csv(unique_methods,
+          file.path(cfg$output_qaqc_dir, "unique_methods_2023.csv"),
+          row.names = FALSE)
+```
+
+<br>
+
+**35.) Are all expected activity types present and are QC samples correctly identified?**
+
+```{r part-c-q35, message=FALSE, warning=FALSE}
+#| eval: false
+activity_types <- dat |>
+  count(activity_type) |>
+  filter(activity_type != "")
+
+write.csv(activity_types,
+          file.path(cfg$output_qaqc_dir, "activity_types_2023.csv"),
+          row.names = FALSE)
+```
+
+<br>
+
+**36.) Is the Activity media subdivision filled in (if relevant)?**
+
+"Activity media subdivision" is solely "Surface water" in the 2023 dataset.
+
+<br>
+
+**37.) For Water activity media, is the relative depth filled in?**
+
+Yes, all samples are listed at an approximate depth of 15 cm.
+
+<br>
+
+**38.) Is the number of results for each Characteristic correct?**
+
+```{r part-c-q38, message=FALSE, warning=FALSE}
+#| eval: false
+chr_num <- dat |>
+  filter(
+    characteristic_name != "",
+    !is.na(characteristic_name),
+    !is.na(monitoring_location_id),
+    !grepl("surr", characteristic_name)) |>
+  group_by(activity_start_date, characteristic_name, result_sample_fraction) |>
+  tally()
+
+write.csv(chr_num,
+          file.path(cfg$output_qaqc_dir, "characteristic_count_2023.csv"),
+          row.names = FALSE)
+```
+
+<br>
+
+**39.) Do the range of result values make sense?**
+
+Prior to upload, the range of results will be evaluated visually and numerically in the comprehensive report, relative to past results. Likely outliers will be identified and recorded in a dedicated spreadsheet.
+
+<br>
+
+**40.) Are units correct and consistent for each parameter?**
+
+```{r part-c-q40, message=FALSE, warning=FALSE}
+#| eval: false
+dat |>
+  distinct(characteristic_name, result_unit) |>
+  arrange(characteristic_name)
+```
+
+<br>
+
+**41.) Are detection limits and laboratory qualifiers included for analytical results?**
+
+Laboratory qualifiers "J" (below LOQ; estimate), "=" (observed value), "U" (below detection limit) are included in the "result_qualifier" column. Detection limits are included in columns "result_detection_limit_type_1/2" and corresponding value/unit columns.
+
+<br>
+
+**42.) Are results of trip blanks and/or field blanks above detection limits, and is any related data flagged as a result?**
+
+In summer 2023, trip blanks were included with field crews collecting hydrocarbon samples. Sites visited by these crews include RM 1.5 (Kenai City Dock), RM 6.5 (Cunningham Park), RM 40 (Bing's Landing), and RM 43 (Upstream of Dow Island). All hydrocarbon results in trip blanks are reported as below detection limit, indicating no need to flag summer 2023 hydrocarbon results.
+
+```{r part-c-q42, message=FALSE, warning=FALSE}
+#| eval: false
+# Review trip blank and field blank results
+dat |>
+  filter(grepl("Trip Blank|Field Blank", activity_type)) |>
+  select(monitoring_location_id, activity_start_date,
+         characteristic_name, result_value, result_unit,
+         result_detection_condition, activity_type) |>
+  arrange(activity_type, characteristic_name)
+```
+
+------------------------------------------------------------------------
+
+## Part D: CDX Export
+
+::: callout-note
+Part D (CDX export via `generate_cdx_export.R`) is pending migration for 2023. Requires WQP downloads in `other/input/WQX_downloads/` (populated manually) and Part B to be complete.
+:::
+
+```{r part-d-2023, message=FALSE, warning=FALSE}
+#| eval: false
+source(here("other/misc/qaqc_repo_transition/functions/generate_cdx_export.R"))
+```

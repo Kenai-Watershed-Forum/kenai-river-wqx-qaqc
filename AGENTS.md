@@ -10,8 +10,9 @@ Annual QA/QC pipeline for Kenai River Baseline Water Quality Monitoring data sub
 
 ```         
 kenai-river-wqx-qaqc/
-├── 2025.qmd                          # Active pipeline (see structure below)
-├── 2014.qmd – 2023.qmd              # Legacy year pipelines (old format)
+├── project_year/
+│   ├── 2025.qmd                      # Active pipeline (see structure below)
+│   └── 2014.qmd – 2023.qmd          # Legacy year pipelines (Quarto book chapters)
 ├── other/
 │   ├── input/
 │   │   ├── 2025/
@@ -38,12 +39,17 @@ kenai-river-wqx-qaqc/
 │   │   │   └── sample_holding_times.csv
 │   │   ├── WQX_downloads/            # Must be downloaded manually from WQP before Part D
 │   │   └── regulatory_limits/
-│   ├── output/
-│   │   ├── wqx_formatted/intermediate/
-│   │   │   ├── 2025_kwf_baseline_results_wqx.csv
-│   │   │   └── 2025_export_data_flagged.csv
-│   │   ├── field_qa_qc_data/
-│   │   └── lab_qaqc_data/
+│   ├── output/                              # Final WQX/CDX upload-ready files
+│   │   ├── 2025_kwf_baseline_results_wqx.csv
+│   │   ├── 2025_export_data_flagged.csv
+│   │   ├── results_activities.csv
+│   │   ├── project.csv
+│   │   ├── station.csv
+│   │   └── intermediate/                    # Working/QA outputs (not for upload)
+│   │       ├── 2025/                        # Year-specific QA working files
+│   │       ├── field_qa_qc_data/
+│   │       ├── lab_qaqc_data/
+│   │       └── misc/
 │   └── misc/
 │       └── qaqc_repo_transition/
 │           └── functions/
@@ -112,7 +118,7 @@ Analyte name → abbreviation used in WQX Activity IDs (27 rows as of April 2026
 
 ### Year Configuration chunk
 
-Sets `spring_sample_date = "4/30/2025"`, `summer_sample_date = "7/23/2025"`, paths, and `cfg` list. **This is the only block that changes between years.**
+Sets `spring_sample_date = "4/30/2025"`, `summer_sample_date = "7/23/2025"`, paths, and `cfg` list. **This is the only block that changes between years.** All paths use `here::here()` so the document works correctly from `project_year/` regardless of the RStudio "Evaluate chunks in directory" setting.
 
 ### Part A: Data Ingestion → produces `dat`
 
@@ -142,19 +148,19 @@ Sources `generate_cdx_export.R`. Requires WQP downloads in `other/input/WQX_down
 
 ## `format_wqx.R` Key Behaviors
 
--   `result_sample_fraction`: Part A values take precedence (coalesce); lookup table fills gaps. TSS always → "Suspended"; FC always → "None" (overrides applied after coalesce).
--   Activity ID: `{monitoring_location_id}-{collect_date}-{analyte_abbreviation}[-DUP/-Blank]`
--   Field Duplicate Activity Type: "Quality Control Field Replicate Msr/Obs"
+- `result_sample_fraction`: Part A values take precedence (coalesce); lookup table fills gaps. TSS always → "Suspended"; FC always → "None" (overrides applied after coalesce).
+- Activity ID: `{monitoring_location_id}-{collect_date}-{analyte_abbreviation}[-DUP/-Blank]`
+- Field Duplicate Activity Type: "Quality Control Field Replicate Msr/Obs"
 
 ------------------------------------------------------------------------
 
 ## Known Issues / Flags
 
--   **EPA ETL blocked:** 2021 data (835 records) cannot be re-uploaded pending EPA fix.
--   **WQP downloads:** `other/input/WQX_downloads/` must be populated manually before Part D runs.
--   **TSS LOD/LOQ:** 0.5 / 1.0 mg/L are placeholders. Verify against current QAPP.
--   **Summer FC run_date:** hardcoded as 7/24/2025; verify against SWWTP lab report.
--   **YSI site mapping:** any site names not in `ysi_site_lkp` will print a warning and be excluded.
+- **EPA ETL blocked:** 2021 data (835 records) cannot be re-uploaded pending EPA fix.
+- **WQP downloads:** `other/input/WQX_downloads/` must be populated manually before Part D runs.
+- **TSS LOD/LOQ:** 0.5 / 1.0 mg/L are placeholders. Verify against current QAPP.
+- **Summer FC run_date:** hardcoded as 7/24/2025; verify against SWWTP lab report.
+- **YSI site mapping:** any site names not in `ysi_site_lkp` will print a warning and be excluded.
 
 ------------------------------------------------------------------------
 

@@ -30,9 +30,19 @@ export_dat <- read.csv(cfg$wqx_intermediate_path) %>%
 # The flag_decisions CSV contains one row per flagged result, with columns:
 #   activity_start_date, characteristic_name (or other join key), flag = "Y", notes
 # Rows absent from flag_decisions default to flag = "N" (Accepted).
-flag_decisions <- read.csv(cfg$flag_decisions_path) %>%
+flag_decisions <- read.csv(cfg$flag_decisions_path,
+                          colClasses = c(
+                            activity_start_date    = "character",
+                            characteristic_name    = "character",
+                            monitoring_location_id = "character",
+                            flag                   = "character",
+                            notes                  = "character"
+                          )) %>%
   select(-notes) %>%
   transform(activity_start_date = mdy(activity_start_date))
+
+export_dat <- export_dat %>%
+  mutate(monitoring_location_id = as.character(monitoring_location_id))
 
 export_dat <- full_join(export_dat, flag_decisions) %>%
   mutate(flag = case_when(

@@ -28,9 +28,9 @@
 # Produces in global env: (none -- all output is written to disk)
 #
 # Writes:
-#   other/output/wqx_formatted/results_activities.csv
-#   other/output/wqx_formatted/project.csv
-#   other/output/wqx_formatted/station.csv
+#   other/output/results_activities.csv
+#   other/output/project.csv
+#   other/output/station.csv
 
 
 # ── Results and Activities ──────────────────────────────────────────────────────
@@ -144,7 +144,7 @@ wqx_colnames <- read_excel(cfg$wqx_template_file,
 export_dat %<>% select(one_of(wqx_colnames))
 
 # Write final results and activities CSV for CDX upload
-write.csv(export_dat, "other/output/wqx_formatted/results_activities.csv", row.names = FALSE)
+write.csv(export_dat, here::here("other/output/results_activities.csv"), row.names = FALSE)
 
 
 # ── Project CSV ──────────────────────────────────────────────────────────────────
@@ -176,7 +176,7 @@ project_upload <- read.csv(
     ProjectAttachmentType
   )
 
-write.csv(project_upload, "other/output/wqx_formatted/project.csv", row.names = FALSE)
+write.csv(project_upload, here::here("other/output/project.csv"), row.names = FALSE)
 
 
 # ── Station CSV ──────────────────────────────────────────────────────────────────
@@ -207,4 +207,4 @@ station_upload <- read.csv(
     TRUE ~ HorizontalCollectionMethodName
   ))
 
-write.csv(station_upload, "other/output/wqx_formatted/station.csv", row.names = FALSE)
+write.csv(station_upload, here::here("other/output/station.csv"), row.names = FALSE)

@@ -1,16 +1,16 @@
-# Preface {.unnumbered}
-
 ---
 execute:
   echo: false
   freeze: true
-date: "`r Sys.Date()`"
+date: today
 format:
   html:
     code-fold: true
     code-tools: true
     code-summary: "Show the code"
 ---
+
+# Preface {.unnumbered}
 
 ::: {.content-visible when-format="html"}
 This document is the online work-in-progress for preparation of data that will be used in the upcoming report, [Water Quality Assessment of the Kenai River Watershed, 2000 - 2025](https://kenai-watershed-forum.github.io/kenai-river-wqx/).
