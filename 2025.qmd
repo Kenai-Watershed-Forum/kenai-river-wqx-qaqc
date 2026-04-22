@@ -1,0 +1,1710 @@
+---
+execute:
+  echo: false
+  cache: false
+date: "`r Sys.Date()`"
+format:
+  html:
+    code-fold: true
+    code-tools: true
+    code-summary: "Show code"
+---
+
+# Annual QA/QC Pipeline: 2025 Data {.unnumbered}
+
+## Introduction
+
+This document contains the complete data ingestion, QA/QC evaluation, flagging, and CDX export workflow for the 2025 Kenai River Baseline Water Quality Monitoring dataset.
+
+The structure of this document follows the Data Evaluation Checklist provided by the Alaska Department of Environmental Conservation. Field observations that do not meet QA/QC standards are flagged before upload to the EPA Water Quality Exchange (WQX).
+
+For the 2021 worked example (with full narrative and documentation), see the report repo: <https://github.com/Kenai-Watershed-Forum/kenai-river-wqx>
+
+------------------------------------------------------------------------
+
+## Year Configuration
+
+```{r year-config, message=FALSE, warning=FALSE}
+# ── YEAR CONFIGURATION ─────────────────────────────────────────────────────────
+# This is the ONLY block that must be updated for each new data year.
+# All downstream scripts read from the `cfg` list constructed below.
+
+library(tidyverse)
+library(readxl)
+library(openxlsx)
+library(data.table)
+library(stringr)
+library(magrittr)
+library(janitor)
+library(hms)
+library(lubridate)
+library(anytime)
+library(leaflet)
+
+year <- 2025
+
+# Field sampling dates
+spring_sample_date <- "4/30/2025"
+summer_sample_date <- "7/23/2025"
+
+spring_data_dir <- file.path("other/input/2025/spring_2025_wqx_data")
+summer_data_dir <- file.path("other/input/2025/summer_2025_wqx_data")
+output_qaqc_dir <- file.path("other/output", year, "qa_qc_output")
+
+wqx_intermediate_path <- file.path("other/output/wqx_formatted/intermediate",
+                                    paste0(year, "_kwf_baseline_results_wqx.csv"))
+flagged_export_path   <- file.path("other/output/wqx_formatted/intermediate",
+                                    paste0(year, "_export_data_flagged.csv"))
+flag_decisions_path   <- file.path("other/input/wqx_templates",
+                                    paste0(year, "_data_flag_decisions.csv"))
+
+cfg <- list(
+  year                  = year,
+  templates_dir         = "other/input/wqx_templates",
+  wqx_template_file     = file.path("other/input/wqx_templates",
+                                     paste0("AWQMS_KWF_Baseline_", year, ".xlsx")),
+  spring_data_dir       = spring_data_dir,
+  summer_data_dir       = summer_data_dir,
+  output_qaqc_dir       = output_qaqc_dir,
+  wqx_intermediate_path = wqx_intermediate_path,
+  flagged_export_path   = flagged_export_path,
+  flag_decisions_path   = flag_decisions_path,
+  wqx_downloads_dir     = "other/input/WQX_downloads",
+  spring_sample_date    = spring_sample_date,
+  summer_sample_date    = summer_sample_date
+)
+
+dir.create(output_qaqc_dir,                                  recursive = TRUE, showWarnings = FALSE)
+dir.create(dirname(wqx_intermediate_path),                   recursive = TRUE, showWarnings = FALSE)
+dir.create("other/output/field_qa_qc_data/metals_total_diss",recursive = TRUE, showWarnings = FALSE)
+dir.create("other/output/field_qa_qc_data/completeness_measures", recursive = TRUE, showWarnings = FALSE)
+dir.create("other/output/misc",                              recursive = TRUE, showWarnings = FALSE)
+dir.create("other/output/lab_qaqc_data",                    recursive = TRUE, showWarnings = FALSE)
+```
+
+------------------------------------------------------------------------
+
+## Part A: Data Ingestion
+
+**2025-specific notes:**
+
+-   Spring sampling: April 30, 2025. Summer sampling: July 23, 2025.
+-   SGS EDD delivered as XLSX (Sheet8) for both seasons. No ALS dissolved metals supplement this year.
+-   No BTEX (8260D) analysis in spring 2025; BTEX analyzed at 4 sites in summer 2025.
+-   TSS from SWWTP: both seasons read from the `Updated_Formatting` sheet. Spring source is `KRWF TSS MONITORING 05-01-25.xlsx`; summer is `KRWF TSS MONITORING 07-25-25.xls` (skip = 1 past title row). The original spring `.xls` (wide block format) is retained in the same directory for reference.
+-   FC from SWWTP in standard XLS format (spring: skip = 11; summer: skip = 10). Summer time sampled stored as HHMM integer.
+-   YSI ProQuatro / Hach turbidimeter data: single file covering both seasons, read in below.
+
+### SGS Lab Results
+
+```{r part-a-sgs, message=FALSE, warning=FALSE}
+# Lab QC sample type codes -- segregated from field results
+lab_qc_types <- c("MB", "LCS", "LCSD", "MS", "MSD", "CB", "OS",
+                  "ICV", "CCV", "LLQC", "QCS", "ICB")
+
+# ── Read SGS EDD from Sheet8 ────────────────────────────────────────────────────
+sgs_raw <- read_excel(
+  file.path(cfg$spring_data_dir, "SGS",
+            "spring_2025_kenai_baseline_sgs_results.xlsx"),
+  sheet = "Sheet8"
+) |>
+  clean_names() |>
+  remove_empty()
+
+# ── Parse date/time fields (stored as "MM/DD/YYYY HH:MM" character strings) ────
+sgs_raw <- sgs_raw |>
+  mutate(
+    collect_dt   = mdy_hm(collect_date),
+    collect_date = as.Date(collect_dt),
+    collect_time = as_hms(collect_dt),
+    rec_dt       = mdy_hm(rec_date),
+    rec_date     = as.Date(rec_dt),
+    rec_time     = as_hms(rec_dt),
+    run_dt       = mdy_hm(run_date_time),
+    run_date     = as.Date(run_dt),
+    run_time     = as_hms(run_dt)
+  ) |>
+  select(-collect_dt, -rec_dt, -run_dt, -run_date_time)
+
+# ── Strip "EP" prefix from analytical_method (EP200.8 -> 200.8) ────────────────
+sgs_raw <- sgs_raw |>
+  mutate(analytical_method = str_replace(analytical_method, "^EP", ""))
+
+# ── Assign result_sample_fraction from DISSOLVED flag ──────────────────────────
+# DISSOLVED == "L" = lab-filtered (dissolved fraction)
+# DISSOLVED == "." = unfiltered (total/recoverable)
+# Nutrients (SM21 methods): fraction handled downstream by format_wqx.R lookup table
+sgs_raw <- sgs_raw |>
+  mutate(
+    result_sample_fraction = case_when(
+      dissolved == "L" & analytical_method == "200.8" ~ "Dissolved",
+      dissolved == "." & analytical_method == "200.8" ~ "Unfiltered",
+      TRUE ~ NA_character_
+    )
+  )
+
+# ── Derive sample_condition from sample_id string ──────────────────────────────
+sgs_raw <- sgs_raw |>
+  mutate(
+    sample_condition = case_when(
+      grepl("DUP|Dup",             sample_id, ignore.case = FALSE) ~ "Field Duplicate",
+      grepl("Field Blank|Field B", sample_id, ignore.case = TRUE)  ~ "Field Blank",
+      grepl("Trip Blank",          sample_id, ignore.case = TRUE)  ~ "Trip Blank",
+      grepl("Method Blank",        sample_id, ignore.case = TRUE)  ~ "Method Blank",
+      TRUE ~ NA_character_
+    )
+  )
+
+# ── Join analysis code matching table (SGS codes -> EPA method IDs) ─────────────
+analysis_codes <- read_excel(
+  file.path(cfg$templates_dir, "analysis_code_matching_table.xlsx")
+) |>
+  clean_names() |>
+  select(sgs_analysis_code, epa_analysis_id, context_code) |>
+  mutate(sgs_analysis_code = str_replace(sgs_analysis_code, "^EP", "")) |>
+  rename(analytical_method = sgs_analysis_code)
+
+sgs_raw <- left_join(sgs_raw, analysis_codes, by = "analytical_method")
+
+# ── Join site names matching table (sample_id -> monitoring_location_id) ────────
+sgs_site_names <- read_excel(
+  file.path(cfg$templates_dir, "sgs_site_names_matching_table.xlsx")
+) |>
+  clean_names() |>
+  select(sgs_sample_id, monitoring_location_id) |>
+  mutate(sgs_sample_id = str_trim(sgs_sample_id)) |>
+  rename(sample_id = sgs_sample_id)
+
+sgs_raw <- sgs_raw |>
+  mutate(sample_id = str_trim(sample_id)) |>
+  left_join(sgs_site_names, by = "sample_id")
+
+# ── Segregate lab QC rows to output file ────────────────────────────────────────
+sgs_qaqc <- sgs_raw |>
+  filter(sample_type %in% lab_qc_types)
+
+dir.create(cfg$output_qaqc_dir, recursive = TRUE, showWarnings = FALSE)
+write.csv(sgs_qaqc,
+          file.path(cfg$output_qaqc_dir, "sgs_als_qaqc_dat.csv"),
+          row.names = FALSE)
+cat("Lab QC rows written:", nrow(sgs_qaqc), "\n")
+
+# ── Filter to field results; rename to dat contract ─────────────────────────────
+dat_sgs <- sgs_raw |>
+  filter(!sample_type %in% lab_qc_types, !is.na(result)) |>
+  mutate(
+    lab_name   = "SGS",
+    result     = as.numeric(result),
+    result_detection_condition = case_when(
+      grepl("U", resultflag) ~ "Not Detected",
+      TRUE ~ NA_character_
+    ),
+    note = sdg
+  ) |>
+  select(
+    sample              = sample_id,
+    lab_sample          = lab_sample_id,
+    lab_name,
+    analyte,
+    result,
+    units,
+    resultflag,
+    loq,
+    lod,
+    collect_date,
+    collect_time,
+    rec_date,
+    rec_time,
+    run_date,
+    run_time,
+    analytical_method,
+    epa_analysis_id,
+    context_code,
+    monitoring_location_id,
+    note,
+    sample_type,
+    sample_condition,
+    dissolved,
+    matrix,
+    result_sample_fraction,
+    result_detection_condition
+  )
+
+dat_sgs_spring <- dat_sgs
+
+# ── Summer 2025 SGS ──────────────────────────────────────────────────────────────
+sgs_raw_sum <- read_excel(
+  file.path(cfg$summer_data_dir, "SGS",
+            "summer_2025_kenai_baseline_results_sgs.xlsx"),
+  sheet = "Sheet8"
+) |>
+  clean_names() |>
+  remove_empty()
+
+sgs_raw_sum <- sgs_raw_sum |>
+  mutate(
+    collect_dt   = mdy_hm(collect_date),
+    collect_date = as.Date(collect_dt),
+    collect_time = as_hms(collect_dt),
+    rec_dt       = mdy_hm(rec_date),
+    rec_date     = as.Date(rec_dt),
+    rec_time     = as_hms(rec_dt),
+    run_dt       = mdy_hm(run_date_time),
+    run_date     = as.Date(run_dt),
+    run_time     = as_hms(run_dt)
+  ) |>
+  select(-collect_dt, -rec_dt, -run_dt, -run_date_time)
+
+sgs_raw_sum <- sgs_raw_sum |>
+  mutate(analytical_method = str_replace(analytical_method, "^EP", ""))
+
+sgs_raw_sum <- sgs_raw_sum |>
+  mutate(
+    result_sample_fraction = case_when(
+      dissolved == "L" & analytical_method == "200.8" ~ "Dissolved",
+      dissolved == "." & analytical_method == "200.8" ~ "Unfiltered",
+      TRUE ~ NA_character_
+    )
+  )
+
+sgs_raw_sum <- sgs_raw_sum |>
+  mutate(
+    sample_condition = case_when(
+      grepl("DUP|Dup",             sample_id, ignore.case = FALSE) ~ "Field Duplicate",
+      grepl("Field Blank|Field B", sample_id, ignore.case = TRUE)  ~ "Field Blank",
+      grepl("Trip Blank",          sample_id, ignore.case = TRUE)  ~ "Trip Blank",
+      grepl("Method Blank",        sample_id, ignore.case = TRUE)  ~ "Method Blank",
+      TRUE ~ NA_character_
+    )
+  )
+
+sgs_raw_sum <- left_join(sgs_raw_sum, analysis_codes, by = "analytical_method")
+
+sgs_raw_sum <- sgs_raw_sum |>
+  mutate(sample_id = str_trim(sample_id)) |>
+  left_join(sgs_site_names, by = "sample_id")
+
+sgs_qaqc_sum <- sgs_raw_sum |>
+  filter(sample_type %in% lab_qc_types)
+write.csv(sgs_qaqc_sum,
+          file.path(cfg$output_qaqc_dir, "sgs_als_qaqc_dat_summer.csv"),
+          row.names = FALSE)
+cat("Summer lab QC rows written:", nrow(sgs_qaqc_sum), "\n")
+
+dat_sgs_summer <- sgs_raw_sum |>
+  filter(!sample_type %in% lab_qc_types, !is.na(result)) |>
+  mutate(
+    lab_name   = "SGS",
+    result     = as.numeric(result),
+    result_detection_condition = case_when(
+      grepl("U", resultflag) ~ "Not Detected",
+      TRUE ~ NA_character_
+    ),
+    note = sdg
+  ) |>
+  select(
+    sample              = sample_id,
+    lab_sample          = lab_sample_id,
+    lab_name,
+    analyte,
+    result,
+    units,
+    resultflag,
+    loq,
+    lod,
+    collect_date,
+    collect_time,
+    rec_date,
+    rec_time,
+    run_date,
+    run_time,
+    analytical_method,
+    epa_analysis_id,
+    context_code,
+    monitoring_location_id,
+    note,
+    sample_type,
+    sample_condition,
+    dissolved,
+    matrix,
+    result_sample_fraction,
+    result_detection_condition
+  )
+
+dat_sgs <- bind_rows(dat_sgs_spring, dat_sgs_summer)
+
+cat("SGS field rows:", nrow(dat_sgs),
+    " (spring:", nrow(dat_sgs_spring), "| summer:", nrow(dat_sgs_summer), ")\n")
+cat("SGS sites:", n_distinct(dat_sgs$monitoring_location_id), "\n")
+cat("SGS analytes:", n_distinct(dat_sgs$analyte), "\n")
+```
+
+### Fecal Coliform Results
+
+```{r part-a-fc, message=FALSE, warning=FALSE}
+fc_path_spring <- file.path(cfg$spring_data_dir, "SWWTP", "KRWF Fecal 04-30-25.xls")
+
+# SWWTP XLS: skip 11 rows to reach column headers
+# Columns: Dish Number | Sample Location/RM | ML | Time Sampled | Time In |
+#          Time Out | Colony Count | Colony Count/100mL
+fc_raw <- read_excel(fc_path_spring, skip = 11, col_types = "text")
+
+# FC site -> monitoring_location_id lookup (inline; same sites as SGS)
+fc_site_lkp <- tribble(
+  ~site_rm,        ~monitoring_location_id, ~sample_condition,
+  "RM 0",          10000008L,               NA_character_,
+  "RM 1.5",        10000002L,               NA_character_,
+  "RM 6.5",        10000005L,               NA_character_,
+  "RM 10",         10000015L,               NA_character_,
+  "RM 10.1",       10000016L,               NA_character_,
+  "RM 12.5",       10000017L,               NA_character_,
+  "RM 18",         10000018L,               NA_character_,
+  "RM 18 DUP",     10000018L,               "Field Duplicate",
+  "RM 19",         10000020L,               NA_character_,
+  "RM 21",         10000021L,               NA_character_,
+  "RM 22",         10000022L,               NA_character_,
+  "RM 22 DUP",     10000022L,               "Field Duplicate",
+  "RM 23",         10000023L,               NA_character_,
+  "RM 30",         10000024L,               NA_character_,
+  "RM 31",         10000025L,               NA_character_,
+  "RM 36",         10000026L,               NA_character_,
+  "RM 40",         10000027L,               NA_character_,
+  "RM 43",         10000028L,               NA_character_,
+  "RM 44",         10000029L,               NA_character_,
+  "RM 50",         10000030L,               NA_character_,
+  "RM 70",         10000031L,               NA_character_,
+  "RM 74",         10000032L,               NA_character_,
+  "RM 79.5",       10000424L,               NA_character_,
+  "RM 82",         10000425L,               NA_character_
+)
+
+dat_fc <- fc_raw |>
+  rename(
+    site_rm          = `Sample Location/RM`,
+    time_sampled     = `Time Sampled`,
+    result_per_100ml = `Colony Count/100mL`,
+    dish_number      = `Dish Number`
+  ) |>
+  # Remove blanks, positives, and sites with N/A results
+  filter(
+    !is.na(site_rm),
+    !grepl("^BLANK|^POSITIVE", site_rm, ignore.case = TRUE),
+    result_per_100ml != "N/A",
+    !is.na(result_per_100ml)
+  ) |>
+  mutate(
+    result       = as.numeric(result_per_100ml),
+    # Time Sampled is stored as an Excel decimal fraction of a day
+    collect_time = as_hms(as.numeric(time_sampled) * 86400),
+    collect_date = mdy(spring_sample_date),
+    rec_date     = mdy(spring_sample_date),
+    rec_time     = as_hms(0),
+    run_date     = mdy("5/1/2025"),  # SWWTP analysis date from file name
+    run_time     = as_hms(0),
+    resultflag   = case_when(result == 0 ~ "U", TRUE ~ "="),
+    result_detection_condition = case_when(
+      result == 0 ~ "Not Detected", TRUE ~ NA_character_
+    ),
+    analyte             = "Fecal Coliform",
+    units               = "MPN/100ml",
+    analytical_method   = "9222D",
+    epa_analysis_id     = "9222D",
+    context_code        = "APHA",
+    lab_name            = "SWWTP",
+    lab_sample          = dish_number,
+    sample_type         = "PS",
+    matrix              = "Water",
+    dissolved           = NA_character_,
+    note                = NA_character_,
+    loq                 = NA_real_,
+    lod                 = NA_real_,
+    result_sample_fraction = NA_character_
+  ) |>
+  left_join(fc_site_lkp, by = "site_rm") |>
+  filter(!is.na(monitoring_location_id)) |>
+  select(
+    sample              = site_rm,
+    lab_sample,
+    lab_name,
+    analyte,
+    result,
+    units,
+    resultflag,
+    loq,
+    lod,
+    collect_date,
+    collect_time,
+    rec_date,
+    rec_time,
+    run_date,
+    run_time,
+    analytical_method,
+    epa_analysis_id,
+    context_code,
+    monitoring_location_id,
+    note,
+    sample_type,
+    sample_condition,
+    dissolved,
+    matrix,
+    result_sample_fraction,
+    result_detection_condition
+  )
+
+dat_fc_spring <- dat_fc
+
+# ── Summer 2025 FC ───────────────────────────────────────────────────────────────
+# Summer DUP sites differ from spring: RM 10 DUP and RM 23 DUP
+fc_site_lkp_sum <- tribble(
+  ~site_rm,        ~monitoring_location_id, ~sample_condition,
+  "RM 0",          10000008L,               NA_character_,
+  "RM 1.5",        10000002L,               NA_character_,
+  "RM 6.5",        10000005L,               NA_character_,
+  "RM 10",         10000015L,               NA_character_,
+  "RM 10 DUP",     10000015L,               "Field Duplicate",
+  "RM 10.1",       10000016L,               NA_character_,
+  "RM 12.5",       10000017L,               NA_character_,
+  "RM 18",         10000018L,               NA_character_,
+  "RM 19",         10000020L,               NA_character_,
+  "RM 21",         10000021L,               NA_character_,
+  "RM 22",         10000022L,               NA_character_,
+  "RM 23",         10000023L,               NA_character_,
+  "RM 23 DUP",     10000023L,               "Field Duplicate",
+  "RM 30",         10000024L,               NA_character_,
+  "RM 31",         10000025L,               NA_character_,
+  "RM 36",         10000026L,               NA_character_,
+  "RM 40",         10000027L,               NA_character_,
+  "RM 43",         10000028L,               NA_character_,
+  "RM 44",         10000029L,               NA_character_,
+  "RM 50",         10000030L,               NA_character_,
+  "RM 70",         10000031L,               NA_character_,
+  "RM 74",         10000032L,               NA_character_,
+  "RM 79.5",       10000424L,               NA_character_,
+  "RM 82",         10000425L,               NA_character_
+)
+
+fc_path_summer <- file.path(cfg$summer_data_dir, "SWWTP", "KRWF Fecal 07-23-25.xls")
+
+# Summer FC: skip=10 (one fewer header row than spring). Time Sampled stored as
+# 4-digit HHMM integer (e.g. 1057 = 10:57), not Excel decimal fraction.
+fc_raw_sum <- read_excel(fc_path_summer, skip = 10, col_types = "text")
+
+dat_fc_summer <- fc_raw_sum |>
+  rename(
+    site_rm          = `Sample Location/RM`,
+    time_sampled     = `Time Sampled`,
+    result_per_100ml = `Colony Count/100mL`,
+    dish_number      = `Dish Number`
+  ) |>
+  filter(
+    !is.na(site_rm),
+    !grepl("^BLANK|^POSITIVE", site_rm, ignore.case = TRUE),
+    result_per_100ml != "N/A",
+    !is.na(result_per_100ml)
+  ) |>
+  mutate(
+    result = as.numeric(result_per_100ml),
+    # Time Sampled in summer is HHMM integer (e.g. 1057 = 10:57)
+    collect_time = {
+      t <- as.numeric(time_sampled)
+      as_hms(floor(t / 100) * 3600 + (t %% 100) * 60)
+    },
+    collect_date = mdy(summer_sample_date),
+    rec_date     = mdy(summer_sample_date),
+    rec_time     = as_hms(0),
+    run_date     = mdy("7/24/2025"),  # next-day analysis; verify against SWWTP lab report
+    run_time     = as_hms(0),
+    resultflag   = case_when(result == 0 ~ "U", TRUE ~ "="),
+    result_detection_condition = case_when(
+      result == 0 ~ "Not Detected", TRUE ~ NA_character_
+    ),
+    analyte             = "Fecal Coliform",
+    units               = "MPN/100ml",
+    analytical_method   = "9222D",
+    epa_analysis_id     = "9222D",
+    context_code        = "APHA",
+    lab_name            = "SWWTP",
+    lab_sample          = dish_number,
+    sample_type         = "PS",
+    matrix              = "Water",
+    dissolved           = NA_character_,
+    note                = NA_character_,
+    loq                 = NA_real_,
+    lod                 = NA_real_,
+    result_sample_fraction = NA_character_
+  ) |>
+  left_join(fc_site_lkp_sum, by = "site_rm") |>
+  filter(!is.na(monitoring_location_id)) |>
+  select(
+    sample              = site_rm,
+    lab_sample,
+    lab_name,
+    analyte,
+    result,
+    units,
+    resultflag,
+    loq,
+    lod,
+    collect_date,
+    collect_time,
+    rec_date,
+    rec_time,
+    run_date,
+    run_time,
+    analytical_method,
+    epa_analysis_id,
+    context_code,
+    monitoring_location_id,
+    note,
+    sample_type,
+    sample_condition,
+    dissolved,
+    matrix,
+    result_sample_fraction,
+    result_detection_condition
+  )
+
+dat_fc <- bind_rows(dat_fc_spring, dat_fc_summer)
+
+cat("FC rows:", nrow(dat_fc),
+    " (spring:", nrow(dat_fc_spring), "| summer:", nrow(dat_fc_summer), ")\n")
+```
+
+### Total Suspended Solids
+
+```{r part-a-tss, message=FALSE, warning=FALSE}
+# Spring TSS: read from the tidy Updated_Formatting sheet in the new XLSX file.
+# Site names in this file retain original SWWTP quirks ("RM O", "RM22", "RM22 DUP"),
+# so the lookup table below matches them exactly without further normalization.
+tss_path_spring <- file.path(cfg$spring_data_dir, "SWWTP",
+                              "KRWF TSS MONITORING 05-01-25.xlsx")
+
+tss_raw_spr <- read_excel(tss_path_spring, sheet = "Updated_Formatting") |>
+  filter(sample_type == "PS") |>
+  mutate(
+    # Sample_Time stored as Excel time-only (date = 1899-12-31 artifact)
+    collect_time = as_hms(format(Sample_Time, "%H:%M:%S")),
+    result       = as.numeric(`S.S.mg/L`)
+  )
+
+# TSS site name -> monitoring_location_id
+# Matches original SWWTP site name quirks: "RM O" (capital O), "RM22" (no space)
+tss_site_lkp <- tribble(
+  ~site,       ~monitoring_location_id, ~sample_condition,
+  "RM O",      10000008L,               NA_character_,
+  "RM 1.5",    10000002L,               NA_character_,
+  "RM 6.5",    10000005L,               NA_character_,
+  "RM 10",     10000015L,               NA_character_,
+  "RM 10.1",   10000016L,               NA_character_,
+  "RM 12.5",   10000017L,               NA_character_,
+  "RM 18",     10000018L,               NA_character_,
+  "RM 18 DUP", 10000018L,               "Field Duplicate",
+  "RM 19",     10000020L,               NA_character_,
+  "RM 21",     10000021L,               NA_character_,
+  "RM22",      10000022L,               NA_character_,
+  "RM22 DUP",  10000022L,               "Field Duplicate",
+  "RM 23",     10000023L,               NA_character_,
+  "RM 30",     10000024L,               NA_character_,
+  "RM 31",     10000025L,               NA_character_,
+  "RM 36",     10000026L,               NA_character_,
+  "RM 40",     10000027L,               NA_character_,
+  "RM 43",     10000028L,               NA_character_,
+  "RM 44",     10000029L,               NA_character_,
+  "RM 50",     10000030L,               NA_character_,
+  "RM 70",     10000031L,               NA_character_,
+  "RM 74",     10000032L,               NA_character_,
+  "RM 79.5",   10000424L,               NA_character_,
+  "RM 82",     10000425L,               NA_character_
+)
+
+# ADAPT: Verify LOD and LOQ against current QAPP and SWWTP lab report.
+tss_lod <- 0.5   # mg/L placeholder
+tss_loq <- 1.0   # mg/L placeholder
+
+dat_tss <- tss_raw_spr |>
+  left_join(tss_site_lkp, by = c("Sample_Location" = "site")) |>
+  filter(!is.na(monitoring_location_id)) |>
+  mutate(
+    collect_date    = mdy(spring_sample_date),
+    rec_date        = mdy("5/1/2025"),
+    rec_time        = as_hms(0),
+    run_date        = mdy("5/1/2025"),
+    run_time        = as_hms(0),
+    analyte         = "Total suspended solids",
+    units           = "mg/l",
+    lod             = tss_lod,
+    loq             = tss_loq,
+    resultflag = case_when(
+      result < tss_lod ~ "U",
+      result < tss_loq ~ "J",
+      TRUE ~ "="
+    ),
+    result = case_when(result < tss_lod ~ NA_real_, TRUE ~ result),
+    result_detection_condition = case_when(
+      resultflag == "U" ~ "Not Detected", TRUE ~ NA_character_
+    ),
+    analytical_method      = "2540-D",
+    epa_analysis_id        = "2540-D",
+    context_code           = "APHA",
+    lab_name               = "SWWTP",
+    lab_sample             = as.character(row_number()),
+    sample_type            = "PS",
+    matrix                 = "Water",
+    dissolved              = NA_character_,
+    note                   = NA_character_,
+    result_sample_fraction = NA_character_
+  ) |>
+  select(
+    sample              = Sample_Location,
+    lab_sample,
+    lab_name,
+    analyte,
+    result,
+    units,
+    resultflag,
+    loq,
+    lod,
+    collect_date,
+    collect_time,
+    rec_date,
+    rec_time,
+    run_date,
+    run_time,
+    analytical_method,
+    epa_analysis_id,
+    context_code,
+    monitoring_location_id,
+    note,
+    sample_type,
+    sample_condition,
+    dissolved,
+    matrix,
+    result_sample_fraction,
+    result_detection_condition
+  )
+
+dat_tss_spring <- dat_tss
+
+# ── Summer 2025 TSS ──────────────────────────────────────────────────────────────
+# Summer TSS file has a tidy "Updated_Formatting" sheet (skip=1 past title row).
+# Site names use underscores: "RM_0", "RM_10_DUP", etc.
+tss_path_summer <- file.path(cfg$summer_data_dir, "SWWTP",
+                              "KRWF TSS MONITORING 07-25-25.xls")
+
+tss_raw_sum <- read_excel(tss_path_summer, sheet = "Updated_Formatting", skip = 1) |>
+  filter(sample_type == "PS") |>
+  mutate(
+    # Normalize underscores and DUP variants to consistent "RM X [DUP]" format
+    site_clean = Sample_Location |>
+      str_replace_all("_DUP$",  " DUP") |>
+      str_replace_all("_",      " ") |>
+      str_replace("(?i) DUP$", " DUP") |>
+      str_squish(),
+    sample_condition = if_else(
+      str_detect(str_to_lower(Sample_Location), "dup"),
+      "Field Duplicate", NA_character_
+    ),
+    # Sample_Time is stored as Excel time-only (date = 1899-12-31 artifact)
+    collect_time = as_hms(format(Sample_Time, "%H:%M:%S")),
+    result       = as.numeric(`S.S.mg/L`)
+  )
+
+# Re-use the spring tss_site_lkp but with summer site name variants
+tss_site_lkp_sum <- tribble(
+  ~site_clean,     ~monitoring_location_id,
+  "RM 0",          10000008L,
+  "RM 1.5",        10000002L,
+  "RM 6.5",        10000005L,
+  "RM 10",         10000015L,
+  "RM 10 DUP",     10000015L,
+  "RM 10.1",       10000016L,
+  "RM 12.5",       10000017L,
+  "RM 18",         10000018L,
+  "RM 19",         10000020L,
+  "RM 21",         10000021L,
+  "RM 22",         10000022L,
+  "RM 23",         10000023L,
+  "RM 23 DUP",     10000023L,
+  "RM 30",         10000024L,
+  "RM 31",         10000025L,
+  "RM 36",         10000026L,
+  "RM 40",         10000027L,
+  "RM 43",         10000028L,
+  "RM 44",         10000029L,
+  "RM 50",         10000030L,
+  "RM 70",         10000031L,
+  "RM 74",         10000032L,
+  "RM 79.5",       10000424L,
+  "RM 82",         10000425L
+)
+
+dat_tss_summer <- tss_raw_sum |>
+  left_join(tss_site_lkp_sum, by = "site_clean") |>
+  filter(!is.na(monitoring_location_id), !is.na(result)) |>
+  mutate(
+    collect_date    = mdy(summer_sample_date),
+    rec_date        = mdy("7/25/2025"),  # from file name: KRWF TSS MONITORING 07-25-25
+    rec_time        = as_hms(0),
+    run_date        = mdy("7/25/2025"),
+    run_time        = as_hms(0),
+    analyte         = "Total suspended solids",
+    units           = "mg/l",
+    lod             = tss_lod,
+    loq             = tss_loq,
+    resultflag = case_when(
+      result < tss_lod ~ "U",
+      result < tss_loq ~ "J",
+      TRUE ~ "="
+    ),
+    result = case_when(result < tss_lod ~ NA_real_, TRUE ~ result),
+    result_detection_condition = case_when(
+      resultflag == "U" ~ "Not Detected", TRUE ~ NA_character_
+    ),
+    analytical_method      = "2540-D",
+    epa_analysis_id        = "2540-D",
+    context_code           = "APHA",
+    lab_name               = "SWWTP",
+    lab_sample             = as.character(row_number()),
+    sample_type            = "PS",
+    matrix                 = "Water",
+    dissolved              = NA_character_,
+    note                   = NA_character_,
+    result_sample_fraction = NA_character_
+  ) |>
+  select(
+    sample              = site_clean,
+    lab_sample,
+    lab_name,
+    analyte,
+    result,
+    units,
+    resultflag,
+    loq,
+    lod,
+    collect_date,
+    collect_time,
+    rec_date,
+    rec_time,
+    run_date,
+    run_time,
+    analytical_method,
+    epa_analysis_id,
+    context_code,
+    monitoring_location_id,
+    note,
+    sample_type,
+    sample_condition,
+    dissolved,
+    matrix,
+    result_sample_fraction,
+    result_detection_condition
+  )
+
+dat_tss <- bind_rows(dat_tss_spring, dat_tss_summer)
+
+cat("TSS rows:", nrow(dat_tss),
+    " (spring:", nrow(dat_tss_spring), "| summer:", nrow(dat_tss_summer), ")\n")
+```
+
+### YSI ProQuatro / Turbidity Field Measurements
+
+```{r part-a-ysi, message=FALSE, warning=FALSE}
+# Single file covers both seasons. Season is inferred from collection date.
+# Each site has 2 replicate observations; these are averaged per site-date-parameter.
+# DUP sites (e.g. "Soldotna Creek-DUP") are separated by the site lookup table.
+# Physically impossible values excluded (negative pH, DO > 20 mg/L).
+
+ysi_path <- file.path("other/input/2025",
+                       "2025 Kenai Agency Baseline YSI ProQuatro and Turbidity Data.xlsx")
+
+ysi_param_map <- c(
+  "Temperature"  = "Water Temperature",
+  "Conductivity" = "Specific Conductance",
+  "DO"           = "Dissolved Oxygen",
+  "Turbidity"    = "Turbidity",
+  "pH"           = "pH"
+)
+ysi_method_map <- c(
+  "Water Temperature"    = "170.1",
+  "Specific Conductance" = "120.1",
+  "Dissolved Oxygen"     = "360.1",
+  "Turbidity"            = "180.1",
+  "pH"                   = "150.1"
+)
+ysi_unit_map <- c(
+  "Water Temperature"    = "deg C",
+  "Specific Conductance" = "uS/cm",
+  "Dissolved Oxygen"     = "mg/L",
+  "Turbidity"            = "NTU",
+  "pH"                   = "None"
+)
+
+# YSI site name -> monitoring_location_id lookup
+ysi_site_lkp <- tribble(
+  ~ysi_site_name,              ~monitoring_location_id, ~sample_condition,
+  "No Name Creek",             10000008L,               NA_character_,
+  "City of Kenai Dock",        10000002L,               NA_character_,
+  "Kenai Dock",                10000002L,               NA_character_,
+  "Cunningham Park",           10000005L,               NA_character_,
+  "Beaver Creek",              10000015L,               NA_character_,
+  "Beaver Creek- DUP",         10000015L,               "Field Duplicate",
+  "Kenai River",               10000016L,               NA_character_,
+  "Kenai River (RM10.1)",      10000016L,               NA_character_,
+  "Pillars",                   10000017L,               NA_character_,
+  "Pillars Boat Launch",       10000017L,               NA_character_,
+  "Poachers Cove",             10000018L,               NA_character_,
+  "Poachers Cove -DUP",        10000018L,               "Field Duplicate",
+  "Slikok Creek",              10000020L,               NA_character_,
+  "Soldotna Bridge",           10000021L,               NA_character_,
+  "Soldotna Creek",            10000022L,               NA_character_,
+  "Soldotna Creek-DUP",        10000022L,               "Field Duplicate",
+  "Swiftwater Park",           10000023L,               NA_character_,
+  "Swiftwater Park-DUP",       10000023L,               "Field Duplicate",
+  "Funny River",               10000024L,               NA_character_,
+  "Morgan's Landing",          10000025L,               NA_character_,
+  "Morgans Landing",           10000025L,               NA_character_,
+  "Moose River",               10000026L,               NA_character_,
+  "Bing's Landing",            10000027L,               NA_character_,
+  "Bings Landing",             10000027L,               NA_character_,
+  "Upstream of Dow Island",    10000028L,               NA_character_,
+  "Dow Island",                10000028L,               NA_character_,
+  "Mouth of Killey River",     10000029L,               NA_character_,
+  "Killey River",              10000029L,               NA_character_,
+  "Skilak Lake Overflow",      10000030L,               NA_character_,
+  "Jim's Landing",             10000031L,               NA_character_,
+  "Jims Landing (RM 70)",      10000031L,               NA_character_,
+  "Russian River",             10000032L,               NA_character_,
+  "Russian River (RM74)",      10000032L,               NA_character_,
+  "Juneau Creek",              10000424L,               NA_character_,
+  "Juneau Creek (RM 79.5)",    10000424L,               NA_character_,
+  "Kenai Lake Bridge",         10000425L,               NA_character_,
+  "Kenai Lake (RM 82)",        10000425L,               NA_character_
+)
+
+ysi_all <- read_excel(ysi_path) |>
+  filter(
+    !is.na(`Site Name`), !is.na(Parameter), !is.na(Value),
+    !(Parameter == "pH" & (Value < 0 | Value > 14)),
+    !(Parameter == "DO"  & Value > 20)
+  ) |>
+  mutate(
+    analyte      = ysi_param_map[Parameter],
+    collect_date = as.Date(`Site Depart Date`),
+    collect_time = as_hms(format(`Collection Time (HH:MM)`, "%H:%M:%S"))
+  ) |>
+  filter(!is.na(analyte))
+
+# Join site lookup, then average replicates per site-date-parameter group
+dat_ysi <- ysi_all |>
+  left_join(ysi_site_lkp, by = c("Site Name" = "ysi_site_name")) |>
+  filter(!is.na(monitoring_location_id)) |>
+  group_by(monitoring_location_id, sample_condition, analyte, collect_date) |>
+  summarise(
+    result       = mean(Value, na.rm = TRUE),
+    collect_time = first(collect_time),
+    .groups      = "drop"
+  ) |>
+  mutate(
+    sample                     = as.character(monitoring_location_id),
+    lab_sample                 = NA_character_,
+    lab_name                   = "YSI",
+    units                      = ysi_unit_map[analyte],
+    resultflag                 = "=",
+    loq                        = NA_real_,
+    lod                        = NA_real_,
+    rec_date                   = collect_date,
+    rec_time                   = collect_time,
+    run_date                   = collect_date,
+    run_time                   = collect_time,
+    analytical_method          = ysi_method_map[analyte],
+    epa_analysis_id            = ysi_method_map[analyte],
+    context_code               = "USEPA",
+    note                       = NA_character_,
+    sample_type                = "PS",
+    dissolved                  = NA_character_,
+    matrix                     = "Water",
+    result_sample_fraction     = "Total",
+    result_detection_condition = NA_character_
+  ) |>
+  select(
+    sample,
+    lab_sample,
+    lab_name,
+    analyte,
+    result,
+    units,
+    resultflag,
+    loq,
+    lod,
+    collect_date,
+    collect_time,
+    rec_date,
+    rec_time,
+    run_date,
+    run_time,
+    analytical_method,
+    epa_analysis_id,
+    context_code,
+    monitoring_location_id,
+    note,
+    sample_type,
+    sample_condition,
+    dissolved,
+    matrix,
+    result_sample_fraction,
+    result_detection_condition
+  )
+
+cat("YSI rows:", nrow(dat_ysi), "\n")
+cat("YSI sites:", n_distinct(dat_ysi$monitoring_location_id), "\n")
+cat("YSI parameters:", paste(sort(unique(dat_ysi$analyte)), collapse = ", "), "\n")
+
+unmapped_ysi <- ysi_all |>
+  filter(!`Site Name` %in% ysi_site_lkp$ysi_site_name) |>
+  pull(`Site Name`) |> unique()
+if (length(unmapped_ysi) > 0) {
+  cat("⚠ Unmapped YSI sites (excluded):", paste(unmapped_ysi, collapse = ", "), "\n")
+}
+```
+
+### Bind All Results into `dat`
+
+```{r part-a-bind, message=FALSE, warning=FALSE}
+dat <- bind_rows(dat_sgs, dat_fc, dat_tss, dat_ysi) |>
+  mutate(monitoring_location_id = as.character(monitoring_location_id))
+
+cat("Total dat rows:", nrow(dat), "\n")
+cat("Analytes:", paste(sort(unique(dat$analyte)), collapse = ", "), "\n")
+cat("Sites:", n_distinct(dat$monitoring_location_id), "\n")
+```
+
+------------------------------------------------------------------------
+
+## Part B: WQX Formatting
+
+```{r format-wqx, message=FALSE, warning=FALSE, include=FALSE}
+# Applies all lookup table joins (coordinates, result sample fractions, detection
+# condition, preservative, container), constructs WQX-formatted column names,
+# builds Activity IDs, and writes the provisional WQX intermediate CSV.
+#
+# NOTE: format_wqx.R was updated to handle pre-existing result_sample_fraction
+# (set in Part A for EP200.8 dissolved/total distinction). Part A values take
+# precedence; the lookup table fills in unset fractions (nutrients, FC, TSS).
+#
+# Requires: dat, cfg   Produces: dat, dat_raw, all_dat; writes cfg$wqx_intermediate_path
+source("other/misc/qaqc_repo_transition/functions/format_wqx.R")
+```
+
+### Provisional Results (Prior to QA/QC Review)
+
+The following table summarizes results after WQX formatting, before QA/QC evaluation.
+
+```{r provisional-summary, message=FALSE}
+read.csv(cfg$wqx_intermediate_path) |>
+  clean_names() |>
+  count(characteristic_name, result_analytical_method_id, activity_start_date) |>
+  arrange(activity_start_date, characteristic_name)
+```
+
+------------------------------------------------------------------------
+
+## Part C: QA/QC Checklist
+
+Prior to upload to the EPA WQX, all water quality data is checked against a standard Data Evaluation Checklist developed in coordination with the Alaska Department of Environmental Conservation.
+
+#### Pre-Database
+
+##### Overall Project Success
+
+**1.) Were the appropriate analytical methods used for all parameters?**
+
+```{r q01}
+# MANUAL: Confirm analytical methods match those in the approved QAPP.
+# Spring 2025 methods: EP200.8 (metals), SM21 4500NO3-F (nitrate), SM21 4500P-B,E (TP),
+# SM 9222D (fecal coliform), SM 2540-D (TSS).
+```
+
+<br>
+
+**2.) Were appropriate QA/QC procedures followed in the field and laboratory?**
+
+```{r q02}
+# MANUAL: Confirm field duplicate and trip blank collection per QAPP.
+# Spring 2025: duplicates at RM 18 and RM 22 (observed in SGS, FC, and TSS data).
+```
+
+<br>
+
+**3.) Were the appropriate number of samples collected?**
+
+```{r q03-planned, message=FALSE, warning=FALSE}
+# ADAPT: Create other/input/2025/spring_2025_wqx_data/planned_samples_2025.xlsx
+# following the template format to enable full planned-vs-actual comparison.
+# Until that file exists, actual sample counts are used as a proxy.
+
+total_samples_collected_summary <- read.csv(cfg$wqx_intermediate_path) |>
+  clean_names() |>
+  filter(activity_type %in% c("Field Msr/Obs",
+                               "Quality Control Field Replicate Msr/Obs",
+                               "Quality Control Sample-Trip Blank")) |>
+  group_by(result_analytical_method_id, activity_start_date, activity_type) |>
+  count() |>
+  rename(actual_results_n = n)
+
+# Use actual as planned for CMB denominator (conservative estimate)
+planned_samples_summary <- total_samples_collected_summary |>
+  rename(expected_results_n = actual_results_n)
+
+planned_samples_summary_by_site <- read.csv(cfg$wqx_intermediate_path) |>
+  clean_names() |>
+  filter(activity_type == "Field Msr/Obs") |>
+  group_by(monitoring_location_id, result_analytical_method_id,
+           activity_start_date, activity_type) |>
+  count() |>
+  rename(expected_results_n = n)
+
+total_samples_collected_summary
+```
+
+```{r q03-narrative}
+# MANUAL: Describe any deviations between planned and actual results.
+```
+
+<br>
+
+**4.) Do the laboratory reports provide results for all sites and parameters?**
+
+```{r q04}
+# MANUAL: Confirm based on Q3 results. Note any exceptions.
+```
+
+<br>
+
+**5.) Is a copy of the Chain of Custody included with the laboratory reports?**
+
+```{r q05}
+# SGS COC on file: other/input/2025/spring_2025_wqx_data/SGS/1251731_COC.pdf
+# SWWTP: FC and TSS results sheets serve as lab records.
+# MANUAL: Confirm SWWTP documentation meets project requirements.
+```
+
+<br>
+
+**6.) Do the laboratory reports match the Chain of Custody and requested methods throughout?**
+
+```{r q06}
+# MANUAL
+```
+
+<br>
+
+**7.) Are the number of samples on the laboratory reports the same as on the Chain of Custody?**
+
+```{r q07}
+# MANUAL
+```
+
+<br>
+
+**8.) Was all supporting info provided in the laboratory report, such as reporting limits?**
+
+```{r q08}
+# MANUAL
+```
+
+<br>
+
+**9.) Are site names, dates, and times correct and as expected?**
+
+```{r q09, message=FALSE}
+sites_in_data <- read.csv(cfg$wqx_intermediate_path) |>
+  clean_names() |>
+  distinct(monitoring_location_id, activity_start_date) |>
+  arrange(monitoring_location_id, activity_start_date)
+sites_in_data
+# MANUAL: Confirm all expected sites present and dates correct.
+```
+
+<br>
+
+**10.) Were there any issues with instrument calibration?**
+
+```{r q10}
+# MANUAL
+```
+
+<br>
+
+**11.) Did the instruments perform as expected?**
+
+```{r q11}
+# MANUAL
+```
+
+<br>
+
+**12.) Was instrument calibration performed according to the QAPP?**
+
+```{r q12}
+# MANUAL
+```
+
+<br>
+
+**13.) Was instrument verification during the field season performed according to the QAPP?**
+
+```{r q13}
+# MANUAL
+```
+
+<br>
+
+**14.) Were instrument calibration verification logs kept?**
+
+```{r q14}
+# MANUAL
+```
+
+<br>
+
+**15.) Do instrument data file site IDs, timestamps, and filenames match?**
+
+```{r q15}
+# MANUAL
+```
+
+<br>
+
+**16.) Is any in-situ field data rejected and why?**
+
+```{r q16}
+# MANUAL
+```
+
+<br>
+
+**17.) Were preservation, hold time, and temperature requirements met?**
+
+```{r q17-holdtimes, message=FALSE, warning=FALSE}
+col_names <- c("sample", "epa_analysis_id", "analyte", "collect_date", "collect_time",
+               "rec_date", "rec_time", "lab_name")
+
+holdtime_dat <- dat |>
+  select(any_of(col_names)) |>
+  mutate(
+    rec_date1 = as.Date(rec_date),
+    rec_time1 = case_when(
+      !is.na(rec_time) ~ as_hms(rec_time),
+      TRUE             ~ as_hms(0)
+    )
+  ) |>
+  select(-rec_time, -rec_date) |>
+  rename(rec_time = rec_time1, rec_date = rec_date1) |>
+  mutate(
+    activity_datetime          = ymd_hms(paste(collect_date, collect_time)),
+    rec_datetime               = ymd_hms(paste(rec_date, rec_time)),
+    hold_time_hours            = as.numeric(difftime(rec_datetime, activity_datetime,
+                                                      units = "hours")),
+    result_analytical_method_id = epa_analysis_id
+  )
+
+max_holding_times <- read.csv(
+  file.path(cfg$templates_dir, "sample_holding_times.csv")
+) |>
+  transform(max_holding_time_hours = as.numeric(max_holding_time_hours))
+
+holdtime_dat <- left_join(holdtime_dat, max_holding_times,
+                          by = "result_analytical_method_id") |>
+  mutate(hold_time_pass = case_when(
+    hold_time_hours > max_holding_time_hours ~ "N",
+    TRUE ~ "Y"
+  ))
+
+write.csv(holdtime_dat,
+          "other/output/field_qa_qc_data/holding_time_calcs.csv",
+          row.names = FALSE)
+
+cat("Hold time failures:", sum(holdtime_dat$hold_time_pass == "N", na.rm = TRUE), "\n")
+holdtime_dat |> filter(hold_time_pass == "N")
+```
+
+<br>
+
+**18.) Are dissolved metal quantities less than total metals quantities?**
+
+```{r q18-dissolved-total, message=FALSE, warning=FALSE}
+# Spring 2025: Calcium, Iron, Magnesium measured as total only.
+# Copper and Zinc have both dissolved and total -- check those pairs.
+
+diss_total_analytes <- c("Copper", "Zinc")
+
+diss_total_dat <- dat |>
+  filter(analyte %in% diss_total_analytes, !is.na(result)) |>
+  mutate(
+    result_mg_l = case_when(units == "ug/L" ~ result / 1000, TRUE ~ result),
+    fraction    = case_when(
+      result_sample_fraction == "Dissolved"  ~ "Dissolved",
+      TRUE                                   ~ "Total"
+    )
+  )
+
+dir_diss <- "other/output/field_qa_qc_data/metals_total_diss/"
+
+for (elem in diss_total_analytes) {
+  elem_dat <- diss_total_dat |>
+    filter(analyte == elem) |>
+    select(monitoring_location_id, collect_date, fraction, result_mg_l) |>
+    pivot_wider(names_from = fraction, values_from = result_mg_l) |>
+    mutate(
+      total_greater_eq_diss = case_when(
+        is.na(Total) | is.na(Dissolved) ~ NA,
+        Total >= Dissolved              ~ "Y",
+        TRUE                            ~ "N"
+      )
+    )
+  write.csv(elem_dat, file.path(dir_diss, paste0(tolower(elem), ".csv")))
+  cat(elem, "— rows with total >= dissolved:",
+      sum(elem_dat$total_greater_eq_diss == "Y", na.rm = TRUE),
+      "of", nrow(elem_dat), "\n")
+}
+```
+
+```{r q18-narrative}
+# MANUAL: Interpret results. Note any cases where dissolved > total.
+```
+
+<br>
+
+**19.) Are the duplicate sample(s) RPD within range described in QAPP?**
+
+```{r q19-rpd, message=FALSE, warning=FALSE}
+qaqc_sites <- read_excel(
+  file.path(cfg$templates_dir, "wqx_qaqc/wqx_qaqc_info.xlsx"),
+  sheet = paste0("field_dup_sites_", year)
+) |> remove_empty()
+
+export_dat_rpd <- read.csv(cfg$wqx_intermediate_path) |> clean_names()
+field_dup_dat  <- inner_join(export_dat_rpd, qaqc_sites, by = "monitoring_location_id")
+
+rpd_cols <- c("monitoring_location_id", "activity_type", "activity_start_date",
+              "characteristic_name", "result_detection_condition",
+              "result_value", "result_unit",
+              "result_detection_limit_type_1", "result_detection_limit_value_1",
+              "result_detection_limit_unit_1")
+
+rpd_check_dat <- field_dup_dat |>
+  select(any_of(rpd_cols)) |>
+  pivot_wider(names_from = "activity_type", values_from = "result_value") |>
+  clean_names() |>
+  mutate(
+    rpd_eligible = !is.na(field_msr_obs) &
+                   !is.na(quality_control_field_replicate_msr_obs),
+    rpd_pct = abs(
+      (field_msr_obs - quality_control_field_replicate_msr_obs) /
+        ((field_msr_obs + quality_control_field_replicate_msr_obs) / 2) * 100
+    )
+  )
+
+rpd_eligible_dat <- rpd_check_dat |>
+  filter(rpd_eligible) |>
+  mutate(threshold = case_when(
+    grepl("Nitrate|Nitrite",  characteristic_name, ignore.case = TRUE) ~ 25,
+    grepl("Phosphorus",       characteristic_name, ignore.case = TRUE) ~ 25,
+    grepl("suspended|solids", characteristic_name, ignore.case = TRUE) ~ 5,
+    TRUE ~ 20
+  ))
+
+rpd_exceed <- rpd_eligible_dat |> filter(!is.na(rpd_pct), rpd_pct > threshold)
+
+write.csv(rpd_check_dat,
+          "other/output/field_qa_qc_data/rpd_check_dat.csv",
+          row.names = FALSE)
+
+cat("RPD-eligible pairs:", nrow(rpd_eligible_dat), "\n")
+cat("Pairs exceeding QAPP threshold:", nrow(rpd_exceed), "\n")
+if (nrow(rpd_exceed) > 0) rpd_exceed
+```
+
+```{r q19-narrative}
+# MANUAL: Discuss RPD results. Below-LOQ pairs retained as Accepted non-detects.
+```
+
+<br>
+
+**20.) Were there any laboratory discrepancies, errors, data qualifiers, or QC failures?**
+
+```{r q20-matrix-spikes, message=FALSE, warning=FALSE}
+ms_cols <- c("lab_name", "sample", "collect_date", "sample_type", "result",
+             "analyte", "analytical_method", "resultflag", "percent_recovered",
+             "rec_limit_low", "rec_limit_high", "sample_rpd",
+             "rpd_limit_low", "rpd_limit_high", "loq", "lod",
+             "detection_limit", "sample_condition")
+
+matrix_spike_limits <- read.csv(
+  file.path(cfg$output_qaqc_dir, "sgs_als_qaqc_dat.csv")
+) |>
+  select(any_of(ms_cols)) |>
+  mutate(
+    percent_recovered = as.numeric(percent_recovered),
+    rec_limit_low     = as.numeric(rec_limit_low),
+    rec_limit_high    = as.numeric(rec_limit_high),
+    rec_limit_pass = case_when(
+      is.na(rec_limit_low)                                              ~ "",
+      percent_recovered > rec_limit_high |
+        percent_recovered < rec_limit_low                              ~ "N",
+      TRUE                                                              ~ "Y"
+    )
+  )
+
+matrix_spike_fails <- matrix_spike_limits |> filter(rec_limit_pass == "N")
+
+write.csv(matrix_spike_fails,
+          file.path("other/output/lab_qaqc_data",
+                    paste0("matrix_spike_recovery_fails_", year, ".csv")),
+          row.names = FALSE)
+
+cat("Matrix spike recovery failures:", nrow(matrix_spike_fails), "\n")
+if (nrow(matrix_spike_fails) > 0) matrix_spike_fails
+```
+
+```{r q20-narrative}
+# MANUAL: Describe additional lab QC anomalies not captured by matrix spike check.
+```
+
+<br>
+
+**21.) Is any laboratory data rejected and why?**
+
+```{r q21}
+# MANUAL: Record flagging decisions in:
+# other/input/wqx_templates/2025_data_flag_decisions.csv
+# That file is joined in Part D (apply_qaqc_flags.R).
+```
+
+<br>
+
+**22.) Review raw data files as received. Document changes and corrections.**
+
+```{r q22}
+# MANUAL: Note any corrections applied during Part A ingestion and how documented.
+# Spring 2025 known corrections:
+#   - "RM O" (typo) in TSS file treated as "RM 0" (site 10000008).
+#   - "RM22" (missing space) in TSS file treated as "RM 22" (site 10000022).
+#   - SGS analytical_method "EP200.8" stripped to "200.8" for consistency.
+```
+
+<br>
+
+**23.) Is the dataset complete?**
+
+```{r q23}
+# MANUAL: Reference Q3. Note that summer 2025 data is not yet collected.
+```
+
+<br>
+
+**24.) Was data collected representative of environmental conditions?**
+
+```{r q24}
+# MANUAL
+```
+
+<br>
+
+**25.) Does project meet Completeness Measure A criteria?**
+
+From the QAPP, CMA = primary samples collected / usable samples submitted (goal: 85%).
+
+```{r apply-flags, message=FALSE, warning=FALSE}
+# Join flag decisions and write flagged export CSV.
+# IMPORTANT: This chunk must run before Q25 and Q26.
+source("other/misc/qaqc_repo_transition/functions/apply_qaqc_flags.R")
+```
+
+```{r q25-cma, message=FALSE}
+analytes_qapp <- read.csv(
+  file.path(cfg$templates_dir, "analytes_list_manual_edit.csv")
+)
+colnames(analytes_qapp) <- c("characteristic_name", "analyte_abbreviation")
+
+completeness_summary_param <- read.csv(cfg$flagged_export_path) |>
+  clean_names() |>
+  group_by(result_analytical_method_id, characteristic_name, flag) |>
+  count() |>
+  rename(n_results = n) |>
+  pivot_wider(names_from = "flag", values_from = "n_results") |>
+  rename(flag_Y = Y, flag_N = N) |>
+  rowwise() |>
+  mutate(
+    total_samples = sum(flag_Y, flag_N, na.rm = TRUE),
+    cma           = flag_N / total_samples,
+    cma           = replace_na(cma, 0)
+  )
+
+write.csv(completeness_summary_param,
+          "other/output/field_qa_qc_data/completeness_measures/cma_parameter.csv")
+
+cma_dat    <- read.csv(cfg$flagged_export_path) |> clean_names()
+cma_total  <- nrow(cma_dat)
+cma_n      <- sum(cma_dat$flag == "N", na.rm = TRUE)
+cma_pct    <- paste0(round(cma_n / cma_total * 100, 1), "%")
+cat("CMA (overall):", cma_pct, "(goal: 85%)\n")
+completeness_summary_param
+```
+
+<br>
+
+**26.) Does project meet Completeness Measure B criteria?**
+
+From the QAPP, CMB = unflagged results / planned results (goal: 60%).
+
+```{r q26-cmb, message=FALSE}
+cmb_by_method <- read.csv(cfg$flagged_export_path) |>
+  clean_names() |>
+  group_by(result_analytical_method_id, activity_start_date, activity_type, flag) |>
+  count() |>
+  pivot_wider(names_from = "flag", values_from = "n") |>
+  rename(flag_Y = Y, flag_N = N) |>
+  transform(activity_start_date = ymd(activity_start_date)) |>
+  left_join(planned_samples_summary,
+            by = c("result_analytical_method_id", "activity_start_date",
+                   "activity_type")) |>
+  mutate(
+    cmb = flag_N / expected_results_n,
+    cmb = replace_na(cmb, 0)
+  )
+
+write.csv(cmb_by_method,
+          "other/output/field_qa_qc_data/completeness_measures/cmb_parameter.csv")
+
+total_planned  <- sum(planned_samples_summary$expected_results_n, na.rm = TRUE)
+cmb_n          <- sum(cmb_by_method$flag_N, na.rm = TRUE)
+cmb_pct        <- paste0(round(cmb_n / total_planned * 100, 1), "%")
+cat("CMB (overall):", cmb_pct, "(goal: 60%)\n")
+cmb_by_method
+```
+
+<br>
+
+**27.) Was the QA officer consulted for any data concerns?**
+
+```{r q27}
+# MANUAL
+```
+
+<br>
+
+**28.) Are the correct monitoring locations associated with the project?**
+
+```{r q28-map, message=FALSE, warning=FALSE}
+export_dat <- read.csv(cfg$flagged_export_path)
+
+site_check <- export_dat |>
+  distinct(monitoring_location_id, activity_latitude, activity_longitude) |>
+  transform(
+    activity_latitude  = as.numeric(activity_latitude),
+    activity_longitude = as.numeric(iconv(activity_longitude, "utf-8", "ascii", sub = ""))
+  ) |>
+  mutate(activity_longitude = case_when(
+    activity_longitude > 0 ~ activity_longitude * -1,
+    TRUE ~ activity_longitude
+  ))
+
+if (knitr::is_html_output()) {
+  leaflet(site_check) |>
+    addTiles() |>
+    addMarkers(~activity_longitude, ~activity_latitude,
+               popup = ~as.character(monitoring_location_id),
+               label  = ~as.character(monitoring_location_id))
+} else {
+  knitr::kable(site_check, caption = "2025 monitoring locations")
+}
+```
+
+<br>
+
+**29.) Are the QAPP and other supporting documents attached?**
+
+```{r q29}
+# MANUAL: Confirm QAPP filename is set correctly in generate_cdx_export.R.
+```
+
+<br>
+
+**30.) Is all project metadata correct?**
+
+```{r q30}
+# MANUAL: Confirm organization ID, project ID, QAPP approval status, site coordinates.
+```
+
+<br>
+
+**31.) Is the organization ID correct?**
+
+```{r q31}
+cat("Expected organization ID: Kenai_WQX\n")
+```
+
+<br>
+
+**32.) Are the time zones consistent and correct?**
+
+```{r q32-timezone}
+# Spring 2025 sampling (April 30) is in AKDT (Alaska Daylight Time).
+# DST began March 9, 2025 -- all 2025 spring data is AKDT.
+export_dat <- read.csv(cfg$flagged_export_path) |>
+  mutate(time_zone = "AKDT")
+write.csv(export_dat, cfg$flagged_export_path)
+cat("Time zone applied: AKDT\n")
+```
+
+<br>
+
+**33.) Are all media types included?**
+
+```{r q33}
+cat("Activity media types in dataset:\n")
+unique(export_dat$activity_media_name)
+```
+
+<br>
+
+**34.) Check Sample Collection, Preparation and Preservation Methods.**
+
+```{r q34}
+cat("Result sample fractions:\n"); unique(export_dat$result_sample_fraction)
+cat("\nChemical preservatives:\n"); unique(export_dat$chemical_preservative_used)
+cat("\nContainer types:\n");        unique(export_dat$sample_container_type)
+```
+
+<br>
+
+**35.) Are all expected activity types present and are QC samples correctly identified?**
+
+```{r q35}
+cat("Activity types:\n")
+unique(export_dat$activity_type)
+```
+
+<br>
+
+**36.) Is the Activity media subdivision filled in?**
+
+```{r q36}
+unique(export_dat$activity_media_subdivision_name)
+```
+
+<br>
+
+**37.) For Water activity media, is the relative depth filled in?**
+
+```{r q37}
+unique(export_dat$activity_depth_height_measure)
+# All surface grab samples recorded at ~15 cm depth.
+```
+
+<br>
+
+**38.) Is the number of results for each Characteristic correct?**
+
+```{r q38}
+chr_num <- export_dat |>
+  group_by(characteristic_name) |>
+  tally()
+
+write.csv(chr_num,
+          file.path("other/output/misc",
+                    paste0("characteristic_count_", year, ".csv")),
+          row.names = FALSE)
+chr_num
+```
+
+<br>
+
+**39.) Do the range of result values make sense?**
+
+```{r q39}
+export_dat |>
+  filter(!is.na(result_value)) |>
+  group_by(characteristic_name, result_unit) |>
+  summarise(min = min(result_value, na.rm = TRUE),
+            max = max(result_value, na.rm = TRUE),
+            n   = n(), .groups = "drop") |>
+  arrange(characteristic_name)
+# MANUAL: Compare against prior years and regulatory limits.
+```
+
+<br>
+
+**40.) Are units correct and consistent for each parameter?**
+
+```{r q40}
+z <- export_dat |> distinct(characteristic_name, result_unit)
+cat("Unique unit values:\n"); print(unique(z$result_unit))
+
+# Standardize case
+export_dat[export_dat == "mg/l"] <- "mg/L"
+write.csv(export_dat, cfg$flagged_export_path)
+```
+
+<br>
+
+**41.) Are detection limits and laboratory qualifiers included?**
+
+```{r q41}
+cat("Result qualifiers:\n");     unique(export_dat$result_qualifier)
+cat("\nDetection limit types:\n"); unique(export_dat$result_detection_limit_type_1)
+```
+
+<br>
+
+**42.) Are results in trip blanks and/or field blanks above detection limits?**
+
+```{r q42}
+trip_blanks <- export_dat |>
+  filter(activity_type == "Quality Control Sample-Trip Blank")
+
+cat("Trip blank results:", nrow(trip_blanks), "\n")
+cat("Detections in trip blanks (result_value > 0):",
+    sum(!is.na(trip_blanks$result_value) & trip_blanks$result_value > 0), "\n")
+
+# MANUAL: If any trip blank analytes are detected, determine whether associated
+# field results should be flagged and update flag_decisions_path accordingly.
+```
+
+------------------------------------------------------------------------
+
+## Part D: Flag + CDX Export
+
+```{r generate-cdx, message=FALSE, warning=FALSE}
+# Apply Result Status ID (Accepted/Rejected), finalize column format, and write
+# three CDX upload files: results_activities.csv, project.csv, station.csv.
+#
+# REVIEW: generate_cdx_export.R contains a filter that excludes Phosphorus from
+# EPA Method 200.8 (not in the 2021 QAPP). Confirm whether this filter applies
+# to 2025 before running. Comment out in that script if not applicable.
+#
+# Requires: export_dat (with time_zone applied in Q32), cfg
+source("other/misc/qaqc_repo_transition/functions/generate_cdx_export.R")
+```
+
+### CDX Upload Files
+
+The following files are ready for upload to the EPA Water Quality Exchange Central Data Exchange (CDX) at <https://cdx.epa.gov/>:
+
+```{r cdx-file-summary, message=FALSE}
+cdx_files <- c(
+  "other/output/wqx_formatted/results_activities.csv",
+  "other/output/wqx_formatted/project.csv",
+  "other/output/wqx_formatted/station.csv"
+)
+
+for (f in cdx_files) {
+  if (file.exists(f)) {
+    d <- read.csv(f)
+    cat(basename(f), ":", nrow(d), "rows\n")
+  } else {
+    cat(basename(f), ": NOT FOUND -- run generate_cdx_export.R\n")
+  }
+}
+```

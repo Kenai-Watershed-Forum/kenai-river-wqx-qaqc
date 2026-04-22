@@ -1,0 +1,1180 @@
+---
+execute:
+  echo: false
+  cache: false
+date: "`r Sys.Date()`"
+format:
+  html:
+    code-fold: true
+    code-tools: true
+    code-summary: "Show code"
+---
+
+# Annual QA/QC Pipeline: {YEAR} Data
+
+## Introduction
+
+This document contains the complete data ingestion, QA/QC evaluation, flagging, and CDX export workflow for the {YEAR} Kenai River Baseline Water Quality Monitoring dataset.
+
+The structure of this document follows the Data Evaluation Checklist provided by the Alaska Department of Environmental Conservation. Field observations that do not meet QA/QC standards are flagged before upload to the EPA Water Quality Exchange (WQX).
+
+For the 2021 worked example (with full narrative and documentation), see the report repo: https://github.com/Kenai-Watershed-Forum/kenai-river-wqx
+
+------------------------------------------------------------------------
+
+## Year Configuration
+
+```{r year-config, message=FALSE, warning=FALSE}
+# ── YEAR CONFIGURATION ─────────────────────────────────────────────────────────
+# This is the ONLY block that must be updated for each new data year.
+# All downstream scripts read from the `cfg` list constructed below.
+
+library(tidyverse)
+library(readxl)
+library(openxlsx)
+library(data.table)
+library(stringr)
+library(magrittr)
+library(janitor)
+library(hms)
+library(lubridate)
+library(anytime)
+library(leaflet)
+
+# ── Scalar date and year variables ─────────────────────────────────────────────
+year <- XXXX  # e.g., 2023
+
+# Field sampling dates for SGS/ALS/TSS ingestion
+spring_sample_date <- "M/D/YYYY"  # e.g., "5/11/2021"
+summer_sample_date <- "M/D/YYYY"  # e.g., "7/27/2021"
+
+# Lab receipt dates (typically same day as collection)
+spring_rec_date <- "YYYY-MM-DD"  # e.g., "2021-05-11"
+summer_rec_date <- "YYYY-MM-DD"  # e.g., "2021-07-27"
+
+# FC lab analysis dates (typically the day after field collection)
+spring_fc_analysis_date <- mdy("M/D/YYYY")  # e.g., mdy("5/12/2021")
+summer_fc_analysis_date <- mdy("M/D/YYYY")  # e.g., mdy("7/28/2021")
+
+# FC lab source per season. Options: "SWWTP", "Taurianen"
+# Note: Taurianen was used for summer FC in 2021 and some prior years.
+#       Taurianen closed after 2021; 2022+ seasons use "SWWTP" for both.
+spring_fc_lab <- "SWWTP"
+summer_fc_lab <- "SWWTP"  # change to "Taurianen" for 2021 and applicable prior years
+
+# Explicit FC file paths (not derived -- filenames embed sampling dates)
+spring_fc_path <- "other/input/{year}_wqx_data/spring_{year}_wqx_data/SWWTP/[filename].xls"
+summer_fc_path <- "other/input/{year}_wqx_data/summer_{year}_wqx_data/SWWTP/[filename].xlsx"
+
+# Explicit TSS file paths (same reason as FC)
+spring_tss_path <- "other/input/{year}_wqx_data/spring_{year}_wqx_data/SWWTP/[filename].xlsx"
+summer_tss_path <- "other/input/{year}_wqx_data/summer_{year}_wqx_data/SWWTP/[filename].xlsx"
+
+# ── Derived paths (update if folder naming conventions change) ─────────────────
+data_dir        <- file.path("other/input", paste0(year, "_wqx_data"))
+spring_data_dir <- file.path(data_dir, paste0("spring_", year, "_wqx_data"))
+summer_data_dir <- file.path(data_dir, paste0("summer_", year, "_wqx_data"))
+output_qaqc_dir <- file.path("other/output/lab_qaqc_data",
+                              paste0(year, "_lab_qaqc_data"))
+
+# Intermediate output paths
+wqx_intermediate_path <- file.path("other/output/wqx_formatted/intermediate",
+                                    paste0(year, "_kwf_baseline_results_wqx.csv"))
+flagged_export_path   <- file.path("other/output/wqx_formatted/intermediate",
+                                    paste0(year, "_export_data_flagged.csv"))
+flag_decisions_path   <- file.path("other/input/wqx_templates",
+                                    paste0(year, "_data_flag_decisions.csv"))
+
+# ── cfg list (passed to stable function scripts) ───────────────────────────────
+cfg <- list(
+  year                  = year,
+  templates_dir         = "other/input/wqx_templates",
+  wqx_template_file     = file.path("other/input/wqx_templates",
+                                     paste0("AWQMS_KWF_Baseline_", year, ".xlsx")),
+  spring_data_dir       = spring_data_dir,
+  summer_data_dir       = summer_data_dir,
+  output_qaqc_dir       = output_qaqc_dir,
+  wqx_intermediate_path = wqx_intermediate_path,
+  flagged_export_path   = flagged_export_path,
+  flag_decisions_path   = flag_decisions_path,
+  wqx_downloads_dir     = "other/input/WQX_downloads",
+  spring_sample_date    = spring_sample_date,
+  summer_sample_date    = summer_sample_date
+)
+
+# Create output directories if they do not exist
+dir.create(output_qaqc_dir,                             recursive = TRUE, showWarnings = FALSE)
+dir.create(dirname(wqx_intermediate_path),              recursive = TRUE, showWarnings = FALSE)
+dir.create("other/output/field_qa_qc_data/metals_total_diss", recursive = TRUE, showWarnings = FALSE)
+dir.create("other/output/field_qa_qc_data/completeness_measures", recursive = TRUE, showWarnings = FALSE)
+dir.create(file.path("other/output/lab_qaqc_data",
+                     paste0(year, "_lab_qaqc_data")),   recursive = TRUE, showWarnings = FALSE)
+dir.create("other/output/misc",                         recursive = TRUE, showWarnings = FALSE)
+```
+
+------------------------------------------------------------------------
+
+## Part A: Data Ingestion
+
+**ADAPT THIS SECTION FOR EACH NEW YEAR.**
+
+Part A contains all lab-specific ingestion code. Because EDD formats vary by year and lab, this code is inlined here rather than sourced, so that year-specific adaptations are visible and explicitly marked. Use the scripts in `reference/` as worked examples from 2021.
+
+After running all subsections, the final `dat` object must conform to the column contract documented in AGENTS.md before `source("functions/format_wqx.R")` will run correctly.
+
+### SGS/ALS Lab Results
+
+```{r ingest-sgs-als, message=FALSE, warning=FALSE, include=FALSE}
+
+# ADAPT: Read spring and summer SGS EDD files.
+# File naming convention follows: {season}_{year}_sgs_batch_info.csv
+# See reference/2021_ingest_sgs_als.R for the complete 2021 approach.
+
+# ADAPT: Check column names before renaming. SGS EDD column names may vary year to year.
+# Run `names(spring_sgs_raw)` after read-in to verify.
+
+# Read spring SGS EDD
+spring_sgs_raw <- read.csv(
+  file.path(cfg$spring_data_dir, "SGS", paste0("spring_", year, "_sgs_batch_info.csv"))
+)
+
+# Read summer SGS EDD
+summer_sgs_raw <- read.csv(
+  file.path(cfg$summer_data_dir, "SGS", paste0("summer_", year, "_sgs_batch_info.csv"))
+)
+
+# ADAPT: Bind, clean, rename columns to match the dat contract.
+# Required output columns: sample, lab_sample, lab_name, analyte, result, units,
+#   resultflag, loq, lod, collect_date, collect_time, rec_date, rec_time,
+#   run_date, run_time, analytical_method, epa_analysis_id, context_code,
+#   monitoring_location_id, note, sample_type, sample_condition, dissolved, matrix
+#
+# See reference/2021_ingest_sgs_als.R Parts A-E for the full transformation.
+
+sgs_raw <- bind_rows(spring_sgs_raw, summer_sgs_raw) %>%
+  clean_names() %>%
+  remove_empty()
+
+# ADAPT: Apply any year-specific unit corrections here.
+# In 2021, dissolved Ca/Fe/Mg from SGS were labeled "ug/L" but were on the mg/L scale.
+# Check the current year's EDD and PDF report for unit consistency before proceeding.
+
+# ADAPT: Read ALS data (if applicable for this year).
+# In 2021 ALS supplied dissolved Ca, Fe, Mg only. Check whether ALS was used this year.
+# See reference/2021_ingest_sgs_als.R Part B.
+
+# ADAPT: Join site-name matching table to resolve lab site name to WQX site IDs.
+sgs_site_names <- read_excel(
+  file.path(cfg$templates_dir, "sgs_site_names_matching_table_manual_edit.xlsx")
+)
+
+# ADAPT: Join analytical method matching table.
+# Reference: other/input/wqx_templates/wqx_qaqc/ for method lookup tables.
+
+# ADAPT: Segregate lab QA/QC rows (MB, LCS, DUP) from field results (PS).
+# Lab QC goes to output_qaqc_dir; field results remain in dat.
+# See reference/2021_ingest_sgs_als.R Parts D-E.
+
+# At this point dat should contain only PS (project sample) rows.
+# Assign sgs_dat <- dat before FC/TSS bind:
+sgs_dat <- data.frame()  # REPLACE WITH ACTUAL INGESTION RESULT
+```
+
+### Fecal Coliform
+
+```{r ingest-fc, message=FALSE, warning=FALSE, include=FALSE}
+
+# ADAPT: FC ingestion depends on which lab was used (SWWTP or Taurianen).
+# See reference/2021_ingest_fc.R for the complete 2021 approach with both parsers.
+
+# ADAPT: SWWTP FC format differs from Taurianen format. The lab selector variables
+# spring_fc_lab and summer_fc_lab (set in Year Configuration) determine which
+# parser runs. For 2022+, both use SWWTP.
+
+if (spring_fc_lab == "SWWTP") {
+  # ADAPT: Read SWWTP spring FC file. Sheet name, skip rows, and column layout
+  # may vary slightly year to year. Verify with names() after read.
+  spring_fc_raw <- read_excel(spring_fc_path, skip = 2)
+  # ... ADAPT: clean, rename, assign collect_date, analyte = "Fecal Coliform", etc.
+  spring_fc <- data.frame()  # REPLACE WITH ACTUAL INGESTION RESULT
+} else if (spring_fc_lab == "Taurianen") {
+  # ADAPT: Taurianen format (2021 spring only -- see reference/2021_ingest_fc.R)
+  spring_fc <- data.frame()  # REPLACE WITH ACTUAL INGESTION RESULT
+}
+
+if (summer_fc_lab == "SWWTP") {
+  summer_fc_raw <- read_excel(summer_fc_path, skip = 2)
+  # ... ADAPT
+  summer_fc <- data.frame()  # REPLACE WITH ACTUAL INGESTION RESULT
+} else if (summer_fc_lab == "Taurianen") {
+  summer_fc <- data.frame()  # REPLACE WITH ACTUAL INGESTION RESULT
+}
+
+# Bind spring and summer FC and add to sgs_dat
+fc_dat <- bind_rows(spring_fc, summer_fc)
+```
+
+### Total Suspended Solids
+
+```{r ingest-tss, message=FALSE, warning=FALSE, include=FALSE}
+
+# ADAPT: SWWTP TSS format (XLSX) is relatively consistent year to year, but
+# verify sheet name, skip count, and column layout. See reference/2021_ingest_tss.R.
+
+spring_tss_raw <- read_excel(spring_tss_path)
+summer_tss_raw <- read_excel(summer_tss_path)
+
+# ADAPT: Clean, assign collect_date (= rec_date for TSS), analyte = "Total suspended solids",
+# units = "mg/L", analytical_method = "SM 2540 D", etc.
+# Note: SWWTP did not report required lab QA results in 2021 and 2022 -- check for current year.
+
+tss_dat <- data.frame()  # REPLACE WITH ACTUAL INGESTION RESULT
+```
+
+### Bind and Standardize
+
+```{r bind-standardize, message=FALSE, warning=FALSE, include=FALSE}
+
+# Bind all lab results into a single dataframe.
+dat <- bind_rows(sgs_dat, fc_dat, tss_dat)
+
+# ── dat column contract check ──────────────────────────────────────────────────
+# Verify that all required columns are present before handing off to format_wqx.R.
+# Missing columns will cause silent failures or errors downstream.
+required_cols <- c(
+  "monitoring_location_id", "collect_date", "collect_time",
+  "analyte", "result", "units", "resultflag", "loq", "lod",
+  "analytical_method", "epa_analysis_id", "context_code",
+  "lab_name", "lab_sample", "run_date", "run_time",
+  "note", "sample_type", "sample_condition"
+)
+
+missing_cols <- setdiff(required_cols, names(dat))
+if (length(missing_cols) > 0) {
+  stop("dat is missing required columns: ", paste(missing_cols, collapse = ", "))
+}
+
+cat("dat rows:", nrow(dat), "\n")
+cat("Columns present:", paste(names(dat), collapse = ", "), "\n")
+```
+
+------------------------------------------------------------------------
+
+## Part B: WQX Formatting
+
+```{r format-wqx, message=FALSE, warning=FALSE, include=FALSE}
+
+# Applies all lookup table joins (coordinates, sample fractions, detection condition,
+# preservative, container type), constructs WQX column names, builds Activity IDs,
+# and writes the provisional WQX intermediate CSV.
+#
+# Requires: dat, cfg (set in Year Configuration)
+# Produces: dat (raw cols restored), dat_raw, all_dat; writes cfg$wqx_intermediate_path
+
+source("functions/format_wqx.R")
+```
+
+### Provisional Results (Prior to QA/QC Review)
+
+The following table summarizes results after WQX formatting, before QA/QC evaluation.
+
+```{r provisional-summary, message=FALSE}
+read.csv(cfg$wqx_intermediate_path) %>%
+  clean_names() %>%
+  count(characteristic_name, result_analytical_method_id, activity_start_date) %>%
+  arrange(activity_start_date, characteristic_name)
+```
+
+------------------------------------------------------------------------
+
+## Part C: QA/QC Checklist
+
+Prior to upload to the EPA WQX, all water quality data is checked against a standard Data Evaluation Checklist developed in coordination with the Alaska Department of Environmental Conservation.
+
+#### Pre-Database
+
+##### Overall Project Success
+
+**1.) Were the appropriate analytical methods used for all parameters?**
+
+```{r q01, message=FALSE}
+# MANUAL: Confirm that analytical methods match those in the approved QAPP.
+# List any deviations and their disposition.
+
+# "Yes. Analytical methods from the approved [year] QAPP were employed. [any exceptions]"
+```
+
+<br>
+
+**2.) Were there any deviations from the sampling plan?**
+
+```{r q02}
+# MANUAL: Were all sites visited? Were all planned sampling dates completed?
+# Note any instrument or method deviations.
+```
+
+<br>
+
+**3.) Were field duplicates, blanks, and/or other QC samples collected as planned?**
+
+```{r q03, message=FALSE, warning=FALSE}
+# Compare planned vs. actual samples. Reads from the SGS bottle order spreadsheet
+# (KRBWQM_SGS_bottle_order_{season}_{year}.xlsx) and the WQX intermediate CSV.
+
+# ADAPT: Sheet names within the bottle order workbooks may differ by year.
+# ADAPT: The analysis name -> method ID mapping (case_when below) may need updating
+# if method IDs or analysis names changed in the current year.
+
+total_samples_collected_summary <- read.csv(cfg$wqx_intermediate_path) %>%
+  clean_names() %>%
+  group_by(result_analytical_method_id, activity_start_date, activity_type) %>%
+  count() %>%
+  rename(actual_results_n = n) %>%
+  transform(activity_start_date = ymd(activity_start_date))
+
+spring_planned <- read_excel(
+  file.path(cfg$spring_data_dir, "SGS",
+            paste0("KRBWQM_SGS_bottle_order_Spring_", year, ".xlsx")),
+  sheet = paste0("bottles_analyses_spring_", year)
+) %>% mutate(activity_start_date = spring_sample_date)
+
+summer_planned <- read_excel(
+  file.path(cfg$summer_data_dir, "SGS",
+            paste0("KRBWQM_SGS_bottle_order_Summer_", year, ".xlsx")),
+  sheet = paste0("bottles_analyses_summer_", year)
+) %>% mutate(activity_start_date = summer_sample_date)
+
+planned_samples <- bind_rows(spring_planned, summer_planned) %>%
+  clean_names() %>%
+  filter(item == "Bottle") %>%
+  select(monitoring_location_id, site, container_size, quantity,
+         preservative, analysis_1, analysis_2, activity_start_date) %>%
+  fill(site, .direction = "down") %>%
+  fill(monitoring_location_id, .direction = "down") %>%
+  filter(site != "Spare Kit") %>%
+  mutate(sample_type = case_when(
+    grepl("DUPLICATE", site, ignore.case = TRUE) ~ "FIELD DUPLICATE",
+    grepl("blank", analysis_1, ignore.case = TRUE) ~ "TRIP BLANK"
+  )) %>%
+  pivot_longer(values_to = "analysis", cols = c("analysis_1", "analysis_2")) %>%
+  filter(!is.na(analysis)) %>%
+  mutate(analysis = str_replace(analysis, "624 - BTEX trip blank", "624 - BTEX")) %>%
+  # ADAPT: Confirm analysis name -> method ID mappings for the current year
+  mutate(analysis = case_when(
+    analysis == "SM4500-NO3E - Nitrogen (Nitrate+Nitrite)" ~ "4500-NO3(F)",
+    analysis == "SM4500-PE - Total Phosphorus"             ~ "4500-P-E",
+    analysis == "200.7 - Total Metals"                    ~ "200.7",
+    analysis == "200.8 - Dissolved Metals"                 ~ "200.8",
+    analysis == "1 liter Total Suspended Solids"           ~ "2540-D",
+    analysis == "Fecal Coliform"                           ~ "9222D",
+    analysis == "624 - BTEX"                               ~ "8260D",
+    TRUE ~ analysis
+  )) %>%
+  # ADAPT: Update expected_results counts if the analyte lists changed
+  mutate(expected_results = case_when(
+    analysis == "4500-NO3(F)" ~ 1,
+    analysis == "4500-P-E"   ~ 1,
+    analysis == "200.7"      ~ 3,
+    analysis == "200.8"      ~ 6,
+    analysis == "2540-D"     ~ 1,
+    analysis == "9222D"      ~ 1,
+    analysis == "8260D"      ~ 6
+  )) %>%
+  mutate(activity_type = case_when(
+    sample_type == "FIELD DUPLICATE" ~ "Field Duplicate",
+    sample_type == "TRIP BLANK"      ~ "Trip Blank",
+    TRUE ~ "Field Msr/Obs"
+  )) %>%
+  select(-sample_type)
+
+planned_samples_summary <- planned_samples %>%
+  group_by(analysis, expected_results, activity_start_date, activity_type) %>%
+  summarise(expected_ct = sum(expected_results), .groups = "drop") %>%
+  rename(expected_results_n = expected_ct,
+         result_analytical_method_id = analysis) %>%
+  transform(activity_start_date = mdy(activity_start_date),
+            expected_results_n  = as.numeric(expected_results_n)) %>%
+  mutate(activity_type = case_when(
+    activity_type == "Field Duplicate" ~ "Quality Control Field Replicate Msr/Obs",
+    activity_type == "Field Msr/Obs"   ~ "Field Msr/Obs",
+    activity_type == "Trip Blank"      ~ "Quality Control Sample-Trip Blank"
+  ))
+
+planned_samples_summary_by_site <- planned_samples %>%
+  group_by(monitoring_location_id, analysis, expected_results, activity_start_date, activity_type) %>%
+  summarise(expected_ct = sum(expected_results), .groups = "drop") %>%
+  rename(expected_results_n = expected_ct,
+         result_analytical_method_id = analysis) %>%
+  transform(activity_start_date = mdy(activity_start_date),
+            expected_results_n  = as.numeric(expected_results_n)) %>%
+  mutate(activity_type = case_when(
+    activity_type == "Field Duplicate" ~ "Quality Control Field Replicate Msr/Obs",
+    activity_type == "Field Msr/Obs"   ~ "Field Msr/Obs",
+    activity_type == "Trip Blank"      ~ "Quality Control Sample-Trip Blank"
+  ))
+
+planned_actual_analyses <- left_join(
+  planned_samples_summary, total_samples_collected_summary,
+  by = c("result_analytical_method_id", "activity_start_date", "activity_type")
+) %>%
+  mutate(pct_diff = ((actual_results_n - expected_results_n) /
+                       (actual_results_n + expected_results_n)) * 100)
+
+write.csv(planned_actual_analyses,
+          file.path("other/output/field_qa_qc_data",
+                    paste0("planned_actual_analyses_", year, ".csv")),
+          row.names = FALSE)
+
+planned_actual_analyses
+```
+
+```{r q03-narrative}
+# MANUAL: Describe any deviations between planned and actual results.
+# Identify root causes (chain of custody errors, lab errors, missed sites, etc.)
+```
+
+<br>
+
+**4.) Do the laboratory reports provide results for all sites and parameters?**
+
+```{r q04}
+# MANUAL: Confirm based on Q3 results. Note any exceptions.
+```
+
+<br>
+
+**5.) Is a copy of the Chain of Custody included with the laboratory reports?**
+
+```{r q05}
+# MANUAL: Describe CoC status for each contracted lab this year.
+```
+
+<br>
+
+**6.) Do the laboratory reports match the Chain of Custody and requested methods throughout?**
+
+```{r q06}
+# MANUAL: Note any mismatches. Reference Q3 for method-level deviations.
+```
+
+<br>
+
+**7.) Are the number of samples on the laboratory reports the same as on the Chain of Custody?**
+
+```{r q07}
+# MANUAL: Confirm sample counts match between CoC and lab report.
+```
+
+<br>
+
+**8.) Was all supporting info provided in the laboratory report, such as reporting limits for all analyses and definitions?**
+
+```{r q08}
+# MANUAL: Note reporting limit availability per lab. SWWTP limits come from the QAPP.
+```
+
+<br>
+
+**9.) Are site names, dates, and times correct and as expected?**
+
+```{r q09, message=FALSE}
+# Formulaic check: review unique site IDs in WQX intermediate against known site list.
+sites_in_data <- read.csv(cfg$wqx_intermediate_path) %>%
+  clean_names() %>%
+  distinct(monitoring_location_id, activity_start_date) %>%
+  arrange(monitoring_location_id, activity_start_date)
+
+sites_in_data
+
+# MANUAL: Confirm all expected sites are present. Note any transcription errors
+# corrected during ingestion (document the correction method in Part A comments).
+```
+
+<br>
+
+**10.) Were there any issues with instrument calibration?**
+
+```{r q10}
+# MANUAL: Describe calibration status for all field instruments used.
+# For sonde-based field parameters: note calibration records.
+# For hand-held probes: note verification method (e.g., ice bath for temperature).
+```
+
+<br>
+
+**11.) Did the instruments perform as expected?**
+
+```{r q11}
+# MANUAL: Note any instrument failures or anomalous readings.
+```
+
+<br>
+
+**12.) Was instrument calibration performed according to the QAPP and instrument recommendations?**
+
+```{r q12}
+# MANUAL: Confirm or note exceptions.
+```
+
+<br>
+
+**13.) Was instrument verification during the field season performed according to the QAPP and instrument recommendations?**
+
+```{r q13}
+# MANUAL: Confirm or note exceptions.
+```
+
+<br>
+
+**14.) Were instrument calibration verification logs or records kept?**
+
+```{r q14}
+# MANUAL: Confirm records are on file. Note location.
+```
+
+<br>
+
+**15.) Do the instrument data files site IDs, time stamps and file names match?**
+
+```{r q15}
+# MANUAL: If instrument files were used, confirm. If not, note.
+```
+
+<br>
+
+**16.) Is any insitu field data rejected and why?**
+
+```{r q16}
+# MANUAL: List any rejected in-situ measurements and rationale.
+```
+
+<br>
+
+**17.) Were preservation, hold time and temperature requirements met?**
+
+```{r q17-holdtimes, message=FALSE, warning=FALSE}
+# Formulaic: calculate hold time from collection to receipt and compare to max allowed.
+col_names <- c("sample", "epa_analysis_id", "analyte", "collect_date", "collect_time",
+               "rec_date", "rec_time", "lab_name")
+
+holdtime_dat <- dat %>%
+  select(any_of(col_names)) %>%
+  mutate(rec_date1 = as.Date(rec_date),
+         rec_time1 = case_when(
+           !is.na(rec_time) ~ as_hms(rec_time),
+           is.na(rec_time)  ~ as_hms(rec_date)
+         )) %>%
+  select(-rec_time, -rec_date) %>%
+  rename(rec_time = rec_time1, rec_date = rec_date1) %>%
+  mutate(activity_datetime = ymd_hms(paste(collect_date, collect_time)),
+         rec_datetime       = ymd_hms(paste(rec_date, rec_time)),
+         hold_time_hours    = as.numeric(rec_datetime - activity_datetime)) %>%
+  select(-collect_date, -collect_time, -rec_date, -rec_time) %>%
+  mutate(analytical_method = str_trim(dat$analytical_method, side = "left"))
+
+max_holding_times <- read.csv(
+  file.path(cfg$templates_dir, "sample_holding_times.csv")
+) %>% transform(max_holding_time_hours = as.numeric(max_holding_time_hours))
+
+holdtime_dat <- left_join(holdtime_dat, max_holding_times) %>%
+  mutate(hold_time_pass = case_when(
+    hold_time_hours > max_holding_time_hours ~ "N",
+    TRUE ~ "Y"
+  ))
+
+write.csv(holdtime_dat,
+          "other/output/field_qa_qc_data/holding_time_calcs.csv",
+          row.names = FALSE)
+
+cat("Hold time failures:", sum(holdtime_dat$hold_time_pass == "N", na.rm = TRUE), "\n")
+holdtime_dat %>% filter(hold_time_pass == "N")
+```
+
+<br>
+
+**18.) Are dissolved metal quantities less than total metals quantities?**
+
+```{r q18-dissolved-total, message=FALSE, warning=FALSE}
+# Formulaic: compare dissolved vs. total for Ca, Fe, Mg (where both are present).
+# ADAPT: Adjust element list if different parameters are available this year.
+
+diss_total_analytes <- c("Calcium, Total", "Iron, Total", "Magnesium, Total",
+                         "Calcium", "Iron", "Magnesium")
+
+diss_total_metals_dat <- dat %>%
+  select(analyte, collect_date, collect_time, monitoring_location_id,
+         result, units, result_detection_condition, sample_condition) %>%
+  filter(analyte %in% diss_total_analytes) %>%
+  mutate(result = case_when(
+    units == "mg/l" ~ result,
+    units == "ug/L" ~ result / 1000,
+    TRUE ~ result
+  ), units = "mg/L")
+
+dir_diss <- "other/output/field_qa_qc_data/metals_total_diss/"
+
+for (elem in c("Calcium", "Iron", "Magnesium")) {
+  elem_dat <- diss_total_metals_dat %>%
+    filter(grepl(elem, analyte)) %>%
+    pivot_wider(names_from = "analyte", values_from = "result") %>%
+    mutate(particulate_conc = .data[[paste0(elem, ", Total")]] - .data[[elem]],
+           total_greater_diss = ifelse(particulate_conc > 0, "Y", "N"))
+  write.csv(elem_dat, file.path(dir_diss, paste0(tolower(elem), ".csv")))
+  cat(elem, "rows with total > dissolved:",
+      sum(elem_dat$total_greater_diss == "Y", na.rm = TRUE),
+      "of", nrow(elem_dat), "\n")
+}
+```
+
+```{r q18-narrative}
+# MANUAL: Interpret the dissolved vs. total comparison results.
+# Note any systematic offsets (as seen in 2021 Ca) and their potential causes.
+```
+
+<br>
+
+**19.) Are the duplicate sample(s) RPD (Relative Percent Difference) within range described in QAPP?**
+
+```{r q19-rpd, message=FALSE, warning=FALSE}
+# Formulaic: calculate RPD for field duplicate pairs at QC sites.
+# ADAPT: Update the qaqc info sheet for the current year's QC sites.
+
+qaqc_sites <- read_excel(
+  file.path(cfg$templates_dir, "wqx_qaqc/wqx_qaqc_info.xlsx"),
+  sheet = paste0("field_dup_sites_", year)
+) %>% remove_empty()
+
+export_dat_rpd <- read.csv(cfg$wqx_intermediate_path) %>% clean_names()
+field_dup_dat  <- inner_join(export_dat_rpd, qaqc_sites)
+
+rpd_cols <- c("monitoring_location_id", "activity_type", "activity_start_date",
+              "characteristic_name", "result_detection_condition",
+              "result_value", "result_unit",
+              "result_detection_limit_type_1", "result_detection_limit_value_1",
+              "result_detection_limit_unit_1")
+
+rpd_check_dat <- field_dup_dat %>%
+  select(all_of(rpd_cols)) %>%
+  pivot_wider(names_from = "activity_type", values_from = "result_value") %>%
+  clean_names() %>%
+  mutate(
+    field_above_loq = field_msr_obs > result_detection_limit_value_1,
+    field_loq_2x    = field_msr_obs > 2 * result_detection_limit_value_1,
+    qc_above_loq    = quality_control_field_replicate_msr_obs > result_detection_limit_value_1,
+    qc_loq_2x       = quality_control_field_replicate_msr_obs > 2 * result_detection_limit_value_1
+  ) %>%
+  mutate(
+    loq_pass    = field_above_loq | qc_above_loq,
+    loq_2x_pass = field_loq_2x | qc_loq_2x,
+    rpd_eligible = loq_pass & loq_2x_pass &
+      !is.na(field_msr_obs) & !is.na(quality_control_field_replicate_msr_obs)
+  ) %>%
+  mutate(
+    rpd_pct = abs(
+      ((field_msr_obs - quality_control_field_replicate_msr_obs) /
+         ((field_msr_obs + quality_control_field_replicate_msr_obs) / 2)) * 100
+    )
+  )
+
+# ADAPT: Update QAPP thresholds if they changed for the current year.
+rpd_eligible_dat <- rpd_check_dat %>%
+  filter(rpd_eligible) %>%
+  mutate(threshold = case_when(
+    grepl("Nitrate|Nitrite",  characteristic_name, ignore.case = TRUE) ~ 25,
+    grepl("Phosphorus",       characteristic_name, ignore.case = TRUE) ~ 25,
+    grepl("suspended|solids", characteristic_name, ignore.case = TRUE) ~ 5,
+    TRUE ~ 20
+  )) %>%
+  filter(!is.na(rpd_pct))
+
+rpd_exceed <- rpd_eligible_dat %>% filter(rpd_pct > threshold)
+
+write.csv(rpd_check_dat, "other/output/field_qa_qc_data/rpd_check_dat.csv", row.names = FALSE)
+
+cat("Total duplicate pairs:", nrow(rpd_check_dat), "\n")
+cat("RPD-eligible pairs:", sum(rpd_check_dat$rpd_eligible, na.rm = TRUE), "\n")
+cat("Pairs exceeding QAPP threshold:", nrow(rpd_exceed), "\n")
+```
+
+```{r q19-narrative}
+# MANUAL: Discuss RPD results per parameter. Follow the ADEC 2021 approach:
+# below-LOQ pairs are retained as Accepted non-detects, not flagged.
+# Identify any parameters that will be flagged based on RPD failures.
+```
+
+<br>
+
+**20.) Were there any laboratory discrepancies, errors, data qualifiers, or QC failures?**
+
+```{r q20-matrix-spikes, message=FALSE, warning=FALSE}
+# Formulaic: review matrix spike recovery from SGS lab QA/QC data.
+matrix_spike_limits <- read.csv(
+  file.path(cfg$output_qaqc_dir, "sgs_als_qaqc_dat.csv")
+) %>%
+  select(lab_name, sample, collect_date, sample_type, result, analyte,
+         analytical_method, resultflag, percent_recovered,
+         rec_limit_low, rec_limit_high, sample_rpd, rpd_limit_low, rpd_limit_high,
+         loq, lod, detection_limit, sample_condition) %>%
+  mutate(rec_limit_pass = case_when(
+    is.na(rec_limit_low) ~ "",
+    percent_recovered > rec_limit_high | percent_recovered < rec_limit_low ~ "N",
+    TRUE ~ "Y"
+  ))
+
+matrix_spike_fails <- matrix_spike_limits %>% filter(rec_limit_pass == "N")
+
+write.csv(matrix_spike_fails,
+          file.path("other/output/lab_qaqc_data",
+                    paste0("matrix_spike_recovery_fails_", year, ".csv")),
+          row.names = FALSE)
+
+cat("Matrix spike recovery failures:", nrow(matrix_spike_fails), "\n")
+if (nrow(matrix_spike_fails) > 0) matrix_spike_fails
+```
+
+```{r q20-narrative}
+# MANUAL: Describe any additional lab QC anomalies not captured by the matrix spike check.
+# Review the lab PDF reports for narrative QC notes.
+```
+
+<br>
+
+**21.) Is any laboratory data rejected and why?**
+
+```{r q21}
+# MANUAL: List parameters to be flagged based on Q19-Q20 findings.
+# Flagging decisions are recorded in cfg$flag_decisions_path ({year}_data_flag_decisions.csv).
+# That CSV is joined in Part D (apply_qaqc_flags.R).
+```
+
+<br>
+
+**22.) During the field season, review raw data files (EDDs, instrument records) as they are received. Document changes and corrections to methods as needed.**
+
+```{r q22}
+# MANUAL: Describe the EDD review process for the current year.
+# Note any corrections applied during ingestion and how they were documented.
+```
+
+<br>
+
+**23.) Is the dataset complete and did you receive the expected number of results?**
+
+```{r q23}
+# MANUAL: Reference Q3. Summarize deviations and their known causes.
+```
+
+<br>
+
+**24.) Was the data collected representative of environmental conditions?**
+
+```{r q24}
+# MANUAL: Describe representativeness. Note any flagged data that may not be representative.
+```
+
+<br>
+
+**25.) Does project meet Completeness Measure A criteria?**
+
+From the QAPP, CMA = primary samples collected / usable samples submitted (goal: 85%).
+
+```{r apply-flags, message=FALSE, warning=FALSE}
+# Join flag decisions and write flagged export CSV.
+# IMPORTANT: This chunk must run before Q25 and Q26 calculations.
+# Requires: cfg$wqx_intermediate_path, cfg$flag_decisions_path, cfg$flagged_export_path
+source("functions/apply_qaqc_flags.R")
+```
+
+```{r q25-cma, message=FALSE}
+analytes_qapp <- read.csv(
+  file.path(cfg$templates_dir, "analytes_list_manual_edit.csv")
+)
+colnames(analytes_qapp) <- c("characteristic_name", "a", "param_in_qapp")
+analytes_qapp <- analytes_qapp %>% select(-a)
+
+# BY PARAMETER
+completeness_summary_param <- read.csv(cfg$flagged_export_path) %>%
+  clean_names() %>%
+  left_join(analytes_qapp) %>%
+  filter(param_in_qapp == "Y") %>%
+  group_by(result_analytical_method_id, characteristic_name, flag) %>%
+  count() %>%
+  rename(actual_results_n = n) %>%
+  pivot_wider(names_from = "flag", values_from = "actual_results_n") %>%
+  rename(flag_Y = Y, flag_N = N) %>%
+  rowwise() %>%
+  mutate(total_samples = sum(flag_Y, flag_N, na.rm = TRUE),
+         cma = flag_N / total_samples,
+         cma = replace_na(cma, 0)) %>%
+  adorn_pct_formatting(,,,cma)
+write.csv(completeness_summary_param,
+          "other/output/field_qa_qc_data/completeness_measures/cma_parameter.csv")
+
+# BY SITE
+completeness_summary_site <- read.csv(cfg$flagged_export_path) %>%
+  clean_names() %>%
+  left_join(analytes_qapp) %>%
+  filter(param_in_qapp == "Y") %>%
+  group_by(monitoring_location_id, flag) %>%
+  count() %>%
+  rename(actual_results_n = n) %>%
+  pivot_wider(names_from = "flag", values_from = "actual_results_n") %>%
+  rename(flag_Y = Y, flag_N = N) %>%
+  rowwise() %>%
+  mutate(total_samples = sum(flag_Y, flag_N, na.rm = TRUE),
+         cma = flag_N / total_samples,
+         cma = replace_na(cma, 0)) %>%
+  adorn_pct_formatting(,,,cma)
+write.csv(completeness_summary_site,
+          "other/output/field_qa_qc_data/completeness_measures/cma_site.csv")
+
+# OVERALL
+completeness_summary_project <- read.csv(cfg$flagged_export_path) %>%
+  clean_names() %>%
+  left_join(analytes_qapp) %>%
+  filter(param_in_qapp == "Y") %>%
+  group_by(flag) %>%
+  count() %>%
+  pivot_wider(names_from = "flag", values_from = "n") %>%
+  rename(flag_Y = Y, flag_N = N) %>%
+  rowwise() %>%
+  mutate(total_samples = sum(flag_Y, flag_N, na.rm = TRUE),
+         cma = flag_N / total_samples,
+         cma = replace_na(cma, 0)) %>%
+  adorn_pct_formatting(,,,cma)
+write.csv(completeness_summary_project,
+          "other/output/field_qa_qc_data/completeness_measures/cma_project.csv")
+
+# Summary scalars
+cma_dat_inline   <- read.csv(cfg$flagged_export_path) |> clean_names() |>
+  left_join(analytes_qapp) |> filter(param_in_qapp == "Y")
+cma_total        <- nrow(cma_dat_inline)
+cma_unflagged_n  <- sum(cma_dat_inline$flag == "N", na.rm = TRUE)
+cma_flagged_n    <- sum(cma_dat_inline$flag == "Y", na.rm = TRUE)
+cma_overall_pct  <- paste0(round(cma_unflagged_n / cma_total * 100, 1), "%")
+
+cat("CMA (overall):", cma_overall_pct, "(goal: 85%)\n")
+completeness_summary_param
+```
+
+<br>
+
+**26.) Does project meet Completeness Measure B criteria?**
+
+From the QAPP, CMB = unflagged results / planned results (goal: 60%).
+
+```{r q26-cmb, message=FALSE}
+# BY PARAMETER
+cmb_by_method <- read.csv(cfg$flagged_export_path) %>%
+  clean_names() %>%
+  left_join(analytes_qapp) %>%
+  filter(param_in_qapp == "Y") %>%
+  group_by(result_analytical_method_id, activity_start_date, activity_type, flag) %>%
+  count() %>%
+  rename(unflagged_results_n = n) %>%
+  pivot_wider(names_from = "flag", values_from = "unflagged_results_n") %>%
+  rename(flag_Y = Y, flag_N = N) %>%
+  transform(activity_start_date = ymd(activity_start_date)) %>%
+  left_join(planned_samples_summary) %>%
+  mutate(cmb = flag_N / expected_results_n,
+         cmb = replace_na(cmb, 0)) %>%
+  adorn_pct_formatting(,,,cmb)
+write.csv(cmb_by_method, "other/output/field_qa_qc_data/completeness_measures/cmb_parameter.csv")
+
+# BY SITE
+planned_by_site_totals <- planned_samples_summary_by_site %>%
+  group_by(monitoring_location_id) %>%
+  summarise(expected_results_n = sum(expected_results_n), .groups = "drop")
+
+cmb_by_site <- read.csv(cfg$flagged_export_path) %>%
+  clean_names() %>%
+  left_join(analytes_qapp) %>%
+  filter(param_in_qapp == "Y") %>%
+  group_by(monitoring_location_id, flag) %>%
+  count() %>%
+  rename(unflagged_results_n = n) %>%
+  pivot_wider(names_from = "flag", values_from = "unflagged_results_n") %>%
+  rename(flag_Y = Y, flag_N = N) %>%
+  left_join(planned_by_site_totals) %>%
+  mutate(cmb = flag_N / expected_results_n,
+         cmb = replace_na(cmb, 0)) %>%
+  adorn_pct_formatting(,,,cmb)
+write.csv(cmb_by_site, "other/output/field_qa_qc_data/completeness_measures/cmb_site.csv")
+
+# BY PROJECT WHOLE
+total_planned <- sum(planned_samples_summary$expected_results_n)
+cmb_project <- read.csv(cfg$flagged_export_path) %>%
+  clean_names() %>%
+  left_join(analytes_qapp) %>%
+  filter(param_in_qapp == "Y") %>%
+  group_by(flag) %>%
+  count() %>%
+  pivot_wider(names_from = "flag", values_from = "n") %>%
+  rename(flag_Y = Y, flag_N = N) %>%
+  mutate(total_planned = total_planned,
+         cmb = flag_N / total_planned,
+         cmb = replace_na(cmb, 0)) %>%
+  adorn_pct_formatting(,,,cmb)
+write.csv(cmb_project, "other/output/field_qa_qc_data/completeness_measures/cmb_project.csv")
+
+cmb_usable  <- cmb_project$flag_N
+cmb_overall_pct <- paste0(round(cmb_usable / total_planned * 100, 1), "%")
+cat("CMB (overall):", cmb_overall_pct, "(goal: 60%)\n")
+cmb_by_method
+```
+
+<br>
+
+**27.) Was the QA officer consulted for any data concerns?**
+
+```{r q27}
+# MANUAL: Describe any consultations with KWF QA staff or ADEC.
+```
+
+<br>
+
+**28.) Are the correct monitoring locations associated with the project? Are latitude and longitude filled out in a consistent format?**
+
+```{r q28-map, message=FALSE, warning=FALSE}
+export_dat <- read.csv(cfg$flagged_export_path)
+
+site_check <- export_dat %>%
+  distinct(monitoring_location_id, activity_latitude, activity_longitude) %>%
+  transform(activity_longitude = as.numeric(
+    iconv(activity_longitude, "utf-8", "ascii", sub = "")
+  )) %>%
+  # ADAPT: Check for any sites with sign-flipped longitude (a known issue for KR RM 43)
+  mutate(activity_longitude = case_when(
+    activity_longitude > 0 ~ activity_longitude * -1,
+    TRUE ~ activity_longitude
+  ))
+
+if (knitr::is_html_output()) {
+  leaflet(site_check) %>%
+    addTiles() %>%
+    addMarkers(~activity_longitude, ~activity_latitude,
+               popup = ~as.character(monitoring_location_id),
+               label  = ~as.character(monitoring_location_id))
+} else {
+  knitr::kable(site_check, caption = paste(year, "monitoring locations"))
+}
+```
+
+<br>
+
+**29.) Are the QAPP and other supporting documents attached?**
+
+```{r q29}
+# MANUAL: Confirm that the current approved QAPP will be included in the CDX submission.
+# The QAPP filename is set in generate_cdx_export.R (ProjectAttachmentFileName).
+```
+
+<br>
+
+**30.) Is all project metadata correct?**
+
+```{r q30}
+# MANUAL: Confirm organization ID, project ID, QAPP approval status, site coordinates.
+```
+
+<br>
+
+**31.) Is the organization ID correct?**
+
+```{r q31}
+# Organization ID for KWF: "Kenai_WQX" -- confirmed manually during each CDX upload.
+cat("Expected organization ID: Kenai_WQX\n")
+```
+
+<br>
+
+**32.) Are the time zones consistent and correct (AKDT in summer)?**
+
+```{r q32-timezone}
+# Add time_zone column to export_dat and re-write flagged export.
+# ADAPT: Confirm "AKDT" is correct for the current year's sampling dates.
+# Spring sampling during AKST (before second Sunday of March) would require "AKST".
+export_dat <- read.csv(cfg$flagged_export_path) %>%
+  mutate(time_zone = "AKDT")
+write.csv(export_dat, cfg$flagged_export_path)
+cat("Time zone applied: AKDT\n")
+```
+
+<br>
+
+**33.) Are all media types included? Media types appropriate to Characteristic?**
+
+```{r q33}
+cat("Activity media types in dataset:\n")
+unique(export_dat$activity_media_name)
+# "Water" is the only media type in this project.
+```
+
+<br>
+
+**34.) Check Sample Collection, Preparation and Preservation Methods, Thermal Preservative, Equipment ID, Activity Media.**
+
+```{r q34}
+cat("Equipment IDs:\n")
+unique(export_dat$equipment_id)
+cat("\nResult sample fractions:\n")
+unique(export_dat$result_sample_fraction)
+```
+
+<br>
+
+**35.) Are all expected activity types present and are QC samples correctly identified?**
+
+```{r q35}
+cat("Activity types:\n")
+unique(export_dat$activity_type)
+```
+
+<br>
+
+**36.) Is the Activity media subdivision filled in (if relevant)?**
+
+```{r q36}
+cat("Activity media subdivision names:\n")
+unique(export_dat$activity_media_subdivision_name)
+```
+
+<br>
+
+**37.) For Water activity media, is the relative depth filled in?**
+
+```{r q37}
+cat("Depth/height measure values:\n")
+unique(export_dat$activity_depth_height_measure)
+# All surface grab samples recorded at ~15 cm depth.
+```
+
+<br>
+
+**38.) Is the number of results for each Characteristic correct?**
+
+```{r q38}
+chr_num <- export_dat %>%
+  group_by(characteristic_name) %>%
+  tally()
+
+dir_misc <- file.path("other/output/misc", paste0("characteristic_count_", year, ".csv"))
+write.csv(chr_num, dir_misc, row.names = FALSE)
+chr_num
+```
+
+<br>
+
+**39.) Do the range of result values make sense?**
+
+```{r q39}
+# MANUAL: Evaluate result ranges visually and numerically.
+# Compare against prior years and regulatory limits.
+# Document likely outliers in other/input/outliers/baseline_outliers.xlsx.
+
+# Quick range check by characteristic:
+export_dat %>%
+  filter(!is.na(result_value)) %>%
+  group_by(characteristic_name, result_unit) %>%
+  summarise(min = min(result_value, na.rm = TRUE),
+            max = max(result_value, na.rm = TRUE),
+            n   = n(), .groups = "drop") %>%
+  arrange(characteristic_name)
+```
+
+<br>
+
+**40.) Are units correct and consistent for each parameter?**
+
+```{r q40}
+# Check for mixed unit labels (e.g., "mg/L" vs. "mg/l").
+z <- export_dat %>%
+  select(characteristic_name, result_unit) %>%
+  distinct()
+
+cat("Unique unit values:\n")
+print(unique(z$result_unit))
+
+# Standardize case if needed
+export_dat[export_dat == "mg/l"] <- "mg/L"
+write.csv(export_dat, cfg$flagged_export_path)
+```
+
+<br>
+
+**41.) Are detection limits and laboratory qualifiers included for analytical results?**
+
+```{r q41}
+cat("Result qualifiers present:\n")
+unique(export_dat$result_qualifier)
+cat("\nDetection limit types present:\n")
+unique(export_dat$result_detection_limit_type_1)
+```
+
+<br>
+
+**42.) Are results trip blanks and/or field blanks above detection limits, and is any related data flagged as a result?**
+
+```{r q42}
+# Identify trip blank results and check for detections.
+trip_blanks <- export_dat %>%
+  filter(activity_type == "Quality Control Sample-Trip Blank")
+
+cat("Trip blank results:", nrow(trip_blanks), "\n")
+cat("Detections in trip blanks (result_value > 0):",
+    sum(!is.na(trip_blanks$result_value) & trip_blanks$result_value > 0), "\n")
+
+# MANUAL: If any trip blank analytes are detected, determine whether associated
+# field results should be flagged and update flag_decisions_path accordingly.
+```
+
+------------------------------------------------------------------------
+
+## Part D: Flag + CDX Export
+
+```{r generate-cdx, message=FALSE, warning=FALSE}
+
+# Apply Result Status ID (Accepted/Rejected), finalize column format, and write
+# three CDX upload files: results_activities.csv, project.csv, station.csv.
+#
+# REVIEW: generate_cdx_export.R contains a filter that excludes Phosphorus from
+# EPA Method 200.8 (not in the 2021 QAPP). Confirm whether this filter applies
+# to the current year before running. See the REVIEW comment in that script.
+#
+# Requires: export_dat (with time_zone applied in Q32 above), cfg
+
+source("functions/generate_cdx_export.R")
+```
+
+### CDX Upload Files
+
+The following files are ready for upload to the EPA Water Quality Exchange Central Data Exchange (CDX) at https://cdx.epa.gov/:
+
+```{r cdx-file-summary, message=FALSE}
+cdx_files <- c(
+  "other/output/wqx_formatted/results_activities.csv",
+  "other/output/wqx_formatted/project.csv",
+  "other/output/wqx_formatted/station.csv"
+)
+
+for (f in cdx_files) {
+  if (file.exists(f)) {
+    d <- read.csv(f)
+    cat(basename(f), ":", nrow(d), "rows\n")
+  } else {
+    cat(basename(f), ": FILE NOT FOUND\n")
+  }
+}
+```
+
+**Upload notes for `r year`:**
+
+```{r cdx-notes}
+# MANUAL: Document any year-specific notes relevant to the CDX upload:
+# - Any parameters excluded and why
+# - Upload date and CDX submission ID (once uploaded)
+# - Any corrections made post-upload
+# - Status of EPA ETL processing
+```
+
+\newpage

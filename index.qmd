@@ -29,9 +29,9 @@ All project files and source code are hosted in a public GitHub repository, whic
 :::
 
 ::: {.content-visible when-format="docx"}
-This document is the online work-in-progress preparation of data that will be used in the upcoming report, Water Quality Assessment of the Kenai River Watershed, 2000 - 2023. When completed, it will be an update to historical reports summarising available data to date for this project [@mccard2007; @guerronorejuela2016].
+This document is the online work-in-progress preparation of data that will be used in the upcoming report, Water Quality Assessment of the Kenai River Watershed, 2000 - 2025. When completed, it will be an update to historical reports summarising available data to date for this project [@mccard2007; @guerronorejuela2016].
 
-This draft report is best accessed as an online interactive document at https://kenai-watershed-forum.github.io/kenai-river-wqx-report-v2/, where it can also be downloaded as an Microsoft Word document.
+This draft report is best accessed as an online interactive document at https://kenai-watershed-forum.github.io/kenai-river-wqx-report, where it can also be downloaded as an Microsoft Word document.
 
 All project files and source code are hosted in a public GitHub repository, also accessible at the above URL.
 :::
