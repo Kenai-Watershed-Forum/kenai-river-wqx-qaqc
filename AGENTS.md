@@ -202,15 +202,11 @@ Rebuilt to match 2025 template structure (YAML at top, `date: today`, Part A/B/C
 
 ## QA/QC Checklist Question Numbering and Wording
 
-The canonical reference for all 42 QA/QC question texts is `appendix_a.qmd` in the `kenai-river-wqx` repo:
-https://github.com/Kenai-Watershed-Forum/kenai-river-wqx/blob/main/chapters/appendix_a.qmd
+The canonical reference for all 42 QA/QC question texts is `appendix_a.qmd` in the `kenai-river-wqx` repo: https://github.com/Kenai-Watershed-Forum/kenai-river-wqx/blob/main/chapters/appendix_a.qmd
 
-All three active files — `project_year/2025.qmd`, `project_year/2023.qmd`, and
-`other/misc/qaqc_repo_transition/templates/pipeline_template.qmd` — have been synchronized to that reference (April 2026). When adding a new year QMD, copy question text from `pipeline_template.qmd`, which is kept in sync.
+All three active files — `project_year/2025.qmd`, `project_year/2023.qmd`, and `other/misc/qaqc_repo_transition/templates/pipeline_template.qmd` — have been synchronized to that reference (April 2026). When adding a new year QMD, copy question text from `pipeline_template.qmd`, which is kept in sync.
 
-Notable Q2/Q3 wording (most commonly diverged in past):
-- **Q2:** "Were there any deviations from the sampling plan?"
-- **Q3:** "Were field duplicates, blanks, and/or other QC samples collected as planned?"
+Notable Q2/Q3 wording (most commonly diverged in past): - **Q2:** "Were there any deviations from the sampling plan?" - **Q3:** "Were field duplicates, blanks, and/or other QC samples collected as planned?"
 
 ------------------------------------------------------------------------
 
