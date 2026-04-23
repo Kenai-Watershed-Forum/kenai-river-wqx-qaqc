@@ -200,6 +200,20 @@ Rebuilt to match 2025 template structure (YAML at top, `date: today`, Part A/B/C
 
 ------------------------------------------------------------------------
 
+## QA/QC Checklist Question Numbering and Wording
+
+The canonical reference for all 42 QA/QC question texts is `appendix_a.qmd` in the `kenai-river-wqx` repo:
+https://github.com/Kenai-Watershed-Forum/kenai-river-wqx/blob/main/chapters/appendix_a.qmd
+
+All three active files — `project_year/2025.qmd`, `project_year/2023.qmd`, and
+`other/misc/qaqc_repo_transition/templates/pipeline_template.qmd` — have been synchronized to that reference (April 2026). When adding a new year QMD, copy question text from `pipeline_template.qmd`, which is kept in sync.
+
+Notable Q2/Q3 wording (most commonly diverged in past):
+- **Q2:** "Were there any deviations from the sampling plan?"
+- **Q3:** "Were field duplicates, blanks, and/or other QC samples collected as planned?"
+
+------------------------------------------------------------------------
+
 ## Implementation Status (as of April 2026)
 
 | Task | Status |
@@ -211,6 +225,7 @@ Rebuilt to match 2025 template structure (YAML at top, `date: today`, Part A/B/C
 | Phase 1: Spring TSS migrated to Updated_Formatting XLSX | ✅ Done |
 | Phase 1: Trip blank expansion (dat_sgs 567 rows, 0 NA loc IDs) | ✅ Done |
 | Phase 1: 2025.qmd render errors fixed (Q18, Q19, Q25, Q26, Part D guard) | ✅ Done |
+| QA/QC checklist questions standardized across 2025.qmd, 2023.qmd, pipeline_template.qmd | ✅ Done |
 | Phase 2: 2024.qmd | ⏳ Pending |
 | Phase 3: 2023.qmd (skeleton rebuilt; pipeline code still eval:false) | 🔄 In progress |
 | Phase 4: 2022.qmd | ⏳ Pending |

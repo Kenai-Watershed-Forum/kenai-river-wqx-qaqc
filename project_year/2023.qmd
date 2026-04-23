@@ -552,7 +552,7 @@ The laboratory reports from both labs provide results corresponding with the cha
 
 <br>
 
-**5.) Is a copy of the COC included with the laboratory reports?**
+**5.) Is a copy of the Chain of Custody included with the laboratory reports?**
 
 Yes. Chain of custody documents from SGS laboratories are included in the results PDFs. Chain of custody documents from the Soldotna Wastewater Treatment Plant are available upon request.
 
@@ -565,13 +565,13 @@ xfun::embed_file(
 
 <br>
 
-**6.) Do the laboratory reports match the COC and requested methods throughout?**
+**6.) Do the laboratory reports match the Chain of Custody and requested methods throughout?**
 
 Yes, with the exceptions discussed in question #1.
 
 <br>
 
-**7.) Are the number of samples on the laboratory reports the same as on the COC?**
+**7.) Are the number of samples on the laboratory reports the same as on the Chain of Custody?**
 
 Yes, no loss of samples occurred in the process of generating laboratory results.
 
@@ -595,7 +595,7 @@ No issues are documented with calibration for KWF's field or laboratory instrume
 
 <br>
 
-**11.) Did the instrument perform as expected?**
+**11.) Did the instruments perform as expected?**
 
 TBD — check ranges to decide if including conductivity & turbidity results.
 
@@ -709,7 +709,7 @@ Dissolved metals observations are ***not*** consistently lower than total metals
 
 <br>
 
-**19.) Are the duplicate sample(s) RPD within range described in QAPP?**
+**19.) Are the duplicate sample(s) RPD (Relative Percent Difference) within range described in QAPP?**
 
 In 2023, field duplicate samples were collected at:
 
@@ -769,7 +769,7 @@ In 2023 there were 23 eligible pairs (out of 44 total). RPD values ranged from 0
 
 <br>
 
-**20.) Were there any laboratory discrepancies, errors, data qualifiers, or QC failures?**
+**20.) Were there any laboratory discrepancies, errors, data qualifiers, or QC failures (review laboratory duplicates, matrix spikes and blanks)?**
 
 *Laboratory discrepancies:*
 
@@ -788,7 +788,7 @@ In 2023 there were 23 eligible pairs (out of 44 total). RPD values ranged from 0
 
 <br>
 
-**21.) Is any laboratory data rejected (flagged) and why?**
+**21.) Is any laboratory data rejected and why?**
 
 As of 6/5/2024: ***dissolved copper and zinc results are flagged*** as not representative. Primary QA/QC concern: dissolved metals values frequently exceed total metals (physically unrealistic), and two spring dissolved zinc method blanks were above LOQ.
 
@@ -852,7 +852,7 @@ xfun::embed_file(
 
 <br>
 
-**27.) Was the QA Officer consulted for any data concerns?**
+**27.) Was the QA officer consulted for any data concerns?**
 
 Kenai Watershed Forum consulted with staff from the Alaska Department of Environmental Conservation and EPA Region 10 Office to prepare 2023 field data and confirm field methods and data QA/QC procedures.
 
@@ -860,7 +860,7 @@ Kenai Watershed Forum consulted with staff from the Alaska Department of Environ
 
 #### Database Prep
 
-**28.) Are the correct monitoring locations associated with the project?**
+**28.) Are the correct monitoring locations associated with the project? Are latitude and longitude filled out in a consistent format?**
 
 ```{r part-c-q28, message=FALSE, warning=FALSE}
 #| eval: false
@@ -889,7 +889,7 @@ xfun::embed_file(
 
 <br>
 
-**30.) Is all metadata correct?**
+**30.) Is all project metadata correct?**
 
 TBD.
 
@@ -913,7 +913,7 @@ Yes.
 
 <br>
 
-**34.) Check Sample Collection, Preparation and Preservation Methods, Thermal Preservative, Equipment ID, Activity Media.**
+**34.) Check Sample Collection, Preparation and Preservation Methods, Thermal Preservative, Equipment ID, Activity Media. Is supporting information included and correct?**
 
 ```{r part-c-q34, message=FALSE, warning=FALSE}
 #| eval: false
@@ -999,7 +999,7 @@ Laboratory qualifiers "J" (below LOQ; estimate), "=" (observed value), "U" (belo
 
 <br>
 
-**42.) Are results of trip blanks and/or field blanks above detection limits, and is any related data flagged as a result?**
+**42.) Are results trip blanks and/or field blanks above detection limits, and is any related data flagged as a result?**
 
 In summer 2023, trip blanks were included with field crews collecting hydrocarbon samples. Sites visited by these crews include RM 1.5 (Kenai City Dock), RM 6.5 (Cunningham Park), RM 40 (Bing's Landing), and RM 43 (Upstream of Dow Island). All hydrocarbon results in trip blanks are reported as below detection limit, indicating no need to flag summer 2023 hydrocarbon results.
 

@@ -1029,16 +1029,16 @@ Yes. Analytical methods from the approved 2023 QAPP were employed.
 
 <br>
 
-**2.) Were appropriate QA/QC procedures followed in the field and laboratory?**
+**2.) Were there any deviations from the sampling plan?**
 
 ```{r q02}
-# MANUAL: Confirm field duplicate and trip blank collection per QAPP.
-# Spring 2025: duplicates at RM 18 and RM 22 (observed in SGS, FC, and TSS data).
+# MANUAL: Describe any deviations from the sampling plan (sites not visited,
+# schedule changes, etc.). If no deviations, state so explicitly.
 ```
 
 <br>
 
-**3.) Were the appropriate number of samples collected?**
+**3.) Were field duplicates, blanks, and/or other QC samples collected as planned?**
 
 ```{r q03-planned, message=FALSE, warning=FALSE}
 # ADAPT: Create other/input/2025/spring_2025_wqx_data/planned_samples_2025.xlsx
@@ -1110,7 +1110,7 @@ total_samples_collected_summary
 
 <br>
 
-**8.) Was all supporting info provided in the laboratory report, such as reporting limits?**
+**8.) Was all supporting info provided in the laboratory report, such as reporting limits for all analyses and definitions?**
 
 ```{r q08}
 # MANUAL
@@ -1147,7 +1147,7 @@ sites_in_data
 
 <br>
 
-**12.) Was instrument calibration performed according to the QAPP?**
+**12.) Was instrument calibration performed according to the QAPP and instrument recommendations?**
 
 ```{r q12}
 # MANUAL
@@ -1155,7 +1155,7 @@ sites_in_data
 
 <br>
 
-**13.) Was instrument verification during the field season performed according to the QAPP?**
+**13.) Was instrument verification during the field season performed according to the QAPP and instrument recommendations?**
 
 ```{r q13}
 # MANUAL
@@ -1163,7 +1163,7 @@ sites_in_data
 
 <br>
 
-**14.) Were instrument calibration verification logs kept?**
+**14.) Were instrument calibration verification logs or records kept?**
 
 ```{r q14}
 # MANUAL
@@ -1171,7 +1171,7 @@ sites_in_data
 
 <br>
 
-**15.) Do instrument data file site IDs, timestamps, and filenames match?**
+**15.) Do the instrument data files site IDs, time stamps and file names match?**
 
 ```{r q15}
 # MANUAL
@@ -1179,7 +1179,7 @@ sites_in_data
 
 <br>
 
-**16.) Is any in-situ field data rejected and why?**
+**16.) Is any insitu field data rejected and why?**
 
 ```{r q16}
 # MANUAL
@@ -1187,7 +1187,7 @@ sites_in_data
 
 <br>
 
-**17.) Were preservation, hold time, and temperature requirements met?**
+**17.) Were preservation, hold time and temperature requirements met?**
 
 ```{r q17-holdtimes, message=FALSE, warning=FALSE}
 col_names <- c("sample", "epa_analysis_id", "analyte", "collect_date", "collect_time",
@@ -1280,7 +1280,7 @@ for (elem in diss_total_analytes) {
 
 <br>
 
-**19.) Are the duplicate sample(s) RPD within range described in QAPP?**
+**19.) Are the duplicate sample(s) RPD (Relative Percent Difference) within range described in QAPP?**
 
 ```{r q19-rpd, message=FALSE, warning=FALSE}
 qaqc_sites <- read_excel(
@@ -1338,7 +1338,7 @@ if (nrow(rpd_exceed) > 0) rpd_exceed
 
 <br>
 
-**20.) Were there any laboratory discrepancies, errors, data qualifiers, or QC failures?**
+**20.) Were there any laboratory discrepancies, errors, data qualifiers, or QC failures (review laboratory duplicates, matrix spikes and blanks)?**
 
 ```{r q20-matrix-spikes, message=FALSE, warning=FALSE}
 ms_cols <- c("lab_name", "sample", "collect_date", "sample_type", "result",
@@ -1390,7 +1390,7 @@ if (nrow(matrix_spike_fails) > 0) matrix_spike_fails
 
 <br>
 
-**22.) Review raw data files as received. Document changes and corrections.**
+**22.) During the field season, review raw data files (EDDs, instrument records) as they are received. Document changes and corrections to methods as needed.**
 
 ```{r q22}
 # MANUAL: Note any corrections applied during Part A ingestion and how documented.
@@ -1402,7 +1402,7 @@ if (nrow(matrix_spike_fails) > 0) matrix_spike_fails
 
 <br>
 
-**23.) Is the dataset complete?**
+**23.) Is the dataset complete and did you receive the expected number of results?**
 
 ```{r q23}
 # MANUAL: Reference Q3. Note that summer 2025 data is not yet collected.
@@ -1410,7 +1410,7 @@ if (nrow(matrix_spike_fails) > 0) matrix_spike_fails
 
 <br>
 
-**24.) Was data collected representative of environmental conditions?**
+**24.) Was the data collected representative of environmental conditions?.**
 
 ```{r q24}
 # MANUAL
@@ -1512,7 +1512,7 @@ cmb_by_method
 
 <br>
 
-**28.) Are the correct monitoring locations associated with the project?**
+**28.) Are the correct monitoring locations associated with the project? Are latitude and longitude filled out in a consistent format?**
 
 ```{r q28-map, message=FALSE, warning=FALSE}
 export_dat <- read.csv(cfg$flagged_export_path)
@@ -1565,7 +1565,7 @@ cat("Expected organization ID: Kenai_WQX\n")
 
 <br>
 
-**32.) Are the time zones consistent and correct?**
+**32.) Are the time zones consistent and correct (AKDT in summer)?**
 
 ```{r q32-timezone}
 # Spring 2025 sampling (April 30) is in AKDT (Alaska Daylight Time).
@@ -1578,7 +1578,7 @@ cat("Time zone applied: AKDT\n")
 
 <br>
 
-**33.) Are all media types included?**
+**33.) Are all media types included? Media types appropriate to Characteristic?**
 
 ```{r q33}
 cat("Activity media types in dataset:\n")
@@ -1587,7 +1587,7 @@ unique(export_dat$activity_media_name)
 
 <br>
 
-**34.) Check Sample Collection, Preparation and Preservation Methods.**
+**34.) Check Sample Collection, Preparation and Preservation Methods, Thermal Preservative, Equipment ID, Activity Media. Is supporting information included and correct?**
 
 ```{r q34}
 cat("Result sample fractions:\n"); unique(export_dat$result_sample_fraction)
@@ -1606,7 +1606,7 @@ unique(export_dat$activity_type)
 
 <br>
 
-**36.) Is the Activity media subdivision filled in?**
+**36.) Is the Activity media subdivision filled in (if relevant)?**
 
 ```{r q36}
 unique(export_dat$activity_media_subdivision_name)
@@ -1667,7 +1667,7 @@ write.csv(export_dat, cfg$flagged_export_path)
 
 <br>
 
-**41.) Are detection limits and laboratory qualifiers included?**
+**41.) Are detection limits and laboratory qualifiers included for analytical results?**
 
 ```{r q41}
 cat("Result qualifiers:\n");     unique(export_dat$result_qualifier)
@@ -1676,7 +1676,7 @@ cat("\nDetection limit types:\n"); unique(export_dat$result_detection_limit_type
 
 <br>
 
-**42.) Are results in trip blanks and/or field blanks above detection limits?**
+**42.) Are results trip blanks and/or field blanks above detection limits, and is any related data flagged as a result?**
 
 ```{r q42}
 trip_blanks <- export_dat |>
