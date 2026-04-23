@@ -1025,6 +1025,7 @@ IN PROGRESS HERE 4/22/2026
 # Spring 2025 methods: EP200.8 (metals), SM21 4500NO3-F (nitrate), SM21 4500P-B,E (TP),
 # SM 9222D (fecal coliform), SM 2540-D (TSS).
 ```
+Yes. Analytical methods from the approved 2023 QAPP were employed.
 
 <br>
 
