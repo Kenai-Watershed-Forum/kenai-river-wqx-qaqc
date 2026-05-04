@@ -1,0 +1,6 @@
+"collect_date","sample_type","result","analyte","analytical_method","resultflag","percent_recovered","rec_limit_low","rec_limit_high","sample_rpd","rpd_limit_low","rpd_limit_high","loq","lod","sample_condition","rec_limit_pass"
+"2025-04-30","MS",5.93,"Total Nitrate/Nitrite-N","SM21 4500NO3-F","=",114,90,110,NA,NA,NA,0.2,0.15,NA,"N"
+"2025-04-29","MS",6.34,"Total Nitrate/Nitrite-N","SM21 4500NO3-F","=",125,90,110,NA,NA,NA,0.2,0.15,NA,"N"
+"2025-04-29","MSD",6.27,"Total Nitrate/Nitrite-N","SM21 4500NO3-F","=",124,90,110,1.1,0,25,0.2,0.15,NA,"N"
+"2025-05-08","MS",9.66,"Total Nitrate/Nitrite-N","SM21 4500NO3-F","=",88,90,110,NA,NA,NA,0.2,0.15,NA,"N"
+"2025-05-08","MSD",9.43,"Total Nitrate/Nitrite-N","SM21 4500NO3-F","=",83.5,90,110,2.4,0,25,0.2,0.15,NA,"N"

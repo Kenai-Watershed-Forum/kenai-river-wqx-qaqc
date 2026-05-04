@@ -1,0 +1,85 @@
+"monitoring_location_id","activity_start_date","characteristic_name","result_detection_condition","result_unit","result_detection_limit_type_1","result_detection_limit_value_1","result_detection_limit_unit_1","quality_control_field_replicate_msr_obs","field_msr_obs","rpd_eligible","rpd_pct"
+10000022,"2025-04-30","Copper","Not Detected","ug/L","Limit of Quantitation",3,"ug/L",0,0,TRUE,NA
+10000018,"2025-04-30","Arsenic","Not Detected","ug/L","Limit of Quantitation",5,"ug/L",0,0,TRUE,NA
+10000018,"2025-04-30","Cadmium","Not Detected","ug/L","Limit of Quantitation",0.5,"ug/L",0,0,TRUE,NA
+10000018,"2025-04-30","Chromium","Not Detected","ug/L","Limit of Quantitation",5,"ug/L",0,0,TRUE,NA
+10000018,"2025-04-30","Copper","Not Detected","ug/L","Limit of Quantitation",3,"ug/L",0,0,TRUE,NA
+10000018,"2025-04-30","Lead","Not Detected","ug/L","Limit of Quantitation",2,"ug/L",0,0,TRUE,NA
+10000018,"2025-04-30","Zinc","Not Detected","ug/L","Limit of Quantitation",10,"ug/L",NA,0,FALSE,NA
+10000018,"2025-04-30","Total Phosphorus","Not Detected","mg/L","Limit of Quantitation",0.04,"mg/L",NA,0,FALSE,NA
+10000022,"2025-04-30","Zinc","Not Detected","ug/L","Limit of Quantitation",10,"ug/L",NA,0,FALSE,NA
+10000022,"2025-04-30","Cadmium","Not Detected","ug/L","Limit of Quantitation",0.5,"ug/L",0,0,TRUE,NA
+10000022,"2025-04-30","Chromium","Not Detected","ug/L","Limit of Quantitation",5,"ug/L",0,0,TRUE,NA
+10000022,"2025-04-30","Lead","Not Detected","ug/L","Limit of Quantitation",2,"ug/L",0,0,TRUE,NA
+10000022,"2025-04-30","Total Phosphorus",NA,"mg/L","Limit of Quantitation",0.04,"mg/L",0.0733,0.0702,TRUE,4.32055749128921
+10000018,"2025-04-30","Total Phosphorus","Present Below Quantification Limit","mg/L","Limit of Quantitation",0.04,"mg/L",0.0127,NA,FALSE,NA
+10000018,"2025-04-30","Zinc",NA,"ug/L","Limit of Quantitation",10,"ug/L",11.9,13.1,TRUE,9.59999999999999
+10000022,"2025-04-30","Arsenic",NA,"ug/L","Limit of Quantitation",5,"ug/L",5.51,5.24,TRUE,5.02325581395348
+10000022,"2025-04-30","Zinc",NA,"ug/L","Limit of Quantitation",10,"ug/L",10.3,NA,FALSE,NA
+10000022,"2025-04-30","Zinc","Present Below Quantification Limit","ug/L","Limit of Quantitation",10,"ug/L",6.24,9.71,TRUE,43.5109717868339
+10000022,"2025-04-30","Calcium",NA,"ug/L","Limit of Quantitation",500,"ug/L",16400,16200,TRUE,1.22699386503067
+10000022,"2025-04-30","Iron",NA,"ug/L","Limit of Quantitation",250,"ug/L",1090,1130,TRUE,3.6036036036036
+10000022,"2025-04-30","Magnesium",NA,"ug/L","Limit of Quantitation",50,"ug/L",4080,4080,TRUE,0
+10000022,"2025-04-30","Total Nitrate/Nitrite-N","Present Below Quantification Limit","mg/L","Limit of Quantitation",0.2,"mg/L",0.077,0.0566,TRUE,30.5389221556886
+10000018,"2025-04-30","Total Nitrate/Nitrite-N",NA,"mg/L","Limit of Quantitation",0.2,"mg/L",0.222,0.262,TRUE,16.5289256198347
+10000018,"2025-04-30","Calcium",NA,"ug/L","Limit of Quantitation",500,"ug/L",15400,15500,TRUE,0.647249190938511
+10000018,"2025-04-30","Iron","Present Below Quantification Limit","ug/L","Limit of Quantitation",250,"ug/L",NA,248,FALSE,NA
+10000018,"2025-04-30","Magnesium",NA,"ug/L","Limit of Quantitation",50,"ug/L",1840,1800,TRUE,2.1978021978022
+10000018,"2025-04-30","Iron",NA,"ug/L","Limit of Quantitation",250,"ug/L",260,NA,FALSE,NA
+10000018,"2025-04-30","Zinc","Present Below Quantification Limit","ug/L","Limit of Quantitation",10,"ug/L",3.17,NA,FALSE,NA
+10000018,"2025-07-23","Arsenic","Not Detected","ug/L","Limit of Quantitation",5,"ug/L",NA,0,FALSE,NA
+10000018,"2025-07-23","Cadmium","Not Detected","ug/L","Limit of Quantitation",0.5,"ug/L",NA,0,FALSE,NA
+10000018,"2025-07-23","Chromium","Not Detected","ug/L","Limit of Quantitation",5,"ug/L",NA,0,FALSE,NA
+10000018,"2025-07-23","Copper","Not Detected","ug/L","Limit of Quantitation",3,"ug/L",NA,0,FALSE,NA
+10000018,"2025-07-23","Lead","Not Detected","ug/L","Limit of Quantitation",2,"ug/L",NA,0,FALSE,NA
+10000018,"2025-07-23","Zinc","Not Detected","ug/L","Limit of Quantitation",10,"ug/L",NA,0,FALSE,NA
+10000022,"2025-07-23","Zinc","Not Detected","ug/L","Limit of Quantitation",10,"ug/L",NA,0,FALSE,NA
+10000022,"2025-07-23","Copper","Not Detected","ug/L","Limit of Quantitation",3,"ug/L",NA,0,FALSE,NA
+10000022,"2025-07-23","Iron","Not Detected","ug/L","Limit of Quantitation",250,"ug/L",NA,0,FALSE,NA
+10000022,"2025-07-23","Magnesium","Not Detected","ug/L","Limit of Quantitation",50,"ug/L",NA,0,FALSE,NA
+10000022,"2025-07-23","Arsenic","Not Detected","ug/L","Limit of Quantitation",5,"ug/L",NA,0,FALSE,NA
+10000022,"2025-07-23","Cadmium","Not Detected","ug/L","Limit of Quantitation",0.5,"ug/L",NA,0,FALSE,NA
+10000022,"2025-07-23","Chromium","Not Detected","ug/L","Limit of Quantitation",5,"ug/L",NA,0,FALSE,NA
+10000022,"2025-07-23","Lead","Not Detected","ug/L","Limit of Quantitation",2,"ug/L",NA,0,FALSE,NA
+10000022,"2025-07-23","Calcium","Not Detected","ug/L","Limit of Quantitation",500,"ug/L",NA,0,FALSE,NA
+10000018,"2025-07-23","Total Phosphorus","Not Detected","mg/L","Limit of Quantitation",0.04,"mg/L",NA,0,FALSE,NA
+10000022,"2025-07-23","Total Phosphorus",NA,"mg/L","Limit of Quantitation",0.04,"mg/L",NA,0.0682,FALSE,NA
+10000022,"2025-07-23","Arsenic",NA,"ug/L","Limit of Quantitation",5,"ug/L",NA,7.57,FALSE,NA
+10000022,"2025-07-23","Zinc","Present Below Quantification Limit","ug/L","Limit of Quantitation",10,"ug/L",NA,3.61,FALSE,NA
+10000018,"2025-07-23","Iron","Present Below Quantification Limit","ug/L","Limit of Quantitation",250,"ug/L",NA,237,FALSE,NA
+10000018,"2025-07-23","Zinc","Present Below Quantification Limit","ug/L","Limit of Quantitation",10,"ug/L",NA,6.64,FALSE,NA
+10000022,"2025-07-23","Total Nitrate/Nitrite-N","Present Below Quantification Limit","mg/L","Limit of Quantitation",0.2,"mg/L",NA,0.112,FALSE,NA
+10000018,"2025-07-23","Total Nitrate/Nitrite-N",NA,"mg/L","Limit of Quantitation",0.2,"mg/L",NA,0.331,FALSE,NA
+10000018,"2025-07-23","Calcium",NA,"ug/L","Limit of Quantitation",500,"ug/L",NA,14000,FALSE,NA
+10000018,"2025-07-23","Magnesium",NA,"ug/L","Limit of Quantitation",50,"ug/L",NA,1060,FALSE,NA
+10000022,"2025-07-23","Iron",NA,"ug/L","Limit of Quantitation",250,"ug/L",NA,654,FALSE,NA
+10000022,"2025-07-23","Magnesium",NA,"ug/L","Limit of Quantitation",50,"ug/L",NA,5460,FALSE,NA
+10000022,"2025-07-23","Calcium",NA,"ug/L","Limit of Quantitation",500,"ug/L",NA,23600,FALSE,NA
+10000018,"2025-04-30","Fecal Coliform",NA,"MPN/100ml","Limit of Quantitation",NA,"MPN/100ml",5,2,TRUE,85.7142857142857
+10000022,"2025-04-30","Fecal Coliform",NA,"MPN/100ml","Limit of Quantitation",NA,"MPN/100ml",14,16,TRUE,13.3333333333333
+10000018,"2025-07-23","Fecal Coliform",NA,"MPN/100ml","Limit of Quantitation",NA,"MPN/100ml",NA,1,FALSE,NA
+10000022,"2025-07-23","Fecal Coliform",NA,"MPN/100ml","Limit of Quantitation",NA,"MPN/100ml",NA,35,FALSE,NA
+10000018,"2025-04-30","Total suspended solids",NA,"mg/l","Limit of Quantitation",1,"mg/l",7.00000000000002,1.33333333333333,TRUE,136
+10000022,"2025-04-30","Total suspended solids",NA,"mg/l","Limit of Quantitation",1,"mg/l",8.99999999999998,7.33333333333336,TRUE,20.4081632653056
+10000018,"2025-07-23","Total suspended solids",NA,"mg/l","Limit of Quantitation",1,"mg/l",NA,14.3,FALSE,NA
+10000022,"2025-07-23","Total suspended solids",NA,"mg/l","Limit of Quantitation",1,"mg/l",NA,5,FALSE,NA
+10000018,"2025-04-30","Dissolved Oxygen",NA,"mg/L","Limit of Quantitation",NA,"mg/L",13.09,13.605,TRUE,3.85840044952239
+10000018,"2025-04-30","Specific Conductance",NA,"uS/cm","Limit of Quantitation",NA,"uS/cm",99.2,99.95,TRUE,0.753201104694953
+10000018,"2025-04-30","Turbidity",NA,"NTU","Limit of Quantitation",NA,"NTU",2.35,2.485,TRUE,5.58428128231643
+10000018,"2025-04-30","Water Temperature",NA,"deg C","Limit of Quantitation",NA,"deg C",4.7,4.7,TRUE,0
+10000018,"2025-04-30","pH",NA,"None","Limit of Quantitation",NA,"None",6.89,6.695,TRUE,2.87081339712918
+10000018,"2025-07-23","Dissolved Oxygen",NA,"mg/L","Limit of Quantitation",NA,"mg/L",NA,8.555,FALSE,NA
+10000018,"2025-07-23","Specific Conductance",NA,"uS/cm","Limit of Quantitation",NA,"uS/cm",NA,82.4,FALSE,NA
+10000018,"2025-07-23","Turbidity",NA,"NTU","Limit of Quantitation",NA,"NTU",NA,6.825,FALSE,NA
+10000018,"2025-07-23","Water Temperature",NA,"deg C","Limit of Quantitation",NA,"deg C",NA,11.3,FALSE,NA
+10000018,"2025-07-23","pH",NA,"None","Limit of Quantitation",NA,"None",NA,7.445,FALSE,NA
+10000022,"2025-04-30","Dissolved Oxygen",NA,"mg/L","Limit of Quantitation",NA,"mg/L",13.755,14.86,TRUE,7.72322208631835
+10000022,"2025-04-30","Specific Conductance",NA,"uS/cm","Limit of Quantitation",NA,"uS/cm",123.75,124.5,TRUE,0.604229607250755
+10000022,"2025-04-30","Turbidity",NA,"NTU","Limit of Quantitation",NA,"NTU",2.74,3.655,TRUE,28.6161063330727
+10000022,"2025-04-30","Water Temperature",NA,"deg C","Limit of Quantitation",NA,"deg C",4.9,4.9,TRUE,0
+10000022,"2025-04-30","pH",NA,"None","Limit of Quantitation",NA,"None",7.16,6.985,TRUE,2.47437256981265
+10000022,"2025-07-23","Dissolved Oxygen",NA,"mg/L","Limit of Quantitation",NA,"mg/L",NA,10.075,FALSE,NA
+10000022,"2025-07-23","Specific Conductance",NA,"uS/cm","Limit of Quantitation",NA,"uS/cm",NA,0.17705,FALSE,NA
+10000022,"2025-07-23","Turbidity",NA,"NTU","Limit of Quantitation",NA,"NTU",NA,2.075,FALSE,NA
+10000022,"2025-07-23","Water Temperature",NA,"deg C","Limit of Quantitation",NA,"deg C",NA,13.05,FALSE,NA
+10000022,"2025-07-23","pH",NA,"None","Limit of Quantitation",NA,"None",NA,6.89,FALSE,NA

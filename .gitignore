@@ -5,3 +5,8 @@
 
 /.quarto/
 .positai
+<<<<<<< HEAD
+=======
+
+**/*.quarto_ipynb
+>>>>>>> 7830d0047d95da80ebecd14074ad6330a57f6d1c

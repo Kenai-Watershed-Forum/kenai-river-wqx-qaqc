@@ -1,0 +1,28 @@
+"","result_analytical_method_id","characteristic_name","flag_N","flag_Y","total_samples","cma"
+"1","120.1","Specific Conductance",45,NA,45,1
+"2","150.1","pH",45,NA,45,1
+"3","170.1","Water Temperature",45,NA,45,1
+"4","180.1","Turbidity",45,NA,45,1
+"5","200.8","Arsenic",32,NA,32,1
+"6","200.8","Cadmium",32,NA,32,1
+"7","200.8","Calcium",49,NA,49,1
+"8","200.8","Chromium",32,NA,32,1
+"9","200.8","Copper",64,NA,64,1
+"10","200.8","Iron",49,NA,49,1
+"11","200.8","Lead",32,NA,32,1
+"12","200.8","Magnesium",49,NA,49,1
+"13","200.8","Zinc",64,NA,64,1
+"14","2540-D","Total suspended solids",48,NA,48,1
+"15","360.1","Dissolved Oxygen",42,NA,42,1
+"16","4500-NO3(F)","Total Nitrate/Nitrite-N",46,NA,46,1
+"17","4500-P-E","Total Phosphorus",46,NA,46,1
+"18","8260D","1,2-Dichloroethane-D4 (surr)",8,NA,8,1
+"19","8260D","4-Bromofluorobenzene (surr)",8,NA,8,1
+"20","8260D","Benzene",8,NA,8,1
+"21","8260D","Ethylbenzene",8,NA,8,1
+"22","8260D","P & M -Xylene",8,NA,8,1
+"23","8260D","Toluene",8,NA,8,1
+"24","8260D","Toluene-d8 (surr)",8,NA,8,1
+"25","8260D","Xylenes (total)",8,NA,8,1
+"26","8260D","o-Xylene",8,NA,8,1
+"27","9222D","Fecal Coliform",46,NA,46,1
