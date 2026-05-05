@@ -1,6 +1,5 @@
 # Kenai River WQX QAQC — Project Memory
 
-<<<<<<< HEAD
 ## Repo Relationship
 
 This repo is one of two that together form the full data pipeline for Kenai River Baseline Water Quality Monitoring:
@@ -28,8 +27,6 @@ covers work in both repos. Edit it only from `kenai-river-wqx`.
 
 ------------------------------------------------------------------------
 
-=======
->>>>>>> 7830d0047d95da80ebecd14074ad6330a57f6d1c
 ## Project Purpose
 
 Annual QA/QC pipeline for Kenai River Baseline Water Quality Monitoring data submitted to the U.S. EPA Water Quality Exchange (WQX) via CDX. Managed by Kenai Watershed Forum. Each data year gets its own QMD in `project_year/` (e.g. `project_year/2025.qmd`).
