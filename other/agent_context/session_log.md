@@ -38,6 +38,9 @@ This file is **not loaded automatically** — reference it on demand when you ne
 - Updated ETL warning in AGENTS.md to reflect correct May 2026 status: ETL restored but 835 records remain orphaned in WQX Web; EPA email sent 2026-05-04.
 - Confirmed `session_log.md` is present and syncing correctly to qaqc repo via GitHub Actions.
 - Committed and pushed: `ddab2bd` — "refactor: restructure agent context into lean AGENTS.md + companion context files"
+- Moved `tasks/lessons.md` to `other/agent_context/context_files/lessons.md`; removed the now-empty `tasks/` directory. Updated AGENTS.md pointer. Committed: `9238ebf`.
+- Added Task 20: replace local WQP data downloads with live `dataRetrieval` queries in parameter chapters. Committed: `a617d97`.
+- Task 1a-reupload added to numbered priorities list in AGENTS.md (was in header only).
 
 ------------------------------------------------------------------------
 
