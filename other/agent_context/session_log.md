@@ -1,16 +1,56 @@
 # Kenai River WQX — Session Log & Archived Reference
 
-> **Shared context file.** This log is maintained in `kenai-river-wqx` (report repo) and auto-synced to `kenai-river-wqx-qaqc` (qaqc repo). It covers work in both repos. The qaqc repo prepares and submits annual monitoring data to EPA WQX via CDX; the report repo reads that data from EPA's Water Quality Portal and displays it. Edit this file only from the report repo (`kenai-river-wqx`).
+> **Shared context file.** This log is maintained in `kenai-river-wqx` (report repo)
+> and auto-synced to `kenai-river-wqx-qaqc` (qaqc repo). It covers work in both repos.
+> The qaqc repo prepares and submits annual monitoring data to EPA WQX via CDX; the
+> report repo reads that data from EPA's Water Quality Portal and displays it.
+> Edit this file only from the report repo (`kenai-river-wqx`).
 
 This file is **not loaded automatically** — reference it on demand when you need history on a completed task, a resolved issue, or the appendix_a.qmd audit. It is the companion to `AGENTS.md`.
 
 ------------------------------------------------------------------------
 
+### Session Entry (2026-05-18)
+
+**Agent context restructuring — AGENTS.md lean hub + companion context files.**
+
+- Reviewed the claude-project-template repo (github.com/vonchitzki/claude-project-template) as a model for improving context reliability. Adopted its core principle: separate always-loaded session context from on-demand domain knowledge.
+- Split AGENTS.md from 287 lines into a lean ~80-line hub pointing to 5 new topical companion files in `other/agent_context/context_files/`:
+  - `conventions.md` — sample fraction scheme, flagging convention, trip blank assignments, pipeline architecture, lab ingestion notes, year-config variables
+  - `data_architecture.md` — data storage structure, regulatory threshold architecture, R packages
+  - `report_structure.md` — report file table, parameter chapter pattern, logo path note, render commands
+  - `project_overview.md` — project overview, HMW/ATTAINS, parameters monitored, governance docs, external links
+  - `known_issues.md` — active data issues, QA/QC notes
+- Added `.gitignore` negation rule (`!other/agent_context/context_files/`) to prevent `*_files/` pattern from blocking the new directory.
+- Deleted `other/notes.txt` (confirmed stale duplicate of old AGENTS.md with no unique content; one historical reference in session_log.md line 214 is benign).
+- Re-added Repo Relationship section to AGENTS.md (had been dropped during restructure).
+- Updated ETL warning in AGENTS.md to reflect correct May 2026 status: ETL restored but 835 records remain orphaned in WQX Web; EPA email sent 2026-05-04.
+- Confirmed `session_log.md` is present and syncing correctly to qaqc repo via GitHub Actions.
+- Committed and pushed: `ddab2bd` — "refactor: restructure agent context into lean AGENTS.md + companion context files"
+
+------------------------------------------------------------------------
+
 ### Session Entry (2026-05-04)
 
-**EPA WQX batch delete — still blocked after ETL restoration.** - Received Kevin Christian email 2026-05-01 confirming WQP warehouse refresh complete; WQX Last Content Change updated to 2026-05-01. - Attempted CDX batch delete using `resultphyschem_DELETE_v4.csv`. Result: "Domain Value Invalid" for all 835 Activity IDs (datasetUid=113161). Same error as before ETL fix. - Root cause confirmed: ETL restoration fixed the WQX → WQP forward pipeline but did not retroactively restore the 835 orphaned 2021 records into WQX Web's internal database. WQX Web still shows zero 2021 records; batch delete requires WQX Web to own the records. - Follow-up email sent to wqx\@epa.gov 2026-05-04. Attachments: `Import Log.xlsx` (from CDX, datasetUid=113161) and `resultphyschem_DELETE_v4.csv`. Requested EPA either (1) delete orphaned records from WQP/STORET directly or (2) restore them into WQX Web so batch delete can proceed. - Correct DELETE file confirmed: `resultphyschem_DELETE_v4.csv` (835 rows, `ActivityIdentifier` column, no org prefix). v5 is corrupted (837 lines) — do not use. - `other/epa_cdx.txt` corruption fixed (task notes had been appended to password line); CDX status notes updated to reflect current blocked state.
+**EPA WQX batch delete — still blocked after ETL restoration.**
+- Received Kevin Christian email 2026-05-01 confirming WQP warehouse refresh complete; WQX Last Content Change updated to 2026-05-01.
+- Attempted CDX batch delete using `resultphyschem_DELETE_v4.csv`. Result: "Domain Value Invalid" for all 835 Activity IDs (datasetUid=113161). Same error as before ETL fix.
+- Root cause confirmed: ETL restoration fixed the WQX → WQP forward pipeline but did not retroactively restore the 835 orphaned 2021 records into WQX Web's internal database. WQX Web still shows zero 2021 records; batch delete requires WQX Web to own the records.
+- Follow-up email sent to wqx@epa.gov 2026-05-04. Attachments: `Import Log.xlsx` (from CDX, datasetUid=113161) and `resultphyschem_DELETE_v4.csv`. Requested EPA either (1) delete orphaned records from WQP/STORET directly or (2) restore them into WQX Web so batch delete can proceed.
+- Correct DELETE file confirmed: `resultphyschem_DELETE_v4.csv` (835 rows, `ActivityIdentifier` column, no org prefix). v5 is corrupted (837 lines) — do not use.
+- `other/epa_cdx.txt` corruption fixed (task notes had been appended to password line); CDX status notes updated to reflect current blocked state.
 
-**GitHub Actions session_log.md sync — set up, not yet pushed.** - Goal: auto-sync `other/agent_context/session_log.md` from report repo to qaqc repo on every push to main that touches it. AGENTS.md is NOT synced — each repo has its own repo-specific file. - PAT created: `kwf-report-to-qaqc-sync`, fine-grained, scoped to `kenai-river-wqx-qaqc`, Contents: Read/Write. Secret `QAQC_SYNC_PAT` added to `kenai-river-wqx`. - Workflow created: `.github/workflows/sync-agent-context.yml` in report repo. - qaqc repo `AGENTS.md` updated with Repo Relationship section (pulled from remote, prepended, saved locally). `other/agent_context/.gitkeep` added locally. - session_log.md updated with shared-context blockquote header. - Report repo `AGENTS.md` Repo Relationship section updated to reflect that only session_log.md is synced (not AGENTS.md). - **Remaining push steps:** 1. In `kenai-river-wqx-qaqc`: `git add AGENTS.md other/agent_context/.gitkeep && git commit -m "chore: add repo relationship section and agent context directory" && git push` 2. In `kenai-river-wqx`: `git add AGENTS.md other/agent_context/session_log.md .github/workflows/sync-agent-context.yml && git commit -m "chore: add repo relationship section and session log sync workflow" && git push` 3. Verify Action runs in the Actions tab on GitHub (`kenai-river-wqx`).
+**GitHub Actions session_log.md sync — set up, not yet pushed.**
+- Goal: auto-sync `other/agent_context/session_log.md` from report repo to qaqc repo on every push to main that touches it. AGENTS.md is NOT synced — each repo has its own repo-specific file.
+- PAT created: `kwf-report-to-qaqc-sync`, fine-grained, scoped to `kenai-river-wqx-qaqc`, Contents: Read/Write. Secret `QAQC_SYNC_PAT` added to `kenai-river-wqx`.
+- Workflow created: `.github/workflows/sync-agent-context.yml` in report repo.
+- qaqc repo `AGENTS.md` updated with Repo Relationship section (pulled from remote, prepended, saved locally). `other/agent_context/.gitkeep` added locally.
+- session_log.md updated with shared-context blockquote header.
+- Report repo `AGENTS.md` Repo Relationship section updated to reflect that only session_log.md is synced (not AGENTS.md).
+- **Remaining push steps:**
+  1. In `kenai-river-wqx-qaqc`: `git add AGENTS.md other/agent_context/.gitkeep && git commit -m "chore: add repo relationship section and agent context directory" && git push`
+  2. In `kenai-river-wqx`: `git add AGENTS.md other/agent_context/session_log.md .github/workflows/sync-agent-context.yml && git commit -m "chore: add repo relationship section and session log sync workflow" && git push`
+  3. Verify Action runs in the Actions tab on GitHub (`kenai-river-wqx`).
 
 ------------------------------------------------------------------------
 
