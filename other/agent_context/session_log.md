@@ -10,6 +10,17 @@ This file is **not loaded automatically** — reference it on demand when you ne
 
 ------------------------------------------------------------------------
 
+### Session Entry (2026-05-18) — addendum
+
+**Task 1a-reupload: deletion confirmed complete; re-upload now unblocked.**
+
+- Received email from EPA staff (May 4, 2026, separate from Kevin Christian) suggesting the 2021 Activity deletions may have taken effect with the WQP warehouse refresh, and that "Domain Value Invalid" CDX errors were because the records were already gone.
+- Queried WQP via `dataRetrieval::readWQPdata(organization = "KENAI_WQX", startDateLo = "2021-01-01", startDateHi = "2021-12-31")` on 2026-05-18: **0 rows returned**. Deletion confirmed.
+- Root cause of "Domain Value Invalid" errors now clear: CDX batch delete attempted to delete IDs that were already absent from WQX Web's internal DB following the warehouse refresh.
+- **Next step: upload `other/output/wqx_formatted/results_activities.csv`, `project.csv`, and `station.csv` to CDX.** These files contain corrected sample fractions (dissolved metals: `"Dissolved"` instead of `"Filtered, field"`). Verify in WQP after ETL processes.
+
+------------------------------------------------------------------------
+
 ### Session Entry (2026-05-18)
 
 **Agent context restructuring — AGENTS.md lean hub + companion context files.**
