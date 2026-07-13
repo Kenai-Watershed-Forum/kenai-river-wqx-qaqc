@@ -6,6 +6,18 @@ This file is **not loaded automatically** — reference it on demand when you ne
 
 ------------------------------------------------------------------------
 
+### Session Entry (2026-07-13)
+
+**PDF to markdown conversion — governance documents now in `other/documents/md/`.**
+
+- Converted 8 governance/reference PDFs to text-extracted `.md` files using `pdftools::pdf_text()`. Placed in new `other/documents/md/` directory.
+- Files created: `calm-rev-2021.md` (37 KB), `ADEC-18-aac-70.md` (209 KB), `QAPP-v3-2023-with-Addendum-April-2024.md` (187 KB), `Kenai-River-Baseline-WQ-MOU-2025.md` (13 KB), `DL-LOD-LOQ-Interpretation-SGS.md` (2 KB), `Kenai-Baseline-WQ-Assessment-2016.md` (1,334 KB), `kenai-river-2021-field-report.md` (107 KB), `alaska-water-quality-criteria-manual-2022.md` (250 KB).
+- Two PDFs failed text extraction (fully scanned, no text layer): `alaska-water-quality-criteria-manual-for-toxic-and-other-deleterious-organic-and-inorganic-substances-2022.pdf` (local copy) and `Kenai Watershed Forum Baseline Water Quality Assessment 2007.pdf`. The Alaska WQ Criteria Manual was re-sourced from the ADEC website (searchable version), which extracted successfully.
+- The 2007 Baseline Assessment remains PDF-only; OCR would be required.
+- Updated AGENTS.md: replaced old plain-text Governance Documents section with a full table mapping each document to its `.md` path; added `other/documents/md/` entry to Companion Files. Added convention: new governance PDFs should be converted using `pdftools::pdf_text()` and placed in `other/documents/md/`; raw data PDFs (field forms, lab reports, COC documents) do not need conversion.
+
+------------------------------------------------------------------------
+
 ### Session Entry (2026-05-18) — addendum
 
 **Task 1a-reupload: deletion confirmed complete; re-upload now unblocked.**
