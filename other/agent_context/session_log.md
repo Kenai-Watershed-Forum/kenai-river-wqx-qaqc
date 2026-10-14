@@ -85,6 +85,18 @@ Entries before **2026-07-13** are archived in `session_log_archive.md` (same dir
 
 ------------------------------------------------------------------------
 
+### Session Entry (2026-10-14, later) — WQP visibility check for 2021 data
+
+**Context**: user confirmed the 2021 `results_activities.csv` dataset was submitted to CDX ("Step 3 of 3") on 2026-10-14 via WQX Web, resolving the open question from the entry above. Visibility in the public Water Quality Portal (WQP) had not yet been checked.
+
+- Live-queried `dataRetrieval::readWQPdata(organization = "KENAI_WQX", startDateLo/Hi = 2021, dataProfile = "narrowResult")`: **0 rows returned.** 2021 data is not yet publicly visible in WQP, consistent with an expected post-submission indexing lag (WQX Web notes data "only becomes permanent" after CDX submission, but WQP republishing on top of that can take additional time).
+- Sanity-checked the query mechanics against a known-present year: the same call for 2013 returned 382 rows correctly, confirming `dataRetrieval::readWQPdata()` works reliably for this organization's data end-to-end. This supersedes an older, stale comment in `chapters/data_sourcing.qmd` claiming `dataRetrieval` "did not work well" for this project (may reflect an earlier query shape or a package-version issue since resolved); no need to pursue EPA's TADA package for this purpose.
+- This was a narrow, read-only check (per user direction: "live WQP query only", not a full book re-render). No files in the ingestion/rendering pipeline were touched.
+- **Next step (not yet done): recheck WQP visibility for 2021 data in a future session** (`dataRetrieval::readWQPdata()` as above, or re-run the one-off query). Once 2021 rows appear, do the fuller content check: record counts, corrected characteristic names (e.g. `Nitrate + Nitrite`, `m,p-Xylene`), coordinate precision, and units, against what was uploaded (see the 2026-10-14 entry above for the full list of corrections made). Only after that passes does it make sense to assess whether `data_sourcing.qmd` / the book's full render need any adjustment for 2021, and to decide whether that in turn implies changes to `kenai-river-baseline-wqx-template` (see `agent_context.qmd`, "10/14/2026 follow up" note, and the per-year-repo migration plan at `.posit/assistant/plans/2026-10-14-1300-per-year-repo-architecture-migration.md`).
+- Also noted but **out of scope for this check**: the user's longer-term goal of moving `kenai-river-wqx` off static WQP CSV downloads (`other/input/WQX_downloads/...`) to live queries, with an optional local gitignored cache for development. `dataRetrieval` is a credible candidate per the above; deferred to a dedicated follow-on task rather than decided here.
+
+------------------------------------------------------------------------
+
 ### Session Entry (2026-07-13)
 
 **PDF to markdown conversion — governance documents now in `other/documents/md/`.**
