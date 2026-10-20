@@ -150,6 +150,19 @@ Analyte name → abbreviation used in WQX Activity IDs (27 rows as of April 2026
 | 10000424 | RM 79.5 – Juneau Creek         |
 | 10000425 | RM 82 – Kenai Lake Bridge      |
 
+### ID rule: never include the `KENAI_WQX-` prefix in any ID column
+
+WQX Web prepends `KENAI_WQX-` to IDs on import. WQP downloads already include it, so a value copied from WQP must have the prefix stripped. Upload files use bare IDs: `Monitoring Location ID` = `10000002`, station `MonitoringLocationIdentifier` = `10000002`, Activity IDs built from site code, date, and analyte (no prefix).
+
+On 2026-10-14 the 2021 files were uploaded with prefixed location IDs. WQP then held 22 duplicate stations (`KENAI_WQX-KENAI_WQX-100000xx`) carrying all 830 results; cleanup (delete files, WQX Web delete imports, re-upload) is documented in the report repo at `other/output/epa_wqp_uploads/2026-10-20_doubled_station_cleanup/README.md`.
+
+`other/misc/qaqc_repo_transition/functions/generate_cdx_export.R` now builds bare IDs and stops with an error before writing if any ID column starts with `KENAI_WQX`, if a location ID is not one of the 22 known IDs above, or if `station.csv` is not exactly those 22 stations. Notes for future work:
+
+- In the `adec_site_names` sheet of `wqx_template_matching_table.xlsx`, the column `MonitoringLocationIdentifier` holds the site code (`KBL_*`), not a WQP identifier. The script renames it to `site_code`.
+- That sheet previously listed `KBL_t_50.0` and `KBL_t_70.0` for IDs 10000030 and 10000031. Both are mainstem sites (`m`), matching the WQP station names `KBL_m_50.0` and `KBL_m_70.0`. Corrected to `m` on 2026-10-20 (same fix in the report repo copy). The 2021 Activity IDs for those two sites (34 rows) previously used `t`; they were deleted from WQP on 2026-10-20 and the re-upload uses `m`.
+- This script copy is older than the report repo's `functions/appendix_a_scripts/generate_cdx_export.R` (for example, it still maps `Biological Intent` and `Subject Taxonomic Name`, which were removed on 2026-10-14). Port the remaining fixes before using it for upload.
+- 2025 output currently has 116 rows with duplicated Activity IDs (same characteristic, fraction, and method). Not introduced by the ID change; investigate before upload.
+
 ------------------------------------------------------------------------
 
 ## 2025.qmd Pipeline Structure

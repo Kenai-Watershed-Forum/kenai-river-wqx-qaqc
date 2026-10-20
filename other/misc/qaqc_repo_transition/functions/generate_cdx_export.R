@@ -31,6 +31,25 @@
 #   other/output/results_activities.csv
 #   other/output/project.csv
 #   other/output/station.csv
+#
+# ID RULE (learned 2026-10-14/20): never put the "KENAI_WQX-" org prefix in any
+# ID column (Monitoring Location ID, MonitoringLocationIdentifier, Activity ID).
+# WQX Web prepends the prefix itself on import. A prefixed ID is stored as
+# "KENAI_WQX-KENAI_WQX-..." and creates duplicate stations that hold the results.
+# Checks near each write below stop the script before a bad file is written.
+# Details: other/output/epa_wqp_uploads/2026-10-20_doubled_station_cleanup/README.md
+# in the kenai-river-wqx report repo.
+
+# Stops with an error if any value starts with the org prefix
+assert_no_org_prefix <- function(x, label) {
+  bad <- !is.na(x) & grepl("^KENAI_WQX", x, ignore.case = TRUE)
+  if (any(bad)) {
+    stop(sum(bad), " value(s) in ", label, " start with the org prefix 'KENAI_WQX'. ",
+         "WQX Web adds the prefix on import; strip it before upload. First offender: ",
+         x[bad][1], call. = FALSE)
+  }
+  invisible(TRUE)
+}
 
 
 # ── Results and Activities ──────────────────────────────────────────────────────
@@ -50,12 +69,29 @@ export_dat %<>%
 export_dat %<>%
   filter(!(characteristic_name == "Phosphorus" & result_analytical_method_id == "200.8"))
 
-# Re-join WQP site location info (site names) needed for Activity ID construction
+# Re-join site codes needed for Activity ID construction.
+# NOTE: in this sheet the column "MonitoringLocationIdentifier" holds the site
+# CODE (e.g. KBL_m_01.5), not a WQP identifier, and "MonitoringLocationName" is a
+# descriptive name. Rename to avoid confusion and join explicitly on the numeric ID.
 site_name_match <- read_excel(
   file.path(cfg$templates_dir, "wqx_template_matching_table.xlsx"),
   sheet = "adec_site_names"
-) %>% remove_empty()
-export_dat <- left_join(export_dat, site_name_match)
+) %>%
+  remove_empty() %>%
+  transmute(monitoring_location_id = as.character(monitoring_location_id),
+            site_code = MonitoringLocationIdentifier)
+
+# The 22 valid bare location IDs, used by the checks below
+valid_location_ids <- site_name_match$monitoring_location_id
+
+export_dat %<>% mutate(monitoring_location_id = as.character(monitoring_location_id))
+export_dat <- left_join(export_dat, site_name_match, by = "monitoring_location_id")
+
+if (any(is.na(export_dat$site_code))) {
+  stop("Some rows have no site code in the 'adec_site_names' lookup: ",
+       paste(unique(export_dat$monitoring_location_id[is.na(export_dat$site_code)]),
+             collapse = ", "), call. = FALSE)
+}
 
 # Re-join analyte abbreviations for Activity ID construction
 analyte_abbrev <- read.csv(file.path(cfg$templates_dir, "analytes_list_manual_edit.csv"))
@@ -74,14 +110,15 @@ export_dat %<>%
 export_dat %<>%
   mutate(
     `Project ID`                           = 10000007,
-    `Monitoring Location ID`               = MonitoringLocationIdentifier,
+    # Bare numeric ID (no org prefix); WQX Web prepends "KENAI_WQX-" on import
+    `Monitoring Location ID`               = monitoring_location_id,
     `Activity Media Name`                  = activity_media_name,
     `Activity Media Subdivision Name`      = activity_media_subdivision_name,
     `Activity ID` = case_when(
       is.na(sample_condition_abbrv) ~
-        paste0(`MonitoringLocationName`, "-", activity_start_date, "-", analyte_abbreviation),
+        paste0(site_code, "-", activity_start_date, "-", analyte_abbreviation),
       !is.na(sample_condition_abbrv) ~
-        paste0(`MonitoringLocationName`, "-", activity_start_date, "-",
+        paste0(site_code, "-", activity_start_date, "-",
                analyte_abbreviation, "-", sample_condition_abbrv)
     ),
     `Activity Start Date`                  = activity_start_date,
@@ -143,6 +180,16 @@ wqx_colnames <- read_excel(cfg$wqx_template_file,
   colnames()
 export_dat %<>% select(one_of(wqx_colnames))
 
+# Checks before writing: ID form
+assert_no_org_prefix(export_dat$`Monitoring Location ID`, "Monitoring Location ID")
+assert_no_org_prefix(export_dat$`Activity ID`, "Activity ID")
+stopifnot(
+  "Monitoring Location ID must be one of the 22 known bare IDs" =
+    all(as.character(export_dat$`Monitoring Location ID`) %in% valid_location_ids),
+  "Activity ID must not be NA" = !anyNA(export_dat$`Activity ID`),
+  "Activity ID must be 55 characters or fewer" = all(nchar(export_dat$`Activity ID`) <= 55)
+)
+
 # Write final results and activities CSV for CDX upload
 write.csv(export_dat, here::here("other/output/results_activities.csv"), row.names = FALSE)
 
@@ -186,6 +233,8 @@ station_upload <- read.csv(
   file.path(cfg$wqx_downloads_dir, "station/station.csv")
 ) |>
   dplyr::filter(grepl("KBL", MonitoringLocationName)) |>
+  # WQP IDs carry the "KENAI_WQX-" prefix; WQX Web adds it back on import
+  dplyr::mutate(MonitoringLocationIdentifier = sub("^KENAI_WQX-", "", MonitoringLocationIdentifier)) |>
   dplyr::select(
     MonitoringLocationIdentifier,
     MonitoringLocationName,
@@ -206,5 +255,14 @@ station_upload <- read.csv(
     HorizontalCollectionMethodName %in% c("Interpolation-Satellite", "Unknown") ~ "GPS-Unspecified",
     TRUE ~ HorizontalCollectionMethodName
   ))
+
+# Checks before writing: ID form. A leftover prefix here usually means the WQP
+# download still contains the doubled "KENAI_WQX-KENAI_WQX-..." stations.
+assert_no_org_prefix(station_upload$MonitoringLocationIdentifier, "station MonitoringLocationIdentifier")
+stopifnot(
+  "station.csv must contain exactly the 22 known station IDs, once each" =
+    setequal(as.character(station_upload$MonitoringLocationIdentifier), valid_location_ids) &&
+    !anyDuplicated(station_upload$MonitoringLocationIdentifier)
+)
 
 write.csv(station_upload, here::here("other/output/station.csv"), row.names = FALSE)
