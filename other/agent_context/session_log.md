@@ -106,3 +106,14 @@ Entries before **2026-07-13** are archived in `session_log_archive.md` (same dir
 - Two PDFs failed text extraction (fully scanned, no text layer): `alaska-water-quality-criteria-manual-for-toxic-and-other-deleterious-organic-and-inorganic-substances-2022.pdf` (local copy) and `Kenai Watershed Forum Baseline Water Quality Assessment 2007.pdf`. The Alaska WQ Criteria Manual was re-sourced from the ADEC website (searchable version), which extracted successfully.
 - The 2007 Baseline Assessment remains PDF-only; OCR would be required.
 - Updated AGENTS.md: replaced old plain-text Governance Documents section with a full table mapping each document to its `.md` path; added `other/documents/md/` entry to Companion Files. Added convention: new governance PDFs should be converted using `pdftools::pdf_text()` and placed in `other/documents/md/`; raw data PDFs (field forms, lab reports, COC documents) do not need conversion.
+
+### Session Entry (2026-10-25): WQP verification of doubled-station cleanup and CDX re-upload file readiness
+
+**Doubled-prefix cleanup confirmed on WQP; re-upload files verified ready. Upload not yet performed.**
+
+- Live `dataRetrieval` result query for org `KENAI_WQX`: 15,605 rows (2000-2013 only), 0 rows with a doubled `KENAI_WQX-KENAI_WQX-` prefix, 37 stations that have results, no 2021 data. The deletes submitted 2026-10-20 (datasets 117563 and 117564) have therefore published.
+- Live `whatWQPsites()` station query: 135 stations, 0 doubled-prefix. All 22 bare IDs in the local `station.csv` (with the `KENAI_WQX-` prefix added) already exist on WQP, so the station upload should report 22 existing/updated and 0 new. Note: the earlier 157 count was the local cache's station table (135 plus 22 doubled); the 37 above counts only stations with results, so the two are not comparable.
+- File check in `other/output/wqx_formatted/` (files dated 2026-10-20): `project.csv` 1 row, `station.csv` 22 rows, `results_activities.csv` 830 rows; 0 doubled prefixes in either file; Monitoring Location IDs are bare numeric; sites 10000030 and 10000031 are `KBL_m_50.0` and `KBL_m_70.0`.
+- Not checked: the result-level contents of `results_activities.csv` beyond the ID prefix and row count (checked previously on 2026-10-20 via full render).
+- **Next:** upload `station.csv` first and confirm 22 existing/updated and 0 new, then `results_activities.csv` (expect 0 invalid), submit both to CDX; then verify on WQP (830 rows on the original stations), re-run `functions/refresh_wqp_data.R`, and log the outcome in `other/output/epa_wqp_uploads/2026-10-20_doubled_station_cleanup/README`.
+- Housekeeping: an accidental duplicate `other/agent_context/AGENTS.md` was created and deleted the same day; the real project memory is the root `AGENTS.md`.
