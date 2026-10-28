@@ -85,6 +85,18 @@ Entries before **2026-07-13** are archived in `session_log_archive.md` (same dir
 
 ------------------------------------------------------------------------
 
+### Session Entry (2026-10-14, later) — WQP visibility check for 2021 data
+
+**Context**: user confirmed the 2021 `results_activities.csv` dataset was submitted to CDX ("Step 3 of 3") on 2026-10-14 via WQX Web, resolving the open question from the entry above. Visibility in the public Water Quality Portal (WQP) had not yet been checked.
+
+- Live-queried `dataRetrieval::readWQPdata(organization = "KENAI_WQX", startDateLo/Hi = 2021, dataProfile = "narrowResult")`: **0 rows returned.** 2021 data is not yet publicly visible in WQP, consistent with an expected post-submission indexing lag (WQX Web notes data "only becomes permanent" after CDX submission, but WQP republishing on top of that can take additional time).
+- Sanity-checked the query mechanics against a known-present year: the same call for 2013 returned 382 rows correctly, confirming `dataRetrieval::readWQPdata()` works reliably for this organization's data end-to-end. This supersedes an older, stale comment in `chapters/data_sourcing.qmd` claiming `dataRetrieval` "did not work well" for this project (may reflect an earlier query shape or a package-version issue since resolved); no need to pursue EPA's TADA package for this purpose.
+- This was a narrow, read-only check (per user direction: "live WQP query only", not a full book re-render). No files in the ingestion/rendering pipeline were touched.
+- **Next step (not yet done): recheck WQP visibility for 2021 data in a future session** (`dataRetrieval::readWQPdata()` as above, or re-run the one-off query). Once 2021 rows appear, do the fuller content check: record counts, corrected characteristic names (e.g. `Nitrate + Nitrite`, `m,p-Xylene`), coordinate precision, and units, against what was uploaded (see the 2026-10-14 entry above for the full list of corrections made). Only after that passes does it make sense to assess whether `data_sourcing.qmd` / the book's full render need any adjustment for 2021, and to decide whether that in turn implies changes to `kenai-river-baseline-wqx-template` (see `agent_context.qmd`, "10/14/2026 follow up" note, and the per-year-repo migration plan at `.posit/assistant/plans/2026-10-14-1300-per-year-repo-architecture-migration.md`).
+- Also noted but **out of scope for this check**: the user's longer-term goal of moving `kenai-river-wqx` off static WQP CSV downloads (`other/input/WQX_downloads/...`) to live queries, with an optional local gitignored cache for development. `dataRetrieval` is a credible candidate per the above; deferred to a dedicated follow-on task rather than decided here.
+
+------------------------------------------------------------------------
+
 ### Session Entry (2026-07-13)
 
 **PDF to markdown conversion — governance documents now in `other/documents/md/`.**
@@ -94,3 +106,24 @@ Entries before **2026-07-13** are archived in `session_log_archive.md` (same dir
 - Two PDFs failed text extraction (fully scanned, no text layer): `alaska-water-quality-criteria-manual-for-toxic-and-other-deleterious-organic-and-inorganic-substances-2022.pdf` (local copy) and `Kenai Watershed Forum Baseline Water Quality Assessment 2007.pdf`. The Alaska WQ Criteria Manual was re-sourced from the ADEC website (searchable version), which extracted successfully.
 - The 2007 Baseline Assessment remains PDF-only; OCR would be required.
 - Updated AGENTS.md: replaced old plain-text Governance Documents section with a full table mapping each document to its `.md` path; added `other/documents/md/` entry to Companion Files. Added convention: new governance PDFs should be converted using `pdftools::pdf_text()` and placed in `other/documents/md/`; raw data PDFs (field forms, lab reports, COC documents) do not need conversion.
+
+### Session Entry (2026-10-25): WQP verification of doubled-station cleanup and CDX re-upload file readiness
+
+**Doubled-prefix cleanup confirmed on WQP; re-upload files verified ready. Upload not yet performed.**
+
+- Live `dataRetrieval` result query for org `KENAI_WQX`: 15,605 rows (2000-2013 only), 0 rows with a doubled `KENAI_WQX-KENAI_WQX-` prefix, 37 stations that have results, no 2021 data. The deletes submitted 2026-10-20 (datasets 117563 and 117564) have therefore published.
+- Live `whatWQPsites()` station query: 135 stations, 0 doubled-prefix. All 22 bare IDs in the local `station.csv` (with the `KENAI_WQX-` prefix added) already exist on WQP, so the station upload should report 22 existing/updated and 0 new. Note: the earlier 157 count was the local cache's station table (135 plus 22 doubled); the 37 above counts only stations with results, so the two are not comparable.
+- File check in `other/output/wqx_formatted/` (files dated 2026-10-20): `project.csv` 1 row, `station.csv` 22 rows, `results_activities.csv` 830 rows; 0 doubled prefixes in either file; Monitoring Location IDs are bare numeric; sites 10000030 and 10000031 are `KBL_m_50.0` and `KBL_m_70.0`.
+- Not checked: the result-level contents of `results_activities.csv` beyond the ID prefix and row count (checked previously on 2026-10-20 via full render).
+- **Next:** upload `station.csv` first and confirm 22 existing/updated and 0 new, then `results_activities.csv` (expect 0 invalid), submit both to CDX; then verify on WQP (830 rows on the original stations), re-run `functions/refresh_wqp_data.R`, and log the outcome in `other/output/epa_wqp_uploads/2026-10-20_doubled_station_cleanup/README`.
+- Housekeeping: an accidental duplicate `other/agent_context/AGENTS.md` was created and deleted the same day; the real project memory is the root `AGENTS.md`.
+
+### Session Entry (2026-10-25, later): 2021 re-upload to CDX completed
+
+**Corrected 2021 files uploaded and submitted to CDX with bare IDs. WQP publication and book integration still to verify.**
+
+- Import options used: `project.csv` and `station.csv` with "existing data only"; `results_activities.csv` with "new data only" (Activity IDs had been deleted). Staging review kept on. Datasets, all "Completed at CDX" 2026-10-25: project 117639, station 117640, results 117643.
+- First `results_activities.csv` attempt (dataset 117641, 5:46 PM) failed with "More columns than expected. Import Configuration does not match the import file" at Row 2 (System Error, System Process Halted). Cause: the wrong import configuration was selected (`KWF_Results_Baseline_Template`, the older Uid 8515, instead of `KWF_Results_Baseline_Template_v2`, Uid 9481). The file was fine (831 lines, 53 fields each, unchanged since 2026-10-20). Re-import with v2 succeeded (dataset 117643). Added to the Troubleshooting table in `chapters/cdx_upload.qmd`.
+- Added a "New vs. existing data option" rule section (`@sec-new-existing`) to `chapters/cdx_upload.qmd`.
+- Not recorded in this session: the staging counts for the station import (expected 22 existing, 0 new), so whether bare IDs matched the original stations is confirmed only indirectly by the successful results import. Verify on WQP.
+- **Next:** (1) wait for WQP publication (prior lags: about 6 days for results, under 5 days for deletes), then live query: expect 830 rows for 2021 on the 22 original stations, 16,435 total results, 0 doubled-prefix, station count back to 135 minus the deleted doubled ones; (2) run `functions/refresh_wqp_data.R`; (3) render the book and check 2021 in the parameter chapters, trend analysis, and threshold comparisons. Watch for: the three WQX-remapped characteristic names (`Total Phosphorus, mixed forms`, `Total xylenes`, `Iron`), the renamed sites `KBL_m_50.0`/`KBL_m_70.0`, and chapters assuming a contiguous year range (still no 2014-2020 data); (4) log the outcome in the cleanup folder README.
