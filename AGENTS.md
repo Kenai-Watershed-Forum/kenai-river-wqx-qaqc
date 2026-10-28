@@ -41,37 +41,31 @@ kenai-river-wqx-qaqc/
 │   ├── 2025.qmd                      # Active pipeline (see structure below)
 │   ├── 2023.qmd                      # Rebuilt to 2025 template (all chunks eval:false)
 │   └── 2014.qmd – 2022.qmd          # Legacy year pipelines (Quarto book chapters)
+├── config.yml                        # Working-year config (dates, raw file paths/sheets/skip), paths relative to data/
+├── data/                             # Raw lab files for working year only; gitignored (year bundles are GitHub Releases)
+│   ├── spring_2025_wqx_data/{SGS,SWWTP}/
+│   ├── summer_2025_wqx_data/{SGS,SWWTP}/
+│   └── 2025 Kenai Agency Baseline YSI ProQuatro and Turbidity Data.xlsx
+├── functions/                        # Canonical sourced scripts (2025.qmd uses here("functions/..."))
+│   ├── format_wqx.R                  # WQX formatting (sourced in Part B)
+│   ├── apply_qaqc_flags.R            # Joins flag decisions, writes flagged export CSV
+│   └── generate_cdx_export.R         # CDX upload file writer (sourced in Part D)
+├── reference/
+│   ├── dat_contract.md               # DRAFT column contract for `dat` (not yet enforced in code)
+│   └── wqx_templates/                # Moved from other/input/wqx_templates/ (merge, Oct 2026)
+│       ├── wqx_template_matching_table.xlsx  (5 sheets — see below)
+│       ├── AWQMS_KWF_Baseline_2025.xlsx
+│       ├── sgs_site_names_matching_table.xlsx
+│       ├── analysis_code_matching_table.xlsx
+│       ├── analytes_list.csv
+│       ├── analytes_list_manual_edit.csv
+│       ├── 2025_data_flag_decisions.csv
+│       ├── trip_blank_crews_2025.csv
+│       ├── sample_holding_times.csv
+│       └── wqx_qaqc/wqx_qaqc_info.xlsx  (sheets: field_dup_sites_{year})
 ├── other/
 │   ├── input/
-│   │   ├── 2025/
-│   │   │   ├── spring_2025_wqx_data/
-│   │   │   │   ├── SGS/  spring_2025_kenai_baseline_sgs_results.xlsx  (Sheet8)
-│   │   │   │   └── SWWTP/
-│   │   │   │       ├── KRWF Fecal 04-30-25.xls          (skip=11)
-│   │   │   │       ├── KRWF TSS MONITORING 05-01-25.xls  (original, kept for reference)
-│   │   │   │       └── KRWF TSS MONITORING 05-01-25.xlsx (Updated_Formatting sheet — USE THIS)
-│   │   │   ├── summer_2025_wqx_data/
-│   │   │   │   ├── SGS/  summer_2025_kenai_baseline_results_sgs.xlsx  (Sheet8)
-│   │   │   │   └── SWWTP/
-│   │   │   │       ├── KRWF Fecal 07-23-25.xls           (skip=10)
-│   │   │   │       └── KRWF TSS MONITORING 07-25-25.xls  (Updated_Formatting sheet, skip=1)
-│   │   │   └── 2025 Kenai Agency Baseline YSI ProQuatro and Turbidity Data.xlsx
-│   │   ├── 2023/
-│   │   │   ├── spring_2023_wqx_data/Data/SGS/Revision 1 SGS Data/  (two CSV files: part1, part2)
-│   │   │   ├── summer_2023_wqx_data/Data/SGS/Summer 2023 SGS Agency Baseline.xlsx  (Sheet9)
-│   │   │   ├── spring_2023_wqx_data/Data/SWWTP/  (FC + TSS xlsx files)
-│   │   │   ├── summer_2023_wqx_data/Data/SWWTP/  (FC + TSS xlsx files)
-│   │   │   └── misc/  (site name CSVs, lat_long.csv, analytes_list_manual_edit.csv, etc.)
-│   │   ├── wqx_templates/
-│   │   │   ├── wqx_template_matching_table.xlsx  (5 sheets — see below)
-│   │   │   ├── AWQMS_KWF_Baseline_2025.xlsx
-│   │   │   ├── sgs_site_names_matching_table.xlsx
-│   │   │   ├── analysis_code_matching_table.xlsx
-│   │   │   ├── analytes_list_manual_edit.csv
-│   │   │   ├── 2025_data_flag_decisions.csv
-│   │   │   ├── trip_blank_crews_2025.csv
-│   │   │   ├── sample_holding_times.csv
-│   │   │   └── wqx_qaqc/wqx_qaqc_info.xlsx  (sheets: field_dup_sites_{year})
+│   │   ├── 2014/ – 2023/             # Legacy per-year raw inputs (2025 raw files removed; now in data/)
 │   │   ├── WQX_downloads/            # Must be downloaded manually from WQP before Part D
 │   │   └── regulatory_limits/
 │   ├── output/                              # Final WQX/CDX upload-ready files
@@ -88,11 +82,7 @@ kenai-river-wqx-qaqc/
 │   │       ├── lab_qaqc_data/
 │   │       └── misc/
 │   └── misc/
-│       └── qaqc_repo_transition/
-│           └── functions/
-│               ├── format_wqx.R           # WQX formatting (sourced in Part B)
-│               ├── generate_cdx_export.R  # CDX upload file writer (sourced in Part D)
-│               └── apply_qaqc_flags.R     # Joins flag decisions, writes flagged export CSV
+│       └── qaqc_repo_transition/            # OLD copies of functions/ (stale; do not edit) + templates/pipeline_template.qmd
 ```
 
 ------------------------------------------------------------------------
@@ -156,11 +146,11 @@ WQX Web prepends `KENAI_WQX-` to IDs on import. WQP downloads already include it
 
 On 2026-10-14 the 2021 files were uploaded with prefixed location IDs. WQP then held 22 duplicate stations (`KENAI_WQX-KENAI_WQX-100000xx`) carrying all 830 results; cleanup (delete files, WQX Web delete imports, re-upload) is documented in the report repo at `other/output/epa_wqp_uploads/2026-10-20_doubled_station_cleanup/README.md`.
 
-`other/misc/qaqc_repo_transition/functions/generate_cdx_export.R` now builds bare IDs and stops with an error before writing if any ID column starts with `KENAI_WQX`, if a location ID is not one of the 22 known IDs above, or if `station.csv` is not exactly those 22 stations. Notes for future work:
+`functions/generate_cdx_export.R` now builds bare IDs and stops with an error before writing if any ID column starts with `KENAI_WQX`, if a location ID is not one of the 22 known IDs above, or if `station.csv` is not exactly those 22 stations. Notes for future work:
 
 - In the `adec_site_names` sheet of `wqx_template_matching_table.xlsx`, the column `MonitoringLocationIdentifier` holds the site code (`KBL_*`), not a WQP identifier. The script renames it to `site_code`.
 - That sheet previously listed `KBL_t_50.0` and `KBL_t_70.0` for IDs 10000030 and 10000031. Both are mainstem sites (`m`), matching the WQP station names `KBL_m_50.0` and `KBL_m_70.0`. Corrected to `m` on 2026-10-20 (same fix in the report repo copy). The 2021 Activity IDs for those two sites (34 rows) previously used `t`; they were deleted from WQP on 2026-10-20 and the re-upload uses `m`.
-- This script copy is older than the report repo's `functions/appendix_a_scripts/generate_cdx_export.R` (for example, it still maps `Biological Intent` and `Subject Taxonomic Name`, which were removed on 2026-10-14). Port the remaining fixes before using it for upload.
+- The stale copy in `other/misc/qaqc_repo_transition/functions/` and `functions/` differ; confirm which is current. Either may be older than the report repo's `functions/appendix_a_scripts/generate_cdx_export.R` (for example, it still maps `Biological Intent` and `Subject Taxonomic Name`, which were removed on 2026-10-14). Port the remaining fixes before using it for upload.
 - 2025 output currently has 116 rows with duplicated Activity IDs (same characteristic, fraction, and method). Not introduced by the ID change; investigate before upload.
 
 ------------------------------------------------------------------------

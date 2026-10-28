@@ -4,5 +4,5 @@
 .Ruserdata
 
 /.quarto/
-.positai
+.posit/assistant
 **/*.quarto_ipynb

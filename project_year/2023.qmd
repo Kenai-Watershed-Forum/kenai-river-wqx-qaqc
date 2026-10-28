@@ -26,9 +26,9 @@ In this chapter we will collate 2023 laboratory data from several sources into a
 
 Once the data is collated, it will be evaluated according to a Quality Assurance Checklist (template example provided by the Alaska Department of Environmental Conservation Soldotna office). Field observations that do not meet the quality assurance standards described in the evaluation checklist will be flagged as "Rejected" before being uploaded to the EPA WQX.
 
-Data that has been uploaded to the EPA WQX is evaluated biannually by the Alaska Department of Environmental Conservation (ADEC) in their [Integrated Water Quality Monitoring and Assessment Report](https://dec.alaska.gov/water/water-quality/integrated-report/)[^2023-1]. The integrated report evaluates available water quality data from the previous five years against Alaska water quality standards and regulations [@adec2020].
+Data that has been uploaded to the EPA WQX is evaluated biannually by the Alaska Department of Environmental Conservation (ADEC) in their [Integrated Water Quality Monitoring and Assessment Report](https://dec.alaska.gov/water/water-quality/integrated-report/)[^1]. The integrated report evaluates available water quality data from the previous five years against Alaska water quality standards and regulations [@adec2020].
 
-[^2023-1]: https://dec.alaska.gov/water/water-quality/integrated-report/
+[^1]: https://dec.alaska.gov/water/water-quality/integrated-report/
 
 The code scripts in this document assemble water quality data from two analytical laboratories that partnered with Kenai Watershed Forum for 2023:
 
