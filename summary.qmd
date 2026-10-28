@@ -1,7 +1,11 @@
 # Summary
 
-In summary, this book has no content whatsoever.
+Checklist for finishing a data year:
 
-```{r}
-1 + 1
-```
+1. Update `config.yml` and the year configuration chunk, and place raw lab files in `data/`.
+2. Render the year document and review the Part C checklist answers.
+3. Fill in the flag decisions CSV in `reference/wqx_templates/` and re-render so flags are applied.
+4. Download the project and station files from WQP into `other/input/WQX_downloads/`.
+5. Run Part D and check that the export script's ID checks pass.
+6. Upload the files in `other/output/` through WQX Web.
+7. Confirm in the WQP that the new results appear under the 22 known stations, with no duplicate stations.

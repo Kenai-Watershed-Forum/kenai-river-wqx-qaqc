@@ -29,7 +29,13 @@ covers work in both repos. Edit it only from `kenai-river-wqx`.
 
 ## Project Purpose
 
-Annual QA/QC pipeline for Kenai River Baseline Water Quality Monitoring data submitted to the U.S. EPA Water Quality Exchange (WQX) via CDX. Managed by Kenai Watershed Forum. Each data year gets its own QMD in `project_year/` (e.g. `project_year/2025.qmd`).
+Annual QA/QC pipeline for Kenai River Baseline Water Quality Monitoring data submitted to the U.S. EPA Water Quality Exchange (WQX) via CDX. Managed by Kenai Watershed Forum. The repo is a one-year-at-a-time template: each data year is run through `project_year/<year>.qmd` (currently `project_year/2025.qmd`), configured by `config.yml`.
+
+## Book Build (`quarto render`)
+
+`_quarto.yml` is a Quarto book (output to `output/report/`, `date: today`) with chapters `index.qmd`, `intro.qmd` (pipeline overview), `references.qmd`, and one part "Working year" containing only `project_year/2025.qmd`. To run a new year, swap that one line. `summary.qmd` (year-completion checklist) exists but is not a chapter. Files not listed (templates, `session_log.md`, `reference/dat_contract.md`, legacy `project_year/2014–2024.qmd`) are not rendered; a `type: default` project would render all of them and fail on the `XXXX` placeholder in `pipeline_template.qmd`. A full render of the 2025 book completed without errors on 2026-10-28.
+
+
 
 ------------------------------------------------------------------------
 
@@ -173,7 +179,7 @@ Sets `spring_sample_date = "4/30/2025"`, `summer_sample_date = "7/23/2025"`, pat
 
 **YSI / Turbidity** — Single file: `2025 Kenai Agency Baseline YSI ProQuatro and Turbidity Data.xlsx`, Sheet1. Both seasons in one file; season inferred from `Site Depart Date` month. Parameters mapped: Temperature → "Water Temperature" (170.1), Conductivity → "Specific Conductance" (120.1), DO → "Dissolved Oxygen" (360.1), Turbidity → "Turbidity" (180.1), pH → "pH" (150.1). All context_code = "USEPA". Excluded: pH \< 0 or \> 14; DO \> 20 mg/L. Replicates averaged per site-date-parameter; DUP sites kept separate via `ysi_site_lkp`. `result_sample_fraction = "Total"` set in Part A. Produces `dat_ysi`.
 
-**Bind** `dat <- bind_rows(dat_sgs, dat_fc, dat_tss, dat_ysi)` — 865 rows, 23 sites as of April 2026.
+**Bind** `dat <- bind_rows(dat_sgs, dat_fc, dat_tss, dat_ysi)` — 883 rows, 22 sites, 27 analytes per `reference/dat_contract.md` (Oct 2026; earlier notes said 865 rows / 23 sites).
 
 ### Part B: WQX Formatting
 
@@ -226,7 +232,7 @@ Rebuilt to match 2025 template structure (YAML at top, `date: today`, Part A/B/C
 - **TSS LOD/LOQ:** 0.5 / 1.0 mg/L are placeholders. Verify against current QAPP.
 - **Summer FC run_date:** hardcoded as 7/24/2025; verify against SWWTP lab report.
 - **YSI site mapping:** any site names not in `ysi_site_lkp` will print a warning and be excluded.
-- **`date: today`:** Both `index.qmd` and `project_year/2025.qmd` use `date: today` (Quarto native). Do not use `` `r Sys.Date()` `` in YAML — it will not render correctly.
+- **`date: today`:** `_quarto.yml`, `index.qmd` and `project_year/2025.qmd` use `date: today` (Quarto native). Do not use `` `r Sys.Date()` `` in YAML — it will not render correctly.
 
 ------------------------------------------------------------------------
 

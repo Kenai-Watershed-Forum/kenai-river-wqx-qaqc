@@ -1,6 +1,22 @@
 project:
-  type: default
+  type: book
   output-dir: output/report
+
+book:
+  title: "Kenai River Baseline Water Quality Project Data QA/QC"
+  author: "Benjamin Meyer, Kenai Watershed Forum"
+  date: today
+  page-navigation: true
+  chapters:
+    - index.qmd
+    - intro.qmd
+    - references.qmd
+    - part: "Working year"
+      chapters:
+      - project_year/2025.qmd
+  repo-url: https://github.com/Kenai-Watershed-Forum/kenai-river-wqx-qaqc
+  search:
+    location: sidebar
 
 execute:
   echo: false

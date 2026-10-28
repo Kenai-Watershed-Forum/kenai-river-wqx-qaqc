@@ -18,7 +18,7 @@
 #   export_dat  (flagged, ready for downstream QA/QC chunks and generate_cdx_export.R)
 #
 # Also writes:
-#   cfg$flagged_export_path  (e.g., other/output/wqx_formatted/intermediate/{year}_export_data_flagged.csv)
+#   cfg$flagged_export_path  (e.g., output/{year}_export_data_flagged.csv)
 
 
 # Read in data formatted for export
