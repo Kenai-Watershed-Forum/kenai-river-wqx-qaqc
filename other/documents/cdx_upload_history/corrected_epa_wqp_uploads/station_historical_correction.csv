@@ -1,0 +1,16 @@
+MonitoringLocationIdentifier,MonitoringLocationName,MonitoringLocationTypeName,MonitoringLocationDescriptionText,HUCEightDigitCode,LatitudeMeasure,LongitudeMeasure,HorizontalCollectionMethodName,HorizontalCoordinateReferenceSystemDatumName,StateCode,CountyCode
+KENAI_WQX-10000063,KBX_m_03.5,River/Stream Perennial,,19020302,60.52238,-151.24544,GPS-Unspecified,NAD83,2,122
+KENAI_WQX-10000065,KBX_m_07.0,River/Stream Perennial,,19020302,60.539,-151.176,GPS-Unspecified,NAD83,2,122
+KENAI_WQX-10000066,KBX_m_01.5,River/Stream Perennial,,19020302,60.544,-151.226,GPS-Unspecified,NAD83,2,122
+KENAI_WQX-10000068,KBX_m_03.8,River/Stream Perennial,,19020302,60.52162,-151.24264,GPS-Unspecified,NAD83,2,122
+KENAI_WQX-10000069,KBX_m_08.2,River/Stream Perennial,,19020302,60.51833,-151.16495,GPS-Unspecified,NAD83,2,122
+KENAI_WQX-10000071,KBX_m_10.0,River/Stream Perennial,,19020302,60.53344,-151.1475,GPS-Unspecified,NAD83,2,122
+KENAI_WQX-10000121,KBX_m_0.8,River/Stream Perennial,,19020302,60.55,-151.239,GPS-Unspecified,NAD83,2,122
+KENAI_WQX-10000122,KBX_m_01.0,River/Stream,,19020302,60.548,-151.238,GPS-Unspecified,NAD83,2,122
+KENAI_WQX-10000123,KBX_m_01.4,River/Stream Perennial,,19020302,60.545,-151.227,GPS-Unspecified,NAD83,2,122
+KENAI_WQX-10000124,KBX_m_03.0,River/Stream Perennial,,19020302,60.535,-151.252,GPS-Unspecified,NAD83,2,122
+KENAI_WQX-10000126,KBX_m_07.8,River/Stream Perennial,,19020302,60.51833,-151.16495,GPS-Unspecified,NAD83,2,122
+KENAI_WQX-10000128,KBX_m_10.2,River/Stream Perennial,,19020302,60.539,-151.142,GPS-Unspecified,NAD83,2,122
+KENAI_WQX-10000129,KBX_m_11.1,River/Stream Perennial,,19020302,60.547,-151.119,GPS-Unspecified,NAD83,2,122
+KENAI_WQX-10000130,KBX_m_11.6,River/Stream Perennial,,19020302,60.544,-151.112,GPS-Unspecified,NAD83,2,122
+KENAI_WQX-10000131,KBX_m_05.0,River/Stream Perennial,,19020302,60.527,-151.209,GPS-Unspecified,NAD83,2,122

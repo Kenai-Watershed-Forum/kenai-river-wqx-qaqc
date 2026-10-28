@@ -1,0 +1,111 @@
+OrganizationIdentifier,OrganizationFormalName,MonitoringLocationIdentifier,MonitoringLocationName,MonitoringLocationTypeName,MonitoringLocationDescriptionText,HUCEightDigitCode,DrainageAreaMeasure/MeasureValue,DrainageAreaMeasure/MeasureUnitCode,ContributingDrainageAreaMeasure/MeasureValue,ContributingDrainageAreaMeasure/MeasureUnitCode,LatitudeMeasure,LongitudeMeasure,SourceMapScaleNumeric,HorizontalAccuracyMeasure/MeasureValue,HorizontalAccuracyMeasure/MeasureUnitCode,HorizontalCollectionMethodName,HorizontalCoordinateReferenceSystemDatumName,VerticalMeasure/MeasureValue,VerticalMeasure/MeasureUnitCode,VerticalAccuracyMeasure/MeasureValue,VerticalAccuracyMeasure/MeasureUnitCode,VerticalCollectionMethodName,VerticalCoordinateReferenceSystemDatumName,CountryCode,StateCode,CountyCode,AquiferName,LocalAqfrName,FormationTypeText,AquiferTypeName,ConstructionDateText,WellDepthMeasure/MeasureValue,WellDepthMeasure/MeasureUnitCode,WellHoleDepthMeasure/MeasureValue,WellHoleDepthMeasure/MeasureUnitCode,ProviderName
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000002,KBL_m_01.5,River/Stream,,,,,,,60.54368,-151.22294,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000005,KBL_m_06.5,River/Stream,,,,,,,60.54081,-151.18278,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000016,KBL_m_10.1,River/Stream,,,,,,,60.539279,-151.142263,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000017,KBL_m_12.5,River/Stream,,,,,,,60.533743,-151.099258,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000018,KBL_m_18.0,River/Stream,,,,,,,60.502005,-151.106973,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000021,KBL_m_21.0,River/Stream,,,,,,,60.476634,-151.082099,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000023,KBL_m_23.0,River/Stream,,,,,,,60.480338,-151.030847,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000025,KBL_m_31.0,River/Stream,,,,,,,60.498284,-150.863121,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000027,KBL_m_40.0,River/Stream,,,,,,,60.515441,-150.702069,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000028,KBL_m_43.0,River/Stream,,,,,,,60.489844,-150.636905,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000030,KBL_m_50.0,River/Stream,,,,,,,60.467517,-150.507789,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000031,KBL_m_70.0,River/Stream,,,,,,,60.481392,-150.11502,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000425,KBL_m_82.0,River/Stream,,,,,,,60.492,-149.81087,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000008,KBL_t_00.0,River/Stream,,,,,,,60.550888,-151.268417,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000015,KBL_t_10.0,River/Stream,,,,,,,60.548029,-151.14324,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000020,KBL_t_19.0,River/Stream,,,,,,,60.482318,-151.127053,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000022,KBL_t_22.0,River/Stream,,,,,,,60.483364,-151.057656,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000024,KBL_t_30.0,River/Stream,,,,,,,60.489963,-150.860982,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000026,KBL_t_36.0,River/Stream,,,,,,,60.53687,-150.754724,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000029,KBL_t_44.0,River/Stream,,,,,,,60.481518,-150.632498,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000032,KBL_t_74.0,River/Stream,,,,,,,60.484622,-149.993955,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000424,KBL_t_79.5,River/Stream,,,,,,,60.489,-149.877,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000121,KBX_m_0.8,River/Stream Perennial,,,,,,,60.55,-151.239,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000122,KBX_m_01.0,River/Stream,,,,,,,60.548,-151.238,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000123,KBX_m_01.4,River/Stream Perennial,,,,,,,60.545,-151.227,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000066,KBX_m_01.5,River/Stream Perennial,,,,,,,60.544,-151.226,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000124,KBX_m_03.0,River/Stream Perennial,,,,,,,60.535,-151.252,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000063,KBX_m_03.5,River/Stream Perennial,,,,,,,60.52238,-151.24544,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000068,KBX_m_03.8,River/Stream Perennial,,,,,,,60.52162,-151.24264,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000131,KBX_m_05.0,River/Stream Perennial,,,,,,,60.527,-151.209,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000065,KBX_m_07.0,River/Stream Perennial,,,,,,,60.539,-151.176,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000126,KBX_m_07.8,River/Stream Perennial,,,,,,,60.51833,-151.16495,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000069,KBX_m_08.2,River/Stream Perennial,,,,,,,60.51833,-151.16495,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000071,KBX_m_10.0,River/Stream Perennial,,,,,,,60.53344,-151.1475,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000128,KBX_m_10.2,River/Stream Perennial,,,,,,,60.539,-151.142,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000129,KBX_m_11.1,River/Stream Perennial,,,,,,,60.547,-151.119,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000130,KBX_m_11.6,River/Stream Perennial,,,,,,,60.544,-151.112,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-KR RM 1.5 DCK,Kenai River - City of Kenai Docks,River/Stream,North end of dock - watershed sampling location,19020302,,,,,60.54368,-151.22294,,,,GPS-Unspecified,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-KR RM 0 NNC,"Kenai River - River Mile 0 - ""No Name"" Creek",River/Stream,"500' upstream of confluence with Kenai River. Sample from No Name Creek, not the Kenai River",19020302,,,,,60.550888,-151.268417,,,,GPS-Unspecified,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-KR RM 10 BC,Kenai River - River Mile 10 - Beaver Creek,River/Stream,"Nathan's Dock. Sample from Beaver Creek, not the Kenai River.",19020302,,,,,60.548029,-151.14324,,,,GPS-Unspecified,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-KR RM 10.1,Kenai River - River Mile 10.1,River/Stream,Upstream of Beaver Ck. Location is upstream on Kenai River from Beaver Ck & Kenai River confluence.,19020302,,,,,60.539279,-151.142263,,,,GPS-Unspecified,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-KR RM 12.5,Kenai River - River Mile 12.5,River/Stream,Pillars State Park boat launch,,,,,,60.533743,-151.099258,,,,GPS-Unspecified,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-KR RM 18,Kenai River - River Mile 18 - Poachers Cove,River/Stream,Poachers Cove - 6' out see comments,19020302,,,,,60.502005,-151.106973,,,,GPS-Unspecified,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-KR RM 19 SC,Kenai River - River Mile 19 - Slikok Creek,River/Stream,"Mid channel of creek. Sample from Slikok Creek, not the Kenai River",19020302,,,,,60.482318,-151.127053,,,,GPS-Unspecified,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-KR RM 21,Kenai River - River Mile 21 - Soldotna Bridge,River/Stream,Sample from shore. South bank below Soldotna bridge,19020302,,,,,60.476634,-151.082099,,,,GPS-Unspecified,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-KR RM 22 SOC,Kenai River - River Mile 22 - Soldotna Creek,River/Stream,"Sampling site is mid-channel off edge of fence. Sample from Soldotna Creek, not the Kenai River (i.e., collect sample above confluence with Kenai River)",19020302,,,,,60.483364,-151.057656,,,,GPS-Unspecified,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-KR RM 23,Kenai River - River Mile 23 - Swiftwater Park,River/Stream,Swiftwater Park. Sample from fishing platform closest to park entrance toll booth.,19020302,,,,,60.480338,-151.030847,,,,GPS-Unspecified,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-KWF KR RM 23,Kenai River - River Mile 23 - Swiftwater Park,River/Stream,,,,,,,60.480338,-151.030847,,,,GPS-Unspecified,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-KR RM 30 FR,Kenai River - River Mile 30 - Funny River,River/Stream,"Downstream 75', north side of bridge Sample from Funny River, not the Kenai River KWF Kenai River Watershed Monitoring location",19020302,,,,,60.489963,-150.860982,,,,GPS-Unspecified,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-KR RM 31,Kenai River - River Mile 31,River/Stream,Morgans Landing,19020302,,,,,60.498284,-150.863121,,,,GPS-Unspecified,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-KR RM 36 MR,Kenai River - River Mile 36 - Moose River,River/Stream,"Sample from Moose River, not the Kenai River",19020302,,,,,60.53687,-150.754724,,,,GPS-Unspecified,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-KR RM 40,Kenai River - River Mile 40,River/Stream,Bing's Landing Boat Launch. Upstream dock off corner of dock.,19020302,,,,,60.515441,-150.702069,,,,GPS-Unspecified,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-KR RM 43,Kenai River - River Mile 43 - Dow Island,River/Stream,Upstream of Dow Island. 100' upstream point island. Boat access only.,19020302,,,,,60.489844,-150.636905,,,,GPS-Unspecified,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-KR RM 44 KI,Kenai River - River Mile 44 - Killey River,River/Stream,Mouth of Killey River - Mid channel across from fish table,19020302,,,,,60.481518,-150.632498,,,,GPS-Unspecified,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-KWF KR RM 5,Kenai River - River Mile 5,River/Stream,Warren Ames Memorial Bridge river access. Downstream of bridge.,19020302,,,,,60.52557,-151.209,,,,GPS-Unspecified,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-KR RM 50,Kenai River - River Mile 50 - Skilak Lake Outflow,River/Stream,"Kenai River - River Mile 50 - Skilak Lake Outflow.  Thigh deep, north shore in line with the swan closure sign",19020302,,,,,60.467517,-150.507789,,,,GPS-Unspecified,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-KR RM 6.5,Kenai River - River Mile 6.5 - Cunningham Park,River/Stream,Sampling location off corner of boardwalk.,19020302,,,,,60.54081,-151.18278,,,,GPS-Unspecified,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-KR RM 70,Kenai River - River Mile 70 - Jim's Landing,River/Stream,Upstream end of boat launch,19020302,,,,,60.481392,-150.11502,,,,GPS-Unspecified,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-KR RM 74 RR,Kenai River - River Mile 74 - Russian River,River/Stream,Kenai River - River Mile 74 - Russian River Tributary. Sampling at/above confluence. Not Kenai River.,19020302,,,,,60.484622,-149.993955,,,,GPS-Unspecified,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-KR RM 79.5 JC,Kenai River - River Mile 79.5 - Juneau Creek,River/Stream,"Samples collected from of Juneau Creek, not the kenai River -",19020302,,,,,60.489,-149.877,,,,GPS-Unspecified,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-KR RM 82,Kenai River - River Mile 82 - Kenai Lake Bridge,River/Stream,Down stream of boat launch.  Kenai River - River Mile 82 - Kenai Lake Bridge.,19020302,,,,,60.492,-149.81087,,,,GPS-Unspecified,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-KR RM 8.1,Kenai River River Mile 8.1,River/Stream,"Kenai River, river mile 8.1 Chinook sonar site, Lower Bluffs",,,,,,60.5188418,-151.16106,500,,,Interpolation-Satellite,WGS84,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000338,TL_Anchor_River,River/Stream,,,,,,,59.7732333,-151.8338999,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000419,TL_Anchor_River_2,River/Stream,,,,,,,59.7732333,-151.8338999,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000112,TL_Beaver_Creek_Gage,River/Stream,,,,,,,60.561033,-151.123433,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000146,TL_Beaver_Creek_Mouth,River/Stream,,,,,,,60.540589,-151.146802,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000141,TL_Bishop_Creek_Lower,River/Stream,,,,,,,60.76805,-151.103167,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000145,TL_Bishop_Creek_Upper,River/Stream,,,,,,,60.71847,-151.12817,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000343,TL_Chenik_Creek,River/Stream,,,,,,,59.20945,-154.1898833,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000346,TL_Chuitna_River,River/Stream,,,,,,,61.1014833,-151.1904833,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000110,TL_Coal_Creek_Lower,River/Stream,,,,,,,60.354732,-151.268316,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000139,TL_Coal_Creek_Upper,River/Stream,,,,,,,60.35026,-151.20943,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000175,TL_Crooked_Creek_Lower,River/Stream,,,,,,,60.316383,-151.283883,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000140,TL_Crooked_Creek_Upper,River/Stream,,,,,,,60.28249,-151.2716,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000350,TL_Deep_Creek,River/Stream,,,,,,,60.0327167,-151.6706,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000134,TL_Devils_Creek,River/Stream,,,,,,,60.557762,-149.536103,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000114,TL_Elva_Creek,River/Stream,,,,,,,60.529826,-150.771635,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000352,TL_English_Bay_River,River/Stream,,,,,,,59.3431833,-151.9122999,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000354,TL_Fox_Creek,River/Stream,,,,,,,59.7992167,-151.056,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000414,TL_Fox_Creek_2,River/Stream,,,,,,,59.7992167,-151.056,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000117,TL_Funny_River,River/Stream,,,,,,,60.489717,-150.860217,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000173,TL_Hidden_Creek,River/Stream,,,,,,,60.438817,-150.208333,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000174,TL_Jean_Creek,River/Stream,,,,,,,60.482728,-150.117136,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000360,TL_McNeil_River,River/Stream,,,,,,,59.1168833,-154.2793,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000116,TL_Moose_Creek_Kenai,River/Stream,,,,,,,60.51214,-149.467428,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000115,TL_Moose_River,River/Stream,,,,,,,60.55695,-151.734717,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000172,TL_Moose_River_East_Fork,River/Stream,,,,,,,60.530503,-150.462244,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000367,TL_Nikolai_Creek,River/Stream,,,,,,,60.1949,-151.0089,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000415,TL_Nikolai_Creek_2,River/Stream,,,,,,,60.1949,-151.0089,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000368,TL_Ninilchik_River,River/Stream,,,,,,,60.0490667,-151.6560666,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000416,TL_Ninilchik_River_2,River/Stream,,,,,,,60.0490667,-151.6560666,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000118,TL_No_Name_Creek,River/Stream,,,,,,,60.55852,-151.265508,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000119,TL_Primrose_Creek,River/Stream,,,,,,,60.340996,-149.370073,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000369,TL_Quartz_Creek_Lower,River/Stream,,,,,,,60.49345,-149.7004166,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000133,TL_Quartz_Creek_Upper,River/Stream,,,,,,,60.607841,-149.536103,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000371,TL_Resurrection_Creek,River/Stream,,,,,,,60.9179333,-149.6431499,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000136,TL_Scout_Creek,River/Stream,,,,,,,60.518152,-150.794632,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000372,TL_Seldovia_River,River/Stream,,,,,,,59.38905,-151.67975,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000373,TL_Shantatalik_Creek,River/Stream,,,,,,,60.2913167,-150.9850999,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000417,TL_Shantatalik_Creek_2,River/Stream,,,,,,,60.2913167,-150.9850999,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000375,TL_Silver_Salmon_Creek,River/Stream,,,,,,,59.982,-152.6731499,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000144,TL_Slikok_Creek,River/Stream,,,,,,,60.48237,-151.13302,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000180,TL_Slikok_Creek_Lower,River/Stream,,,,,,,60.482883,-151.1308,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000137,TL_Snow_River_Tributary,River/Stream,,,,,,,60.310698,-149.359625,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000179,TL_Soldotna_Creek_Lower,River/Stream,,,,,,,60.488733,-151.044383,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000138,TL_Soldotna_Creek_Upper,River/Stream,,,,,,,60.497977,-151.021633,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000378,TL_Stariski_Creek,River/Stream,,,,,,,59.8506333,-151.7871833,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000418,TL_Stariski_Creek_2,River/Stream,,,,,,,59.8506333,-151.7871833,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000178,TL_Swanson_River,River/Stream,,,,,,,60.792217,-151.011983,,,,Unknown,NAD27,,,,,,,US,02,122,,,,,,,,,,STORET
+KENAI_WQX,Kenai Watershed Forum,KENAI_WQX-10000113,TL_Walmart_Creek,River/Stream,,,,,,,60.551522,-151.227943,,,,Unknown,NAD83,,,,,,,US,02,122,,,,,,,,,,STORET

@@ -65,7 +65,7 @@ kenai-river-wqx-qaqc/
 └── README.md                   # Layout, new-year checklist, archive checklist, restore
 ```
 
-Governance PDFs (QAPP, CALM, 18 AAC 70, etc.) stay in the report repo's `other/agent_context/`; text versions are in `other/documents/md/` here. WQX Web import configuration (Uid 9481) walkthrough is in the report repo's `chapters/cdx_upload.qmd`; the exported config is not yet committed anywhere.
+Governance PDFs (QAPP, CALM, 18 AAC 70, etc.) stay in the report repo's `other/agent_context/`; text versions are in `other/documents/md/` here. WQX Web import configuration (Uid 9481) walkthrough is in `cdx_upload.qmd` here (moved from the report repo 2026-10-28); upload and delete history is in `other/documents/cdx_upload_history/`. The older config export (Uid 8515, `KWF_Results_Baseline_Template`) is in that folder; the working config (Uid 9481) is `other/documents/EPA_WQX_templates/cdx_import_config_results_activities_20261028.cfg`.
 
 ------------------------------------------------------------------------
 
@@ -237,7 +237,7 @@ Notable Q2/Q3 wording (most commonly diverged in past): - **Q2:** "Were there an
 
 ## Report-Repo Items (tracked in `kenai-river-wqx`, not done here)
 
-2021 WQP verification, cache refresh and book render; trend analysis rollout; characteristic name audit (Task 1b); CALM 5-year sample counts (Task 1c); `review_needed` verification in `master_reg_limits.xlsx` (Task 5); committing WQX Web config Uid 9481. See that repo's `AGENTS.md`.
+2021 WQP verification, cache refresh and book render; trend analysis rollout; characteristic name audit (Task 1b); CALM 5-year sample counts (Task 1c); `review_needed` verification in `master_reg_limits.xlsx` (Task 5). See that repo's `AGENTS.md`.
 
 ## Style Preferences
 
