@@ -1,0 +1,66 @@
+---
+title: "agent_context"
+format: html
+---
+
+NOTE: This file is for providing instructions to Posit Assistant. No agent should edit this file, it is only edited manually by users.
+
+9/28/2026
+
+I have not edited this project for some months prior to today. I want to pick up where I left off. I believe the priority tasks remain to a) ensure 2021 data is ready to upload to the epa cdx, 2) upload 2021 data to the epa cdx, 3) continue preparing and uploading data from other years using the repo whose quarto book is published at <https://github.com/Kenai-Watershed-Forum/kenai-river-wqx-qaqc>. help me assess and decide where to begin again. i think the list of "Active Tasks" in AGENTS.md is a good list of project priorities but just want to confirm before proceeding.
+
+10/14/2026
+
+I want to make some changes to systems architecture and organization for the task of performing qa/qc on and reporting on kenai river water quality data. i believe these changes will be valuable in order to continue being able to use posit assistant for ongoing work. as is, this project is becoming very large (\~2 gb), and as a result the context is large and attempting to use posit assistant is becoming expensive. i want to ensure the same challenge does not also propagate in to future years, as this monitoring project is intended to continue indefinitely
+
+notes:
+
+- currently, this repo has an example 2025 report at other/documents/preliminary_report_2025
+
+- this repo has a qa/qc chapter (appendix a) of this report, for performing qa/qc on year 2021 data only, which relies on a variety of sourced scripts
+
+- a seperate repo is intended to perform and document qa.qc for years other than 2021 at <https://github.com/Kenai-Watershed-Forum/kenai-river-wqx-qaqc>
+
+- the epa cdx currently contains project data up to only \~2013
+
+desired outcome:
+
+- the appendix a with 2021 data in this repo remains lcated here
+
+- the content at <https://github.com/Kenai-Watershed-Forum/kenai-river-wqx-qaqc> is instead replaced by a report template, which i can use for each year that i want to perform qa/qc on. each year's report will document the qa/qc, ( one or multiple chpaters), as well as generate basic preliminary report (in the style of the 2025 report mentioned above here)
+
+- i will use the template perform qa/qc and generate preliminary report for all project years for which all data is not yet sync'd to the epa cdx, (2013-2026). each year will be its own standalone rstudio project and its own github repo in Kenai Watershed Forum's github account (<https://github.com/Kenai-Watershed-Forum>)
+
+additional notes
+
+- i don't know if its possible to edit content at <https://github.com/Kenai-Watershed-Forum/kenai-river-wqx-qaqc> directly from this current repo. if so, it seems like that would be convenient, but we should proceed with caution. i am willing to perform whatever manual steps necessary.
+
+- do not guess on issues for how to proceed. interview me and ask questions when necessary, ask me or reference other sources when appropriate
+
+- lets make a plan and refine it before proceeding
+
+10/14/2026 follow up
+
+Before we proceed with the work of using the materials at <https://github.com/Kenai-Watershed-Forum/kenai-river-baseline-wqx-template> to ingest water quality data from all un-sync'd years and feed it to the epa cdx, i suggest one other task/investigation, described as follows:
+
+- we just completed uploading the 2021 data to epa cdx, using the template in this repo in appendix a. it would be a good idea to make sure that all data there can be properly ingested and displayed back in the quarto book in this repo (<https://kenai-watershed-forum.github.io/kenai-river-wqx/>).
+
+- we generated the current version of the book displayed at <https://kenai-watershed-forum.github.io/kenai-river-wqx/> using the data downloaded from cdx from 2000 - 2013, and then also 2021, but the 2021 data was uploaded using the old import template
+
+- it is possible we will need to make adjustments to <https://github.com/Kenai-Watershed-Forum/kenai-river-baseline-wqx-template> based on our need to access that information from cdx and display it back in this report
+
+- this repo (<https://github.com/Kenai-Watershed-Forum/kenai-river-wqx>) is currently accessing data from a csv downloaded from the epa wqp. long-term, i wish for it to be set up to automatically download and access data directly from the epa wqp; with the option to download and utilize a local copy of that data for development purposes (e.g. local only, gitignored)
+
+- assess these notes and help plan how to proceed. do not guess, ask questions/interview or reference materials when appropriate, proceed in stepwise fashion with approval from the user
+
+10/16/2026
+
+I want to work on the task of updating the data_sourcing.qmd chapter. i want sourcing data for this book directly from EPA, and keep a local copy of it that is gitignored inside this repo. a refreshof the data should occur each time new data in the epa database is updated. once this is implemented, the text in the data_sourcing.qmd chapter should reflect this procedure.\
+\
+assess this request help plan for implementation. ask questions and interview me before proceeding as necessary. do not guess if you are unsure, ask or reference external sources to ensure compliance
+
+additional notes
+
+note 1: The guerron-orejuela 2016 report especially has a lot of trend analyses (space or time) for some parameters, by site/season (i think just the ones identified of concern, eg zinc). they are included in the chapters of each parameter. i want to assess what it would look like to implement this in this quarto book. i would like the option to implement this for each parameter chapter, though I may not choose to do so for all of them. also i think some of the plots could be partially combined, eg to show the different seasons in two seperate facets of the same plot. or maybe even a plot that shows trendlines for all summer tributary sites, another one for summer main stem sites, another one for spring tributary sites, and another for summer tributary sites. each facet should indicate the n= quantity of observations. guerron-orejeula fit a polynomial line to each plot; i am unsure if we shoul proceed that way or some other way.
+
+assess this request help plan for implementation. ask questions and interview me before proceeding as necessary. do not guess if you are unsure, ask or reference external sources to ensure compliance
