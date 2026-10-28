@@ -1,0 +1,4 @@
+# Raw lab files for the working year are not committed; see README (year bundles are GitHub Releases).
+*
+!.gitignore
+!*.sha256

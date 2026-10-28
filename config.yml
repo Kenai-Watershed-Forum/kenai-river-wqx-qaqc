@@ -1,0 +1,20 @@
+# Working-year configuration. Edit for each data year; archived in the year bundle.
+year: 2025
+
+sampling:
+  spring_date: "2025-04-30"
+  summer_date: "2025-07-23"
+
+# All paths are relative to data/ (raw lab files for the working year only)
+files:
+  sgs:
+    spring: {path: "spring_2025_wqx_data/SGS/spring_2025_kenai_baseline_sgs_results.xlsx", sheet: "Sheet8"}
+    summer: {path: "summer_2025_wqx_data/SGS/summer_2025_kenai_baseline_results_sgs.xlsx", sheet: "Sheet8"}
+  fc:
+    spring: {path: "spring_2025_wqx_data/SWWTP/KRWF Fecal 04-30-25.xls", skip: 11}
+    summer: {path: "summer_2025_wqx_data/SWWTP/KRWF Fecal 07-23-25.xls", skip: 10}
+  tss:
+    spring: {path: "spring_2025_wqx_data/SWWTP/KRWF TSS MONITORING 05-01-25.xlsx", sheet: "Updated_Formatting", skip: 0}
+    summer: {path: "summer_2025_wqx_data/SWWTP/KRWF TSS MONITORING 07-25-25.xls", sheet: "Updated_Formatting", skip: 1}
+  ysi:
+    both: {path: "2025 Kenai Agency Baseline YSI ProQuatro and Turbidity Data.xlsx"}
