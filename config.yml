@@ -1,4 +1,4 @@
-# Working-year configuration. Edit for each data year; archived in the year bundle.
+# Year configuration. Edit once per repo copy (one data year per repo).
 year: 2025
 
 sampling:
@@ -10,11 +10,33 @@ files:
   sgs:
     spring: {path: "spring_2025_wqx_data/SGS/spring_2025_kenai_baseline_sgs_results.xlsx", sheet: "Sheet8"}
     summer: {path: "summer_2025_wqx_data/SGS/summer_2025_kenai_baseline_results_sgs.xlsx", sheet: "Sheet8"}
+  # TSS run_date/run_time: copy "DATE OF ANALYSIS" and "TIME" from the lab sheet header (required).
+  # TSS receipt (rec_date, rec_time) is not in the lab file; copy from the chain of custody (optional, warns if blank).
+  # FC receipt (rec_date, rec_time) is not in the lab file; copy it from the chain of custody.
+  # Left blank, ingest_fc() warns and sets receipt to NA.
   fc:
-    spring: {path: "spring_2025_wqx_data/SWWTP/KRWF Fecal 04-30-25.xls", skip: 11}
-    summer: {path: "summer_2025_wqx_data/SWWTP/KRWF Fecal 07-23-25.xls", skip: 10}
+    spring: {path: "spring_2025_wqx_data/SWWTP/KRWF Fecal 04-30-25.xls", rec_date: ~, rec_time: ~}
+    summer: {path: "summer_2025_wqx_data/SWWTP/KRWF Fecal 07-23-25.xls", rec_date: ~, rec_time: ~}
   tss:
-    spring: {path: "spring_2025_wqx_data/SWWTP/KRWF TSS MONITORING 05-01-25.xlsx", sheet: "Updated_Formatting", skip: 0}
-    summer: {path: "summer_2025_wqx_data/SWWTP/KRWF TSS MONITORING 07-25-25.xls", sheet: "Updated_Formatting", skip: 1}
+    spring: {path: "spring_2025_wqx_data/SWWTP/KRWF TSS MONITORING 05-01-25.xlsx", sheet: "Updated_Formatting", run_date: "2025-05-01", run_time: "13:58", rec_date: ~, rec_time: ~}
+    summer: {path: "summer_2025_wqx_data/SWWTP/KRWF TSS MONITORING 07-25-25.xls", sheet: "Updated_Formatting", run_date: "2025-07-25", run_time: "14:00", rec_date: ~, rec_time: ~}
   ysi:
     both: {path: "2025 Kenai Agency Baseline YSI ProQuatro and Turbidity Data.xlsx"}
+
+sgs:
+  # Trip blanks labelled "RMx&y trip blank" cover two sites; one row per site is created at ingest.
+  trip_blank_sites:
+    "RM1.5&6.5 trip blank": [10000002, 10000005]   # Kenai City Dock, Cunningham Park
+    "RM40&43 trip blank":   [10000027, 10000028]   # Bing's Landing, Upstream of Dow Island
+
+tss:
+  # Reporting limits for SM21-2540-+D (QAPP v3 Table 5). Check against the SWWTP lab report each year.
+  lod: 0.31   # mg/L
+  loq: 1.0    # mg/L
+
+ysi:
+  # Values outside these limits are removed from dat and reported in `excluded` for manual review.
+  # Corrections go in year_files/ysi_corrections.csv.
+  ph_min: 0
+  ph_max: 14
+  do_max: 20   # mg/L

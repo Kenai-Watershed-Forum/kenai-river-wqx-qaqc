@@ -13,21 +13,27 @@ Flow: this repo submits data to EPA WQX via CDX, EPA publishes to WQP, the repor
 
 **`other/agent_context/session_log.md`** is auto-synced from the report repo and covers both repos. Edit it only from `kenai-river-wqx`.
 
-Design record: `other/agent_context/plans/2026-10-28-qaqc-repo-as-parameterized-template.md` (rev. 2, approved 2026-10-28; read it before making architectural changes). It supersedes Phases 2 and 3 of `2026-10-14-1300-per-year-repo-architecture-migration.md` (Phases 0 and 1 of that plan stand). This repo is **not** archived.
+Design record: `other/agent_context/plans/2026-10-28-qaqc-repo-as-parameterized-template.md` (rev. 2, approved 2026-10-28; read it before making architectural changes). It supersedes Phases 2 and 3 of `2026-10-14-1300-per-year-repo-architecture-migration.md` (Phases 0 and 1 of that plan stand). This repo is **not** archived. **Note (2026-10-28, later in the day): the plan file's archive/fetch/checksum content and its item 13 (plain `type: default`) are out of date; the blank-template model below supersedes them. The plan file has not yet been revised.**
 
 ## Working Model
 
-One working year at a time: that year's raw files, config, outputs and report, plus shared code and reference data. Years are developed **2025 first, then backwards** (2024, 2023, ...). There is no cross-year regression baseline; intake and output handling are customized per year. A finished year is archived as a GitHub Release (`raw-data-{year}`, public, contains everything the labs sent) and removed from the working tree. See `README.md` for the new-year and archive checklists, and `functions/fetch_raw_data.R` and `functions/archive_year.R`.
+**This repo is being built into a blank, robust template that works for any year.** It is not a repo that processes 2025. For each project year the user copies the template into a **new GitHub repo** and puts only that year's raw lab files in `data/` (committed there; one year per repo). 2025 is the test fixture used to refine the template. The template must run the full QA/QC process for an annual dataset and draft the preliminary report.
+
+- Function code must contain nothing year-specific. Year-specific values live only in `config.yml`, `year_files/` and reference tables.
+- The 2025 data and outputs are removed at the end, leaving placeholders, `data/.gitkeep`, and a README new-year checklist. Mark the repo a GitHub template repository. A trimmed example folder (suggested `example_2025/`, contents undecided; raw lab files may not be wanted) stays in the template.
+- Also removed at the end: legacy `project_year/2014-2024` and `other/input/<year>` folders.
+- **Archive and fetch mechanics were deleted** (2026-10-28): `functions/fetch_raw_data.R`, `functions/archive_year.R`, `data/.gitignore`, the `.sha256` files and the `raw-data-{year}` releases are no longer part of the design. `README.md` and the plan file still describe them and need rewriting.
+- The "2025 first, then backwards" sequence and the promotion review no longer apply.
 
 **Phases** (each ends with a check-in; present decisions to the user one at a time):
 
 | Phase | Content | Status |
 |----|----|----|
-| A | Contract, layout, archive mechanics | Largely done. Remaining: reconcile function copies with the report repo's scripts |
-| B | 2025 ingestion as per-lab functions with a season argument; surrogates to `lab_qc_dat`; drop `matrix` and `result_detection_condition`; `mg/L` guard; contract-check function | Next |
-| C | `qaqc.qmd` Parts B-D; field blank coding; surrogate check in Q20; write `assessed_results.csv` and `lab_qc_assessed.csv` | Pending |
+| A | Contract, layout | Largely done. Remaining: reconcile function copies with the report repo's scripts (deferred until code settles) |
+| B | Ingestion as per-lab functions with a season argument; surrogates to `lab_qc_dat`; drop `matrix` and `result_detection_condition`; `mg/L` guard; contract-check function | In progress. `ingest_sgs.R` and `ingest_fc.R` done and verified; `ingest_tss.R` done and verified (2026-10-28); `clock_utils.R` split out (2026-10-28); `ingest_ysi.R` written and verified (2026-10-28); `check_dat_contract.R` written with tests (2026-10-28); `reference/dat_contract.md` updated for enforcement, units and lookup rules (2026-10-28). **Open: wire the check into the combine step; decide the lookup-coverage warning (add YSI, TSS, FC methods and the `SW8260D` key to the three sheets, then promote to error); compare per-type `lab_qc` counts with `dat_contract.md`; test a Trip Blank label in `resolve_rm_site`** |
+| C | `qaqc.qmd` Parts B-D; field blank coding; surrogate check in Q20; Q17 fixes; write `assessed_results.csv` and `lab_qc_assessed.csv` | Pending |
 | D | `prelim_report.qmd` generalized from `other/documents/preliminary_report_2025/2025_preliminary_summary.qmd`; its setup chunk (about lines 200-530) re-ingests raw data and is replaced by reading `assessed_results.csv` | Pending |
-| E | Archive 2025, promotion review, reset for 2024, update both repos' docs | Pending |
+| E | Blank the template (see Working Model), keep the trimmed example, update both repos' docs | Pending |
 
 Key decisions are in the plan. The ones that most affect day-to-day work: `dat` has 24 columns (see `reference/dat_contract.md`); field blanks use Activity Type `Quality Control Sample-Field Blank` and Activity ID suffix `FB`; `lab_qc_dat` holds all 14 SGS lab QC codes plus any `(surr)` analyte and never flows to the WQX export; `prelim_report.qmd` reads only `output/assessed_results.csv`, `config.yml` and reference data.
 
@@ -37,10 +43,10 @@ The pipeline is mid-migration. Today the working pipeline is `project_year/2025.
 
 ```
 kenai-river-wqx-qaqc/
-├── config.yml                  # Working-year settings (dates, lab file paths/sheets/skip, relative to data/)
-├── data/                       # Raw lab files, gitignored; only {year}.sha256 is committed
-├── functions/                  # format_wqx.R, apply_qaqc_flags.R, generate_cdx_export.R,
-│                               # fetch_raw_data.R, archive_year.R
+├── config.yml                  # Year settings (dates, lab file paths/sheets, FC and TSS run/receipt date+time, sgs trip_blank_sites, tss lod/loq)
+├── data/                       # One year's raw lab files; intended to be committed per year repo (15 files, 31 MB for 2025; currently untracked, and nothing from the Phase B work is committed yet)
+├── functions/                  # ingest_sgs.R, ingest_fc.R, ingest_tss.R, ingest_ysi.R, resolve_rm_site.R, clock_utils.R, check_dat_contract.R (Phase B);
+│                               # format_wqx.R, apply_qaqc_flags.R, generate_cdx_export.R
 ├── reference/
 │   ├── dat_contract.md         # 24-column contract for `dat` (not yet enforced in code)
 │   ├── wqx_templates/          # Shared lookup tables (see below)
@@ -61,8 +67,8 @@ kenai-river-wqx-qaqc/
 │   ├── misc/qaqc_repo_transition/  # OLD function copies and 2021 ingest scripts (stale; do not edit)
 │   ├── input/                  # Legacy per-year inputs 2014-2024; WQX_downloads/ (manual WQP downloads for Part D)
 │   └── output/                 # Legacy 2023 and example outputs
-├── _quarto.yml                 # Plain project (type: default, output-dir output/report); legacy QMDs are not rendered as a book
-└── README.md                   # Layout, new-year checklist, archive checklist, restore
+├── _quarto.yml                 # type: book, output-dir output/report; chapters index, intro, references, plus project_year/2025.qmd
+└── README.md                   # STALE: still describes archive/fetch; to be rewritten as a copy-the-template checklist
 ```
 
 Governance PDFs (QAPP, CALM, 18 AAC 70, etc.) stay in the report repo's `other/agent_context/`; text versions are in `other/documents/md/` here. WQX Web import configuration (Uid 9481) walkthrough is in `cdx_upload.qmd` here (moved from the report repo 2026-10-28); upload and delete history is in `other/documents/cdx_upload_history/`. The older config export (Uid 8515, `KWF_Results_Baseline_Template`) is in that folder; the working config (Uid 9481) is `other/documents/EPA_WQX_templates/cdx_import_config_results_activities_20261028.cfg`.
@@ -136,7 +142,44 @@ On 2026-10-14 the 2021 files were uploaded with prefixed location IDs. WQP then 
 
 ------------------------------------------------------------------------
 
-## 2025.qmd Pipeline Structure
+## Per-Lab Ingest Functions (Phase B, replace the inline chunks below)
+
+Each returns `list(dat, lab_qc)`, 24-column `dat`, no `matrix` or `result_detection_condition`, units in project spelling (`mg/L`, `ug/L`, `cfu/100ml`; see the units decision under `check_dat_contract.R`). `2025.qmd` still uses its own inline chunks and is unchanged.
+
+- **`ingest_sgs.R`** `ingest_sgs(season, config, ...)`: routes the 14 lab QC types and any `(surr)` analyte to `lab_qc`; stops on NA location ID, NA `epa_analysis_id`, or non-WQX `mg/L` case; `expand_trip_blanks()` reads `config.yml` `sgs: trip_blank_sites`. 2025: `dat` 543 rows, `lab_qc` 914 rows.
+- **`resolve_rm_site.R`** `resolve_rm_site(labels, sites_path)`: shared by FC, TSS, YSI. Parses the river-mile number from a lab label and matches `river_mile` in `reference/baseline_sites.csv`; strips any `KENAI_WQX-` prefix. Condition comes from label text, never site lists: `DUP` = Field Duplicate; `BLANK` + RM number = Field Blank (Trip Blank if `TRIP`); `BLANK` without RM = lab MB; `POSITIVE` = LCS. Handles `RM O`, `RM22`, `RM_10_DUP`. Stops listing unresolved labels. `&` multi-site trip blanks are handled by `ingest_sgs` via config. Trip Blank labels not yet tested.
+- **`ingest_fc.R`** `ingest_fc(season, config, data_dir, sites_path)`: finds the header row by searching "Dish Number" (no `skip` setting); stops if the file's `DATE IN` differs from config sampling date; `parse_clock()` detects Excel-fraction vs HHMM per column. Fixed values: units `cfu/100ml`, method and `epa_analysis_id` `9222D`, context `APHA`, `loq` 1, lab `SWWTP`. `run_date` = `collect_date` (user-stated: FC always runs on collection day); `run_time` = `Time In`. `rec_date`/`rec_time` come from `config$files$fc[[season]]` (COC only; warns and sets NA if missing; **2025 left blank until the COC is available**). `N/A` results dropped with a message; zero count gives `result` NA and flag "U". BLANK rows become MB (`qc_group` blank), POSITIVE become LCS (accuracy); `lab_qc` has an extra `result_text` column (summer positive control reads `TNTC`); a non-numeric result in a field sample stops the run. Verified against old `dat_fc`: all 46 rows match. **To reconcile:** SGS `lab_qc` lacks `result_text`.
+  - FC facts (2026-10-28): 15 zero counts became NA with "U"; `lab_qc` has 8 rows (3 blanks and 1 positive per season); spring RM 6.5 and RM 10.1 dropped as N/A. `note` holds analysis volume plus DATE OUT and Time Out. Unit evidence: WQP shows `cfu/100mL` for KWF FC 2000-2004 only; `2023.qmd` and the 2021 scripts use `cfu/100ml`.
+  - `resolve_rm_site()` returns `label`, `monitoring_location_id`, `sample_condition`, `lab_qc_type`; `river_mile` is unique across the 22 sites (10 vs 10.1). Tested: `RM 22 DUP`, `RM22`, `RM_10_DUP`, `RM O`, `RM 10.1`, `BLANK`, `POSITIVE CONTROL`, `RM 18 FIELD BLANK`; `RM 99` stops.
+  - `ingest_sgs` verification: `all.equal` TRUE on 24 columns versus old `dat_sgs` (location ID cast to character). `lab_qc` 914 rows: 279 calibration, 315 blank, 199 accuracy, 85 other, 36 surrogate (spring has none). Pending: compare per-type counts with `reference/dat_contract.md`.
+  - 2025 test-fixture counts only (never a template expectation; row counts vary by year, so the contract-check function must validate structure and rules, not row counts): combined `dat` is 857 rows (SGS 543, FC 46, TSS 46, YSI 222), versus 883 in the legacy pipeline.
+
+- **`clock_utils.R`**: `parse_clock()` (Excel fraction or HHMM, detected per column) and `parse_clock_text()` ("13:31"). Sourced by `ingest_fc.R`, `ingest_tss.R` and `ingest_ysi.R`.
+- **`ingest_ysi.R`** `ingest_ysi(config, data_dir, site_names_path, corrections_path)`: no season argument; one file for both seasons (`files$ysi$both$path`). Returns `list(dat, lab_qc, excluded)` (`lab_qc` is an empty tibble). Decisions (2026-10-28):
+  - `collect_date` = `Site Depart Date`; stops if it matches neither `sampling$spring_date` nor `summer_date`. Template rows (no site, parameter or value) dropped; site visits with no values dropped with a message (2025: spring Cunningham Park and RM 10.1).
+  - Sites resolve through `reference/ysi_site_names.csv` (37 spellings; moved out of `2025.qmd`); unmapped names stop the run.
+  - Implausible values (pH outside `ysi: {ph_min, ph_max}` in `config.yml`, DO above `ysi: do_max`) are removed from `dat` and returned in `excluded` for the QA/QC document (Phase C must report it) so the user can check and correct manually. Corrections go in `year_files/ysi_corrections.csv` (site_name, collect_date, parameter, replicate, corrected_value or `keep`, reason), applied before the check and averaging; a row that does not match exactly one data row stops the run. 2025 `excluded`: 8 replicates (spring DO 167 at Soldotna Creek and 22 to 33 mg/L at RM 74, RM 70 and RM 79.5; pH -2.3 at RM 82); the file is header-only until reviewed.
+  - `collect_time`: `Collection Time` exists only on the turbidity rows, so the visit's Collection Time is used for all five parameters (user decision; `Observation Time` is ignored, it runs a median 51 minutes later). The old chunk would have given NA for the four meter parameters.
+  - `lab_name` = `Meter Model` from the file (YSI ProQuatro or Hach for turbidity), filled within site, date and parameter. Units `deg C`, `uS/cm`, `mg/L`, `NTU`, `None`; stops if the file's unit contradicts. `rec_date`/`rec_time` NA; `run_date`/`run_time` = collection. Replicates averaged per site, date, parameter (spring Moose River has a third); `note` is "Mean of N replicate(s)" or "Mean of N of M replicate(s)" when some were excluded (2025: Soldotna Creek DO and RM 82 pH).
+  - Verified: 222 rows (102 spring, 120 summer), 22 sites, 24 columns, all 222 means match the old chunk's logic (max difference 3e-7), and the 8 excluded replicates are the old filter's drops.
+
+- **`check_dat_contract.R`** `check_dat_contract(dat, config, lab_qc = NULL, ref_dir, stop_on_error = TRUE)`: validates structure and rules only, never counts. Returns an issues tibble (check, severity, n_rows, labs, examples) and stops on errors. Checks: 24 columns with exact names and types, no extras; no NA in required columns; flag values; `result` NA only with U or ND (a number with U is allowed, SGS reports the detection limit that way); units in the WQX UoM list or `project_unit_spellings.csv` and no capitalization clashes; bare-digit location IDs present in `site_coordinates`; no lab QC `sample_type` or `(surr)` analyte in `dat`; `sample_condition` values; analyte in `analytes_list_manual_edit.csv`; unique result key; `collect_date` in the two config sampling dates and in `config$year`; `run_date` and `rec_date` order. Minimal `lab_qc` check (required columns, `qc_group` values, units). Tests: `tests/test_check_dat_contract.R` (synthetic data; 10 tests, 30 expectations, all passing; needs `testthat`). On the 2025 fixture: no errors, 3 warnings. Lookup misses are warnings because `format_wqx.R` left-joins and does not stop on a miss.
+  - **Lookup coverage (warning, not error):** `analytical_method` is missing from the `result_sample_fraction`, `chemical_preservative` and `sample_container_type_color` sheets for YSI, TSS and FC methods, and the sheets hold `8260D` while dat carries `SW8260D` (so BTEX likely gets NA fraction, preservative and container in `format_wqx.R`). Needs a decision: add rows (and the SW8260D key), then promote to error.
+  - **Units decision (2026-10-28):** the WQX UoM list (`Results` template's `UoM` tab, snapshot in `reference/wqx_templates/wqx_uom_codes.csv`, 364 codes) spells `mg/l`, `ug/l`, `cfu/100ml`. WQP data (2,683 KWF metals rows) and the accepted 2021 upload use `ug/L` and `mg/L`, so the project keeps `mg/L` and `ug/L` (`project_unit_spellings.csv`), checked case-insensitively against the list. FC units changed to `cfu/100ml` (matches the list, WQP and 2021); this supersedes the earlier `cfu/100mL` rule. Whether WQX Web normalizes case on import is unverified (a trial import would settle it). The `unedited_templates` folder already held identical copies of the WQX workbooks, so nothing needed copying.
+
+Settled rules for the remaining functions:
+- FC units are `cfu/100ml` (changed 2026-10-28 from `cfu/100mL`: matches the WQX UoM list, the 2021 upload and `2023.qmd`).
+- YSI `rec_date`/`rec_time` must be NA (in situ, no lab); the old chunk wrongly copies collect time.
+- Q17 (Phase C): missing receipt is "not evaluable" (old code turns it into midnight); YSI is "not applicable"; a method with no holding time must not default to "Y". `sample_holding_times.csv` has `9222D` at 6 hours (collection to analysis start, i.e. `Time In`).
+- Per-year edits for the README checklist: new rows in `sgs_site_names_matching_table.xlsx` for new SGS duplicate/blank IDs; `sgs: trip_blank_sites`; FC receipt date and time from the COC per season.
+
+- **`ingest_tss.R`** `ingest_tss(season, config, data_dir, sites_path)`: returns `list(dat, lab_qc)`; reuses `parse_clock()`/`parse_clock_text()` from `clock_utils.R` and `resolve_rm_site()`. Finds the header row by searching `Sample_Location`; `sample_type` must be `PS` (field) or `MB` (method blank), else stops. Decisions (2026-10-28): LOD/LOQ come from `config.yml` `tss: {lod, loq}` (0.31 / 1.0 mg/L, QAPP v3 Table 5 for SM21-2540-+D; check against the SWWTP report each year; stops if missing or lod >= loq). `run_date` and `run_time` are **required** in `config.yml` `files$tss$<season>` (copy "DATE OF ANALYSIS" and "TIME" from the lab sheet header); summer files carry `Date_of_Analysis` per row and the function stops if it disagrees with config. `rec_date`/`rec_time` optional (from the COC; warns and sets NA if blank; 2025 left blank). `collect_date` from `sampling$<season>_date` (not the file). Flags: below LOD gives `result` NA and "U"; between LOD and LOQ gives "J"; else "=". Sites with no weights and no sample time are dropped with a message (not sampled); a weight without a time (or reverse) stops. MB rows go to `lab_qc` (qc_group `blank`); `dat` carries units `mg/L`, method and `epa_analysis_id` `2540-D`, context `APHA`, lab `SWWTP`, note "Sample volume = N mL". Fixes the `mg/l` units contract violation. Reference: `other/misc/report_repo_scripts/ingest_tss.R`.
+  - Verified 2026-10-28 against old `dat_tss`: new `dat` has 46 rows (22 spring, 24 summer) versus 48 old; all 46 match on site, date, condition, result, flag and collect time. The 2 old-only rows are spring RM 6.5 and RM 10.1, not visited (user-confirmed). LOD 0.5 to 0.31 changed no flags. `lab_qc`: 4 MB rows per season (spring 0.333, 0, 0.333, 0 = two J, two U; summer all 0 = U); blank results kept as reported. Receipt warning fires for both seasons (expected until the COCs are entered).
+  - Other behavior: results rounded to 6 decimals (spreadsheet noise); sources `clock_utils.R` if `parse_clock()` is not loaded; stops if a PS label resolves to a lab QC type; analyte "Total suspended solids"; `result_sample_fraction` left NA (`format_wqx.R` sets "Suspended"); `lab_qc` has no `result_text`; `repdl` = LOQ.
+  - Sampling facts: the spring tidy sheet's `Field_Sample_Date` (5/1) is the analysis date under a wrong heading, so `collect_date` always comes from config (spring 4/30, summer 7/23). Spring `run_time` 13:58 comes from the original `.xls` header; summer is 1400 on 07-25-25. Collection and run dates differ (1 to 2 days); TSS holding time (`2540-D`) is 7 days, measured collection to analysis start, so a blank receipt does not block Q17 for TSS.
+  - Method ID `2540-D` (context `APHA`) matches the 2021 example output and the 2025 export; `SM21-2540-+D` appears only in the QAPP, the report repo script and the `config.yml` `tss:` comment. 2025 TSS files contain no lab duplicates or check standards.
+
+## 2025.qmd Pipeline Structure (legacy inline version, being replaced)
 
 ### Year Configuration chunk
 
@@ -176,6 +219,10 @@ Sources `generate_cdx_export.R`. Guarded by `file.exists()` check on WQP project
 
 ------------------------------------------------------------------------
 
+## Book and Docs (2026-10-28)
+
+`quarto render` ran clean. `intro.qmd` was rewritten (purpose, single-year workflow, four pipeline parts, bare-ID rule). `summary.qmd` is a seven-step finish-a-year checklist (not a book chapter; can feed the README checklist). Book title no longer says "2014 - 2025"; `date: today` is set in `_quarto.yml`. Output stays `output/report`; whether it is published (GitHub Pages) is open. Not checked: whether Part D wrote files or skipped.
+
 ## `format_wqx.R` Key Behaviors
 
 - `result_sample_fraction`: Part A values take precedence (coalesce); lookup table fills gaps. TSS always → "Suspended"; FC always → "None" (overrides applied after coalesce).
@@ -204,20 +251,23 @@ Rebuilt to match 2025 template structure (YAML at top, `date: today`, Part A/B/C
 
 Contract violations found in the 2025 data (to be fixed in Phases B and C):
 
-- **Units case:** 48 SWWTP TSS rows carry `mg/l`; `2025.qmd` hardcodes it. The report repo's `ingest_tss.R` was fixed 2026-10-20 but this repo's copy was not.
+- **Units case:** 48 SWWTP TSS rows carry `mg/l` in `2025.qmd`, which hardcodes it. Fixed in `functions/ingest_tss.R`; `2025.qmd` itself still has the problem.
 - **Surrogates leaking:** 24 BTEX surrogate recovery rows (units `%`) are in `dat` and in the 2025 WQX export as `Field Msr/Obs`. They belong in `lab_qc_dat`.
 - **Dead branch:** `format_wqx.R` tests `sample_condition == "Blank"`, but ingest emits `Trip Blank` and `Field Blank`.
 - **Field blanks not coded:** 44 `Field Blank` rows in `dat`; the export has no field-blank Activity Type, and 56 Activity IDs end in `-NA`.
 - **Duplicate Activity IDs:** 116 rows in the 2025 output share an Activity ID with the same characteristic, fraction and method. Not caused by the ID change; investigate before upload.
-- **Duplicated spring and summer ingest chunks** (supports per-lab functions with a season argument).
+- **Duplicated spring and summer ingest chunks** (resolved for SGS, FC, TSS and YSI by the new functions).
+- **YSI receipt:** `2025.qmd` copies collect time into `rec_date`/`rec_time`; should be NA (fixed in `ingest_ysi.R`).
+- **Citations:** `index.qmd` cites `@mccard2007` and `@guerronorejuela2016`, missing from `references.bib`.
+- **Stale docs:** `README.md`, the plan file (archive/fetch content, item 13) need updating (`reference/dat_contract.md` was refreshed 2026-10-28; recheck it once Phase C settles). Defer until code settles. Small items: the `config.yml` `tss:` comment cites `SM21-2540-+D` while the function emits `2540-D`; the TSS/FC comment lines in `config.yml` sit above the `fc:` block. `2025.qmd` still hardcodes TSS `mg/l` and the 0.5 LOD.
 
 Other:
 
 - **Function copies differ** from the report repo's `functions/appendix_a_scripts/` (large diffs in `format_wqx.R` and `generate_cdx_export.R`). Reconcile in Phase B; the report repo's `generate_cdx_export.R` has the bare-ID guard and the `na = ""` fix.
 - **WQP downloads:** `other/input/WQX_downloads/` must be populated manually before Part D runs; Part D prints a message and skips if absent.
 - **2021 on WQP:** corrected 2021 files were re-uploaded 2026-10-25 (CDX datasets 117639, 117640, 117643, all Completed at CDX). A live query on 2026-10-28 showed 0 rows for 2021 and no doubled-prefix stations; recheck about Nov 1-3. Tracked in the report repo.
-- **TSS LOD/LOQ:** 0.5 / 1.0 mg/L are placeholders; verify against the current QAPP.
-- **Summer FC run_date:** hardcoded as 7/24/2025; verify against the SWWTP lab report.
+- **TSS LOD/LOQ:** now 0.31 / 1.0 mg/L in `config.yml` (`tss:` block); `2025.qmd` still uses the 0.5 / 1.0 placeholders. Confirm against the SWWTP lab report.
+- **FC run_date:** resolved. `ingest_fc` sets `run_date` = `collect_date`; the lab file headers show DATE OUT one day later (spring 05-01-25, summer 07-24-25), recorded in `note` with Time Out. Do not carry the 2021 receipt times (13:31, 13:37) from the report repo into any year.
 - **YSI site mapping:** site names not in `ysi_site_lkp` print a warning and are excluded.
 - **`date: today`:** use Quarto's native `date: today` in YAML, not an inline R `Sys.Date()` call.
 
@@ -240,7 +290,9 @@ Notable Q2/Q3 wording (most commonly diverged in past): - **Q2:** "Were there an
 2021 WQP verification, cache refresh and book render; trend analysis rollout; characteristic name audit (Task 1b); CALM 5-year sample counts (Task 1c); `review_needed` verification in `master_reg_limits.xlsx` (Task 5). See that repo's `AGENTS.md`.
 
 ## Style Preferences
+- This repo is a blank template for any year. Never record or code row counts, site counts or other 2025 values as expectations; label 2025 numbers as test-fixture results. Checks must test structure and rules (columns, types, units, allowed values, config consistency).
 
+- Do not put conversation-title markup literally in `/compact` summaries (it truncated a summary). Approval of a design is the go-ahead to write it.
 - No em-dashes; use a colon, comma, semicolon or parentheses. Minimal AI-writing tropes.
 - All ingest scripts must emit `mg/L` (WQX capitalization).
 - Do not interpret trends in text.

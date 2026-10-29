@@ -1,8 +1,11 @@
 # `dat` Column Contract (DRAFT, Phase A step 1)
 
 Status: draft derived from `project_year/2025.qmd` Part A, Part B (`format_wqx.R`), and
-a profile of the actual 2025 `dat` (883 rows, 22 sites, 27 analytes, three labs).
-Nothing here is enforced in code yet. A contract-check function will be added in Phase B.
+a profile of the 2025 test-fixture `dat`. Structure and rules (invariants 1-9 below, plus
+config consistency) are enforced by `check_dat_contract()` in
+`functions/check_dat_contract.R` (tests: `tests/test_check_dat_contract.R`). The check
+never tests counts: row, site and analyte counts differ every year. Any 2025 numbers in
+this document are test-fixture observations, not expectations.
 
 Reference year: the 2021 pipeline in the report repo (`chapters/appendix_a.qmd` and
 `functions/appendix_a_scripts/`) is the most thoroughly troubleshot year. Where 2021 and
@@ -40,7 +43,7 @@ the extra raw columns that field data does not need (`percent_recovered`,
 | 3 | `lab_name` | chr | yes | no | One of `SGS`, `SWWTP`, `YSI` (2025). Maps to WQX Laboratory Name. New labs add a value here. |
 | 4 | `analyte` | chr | yes | no | Name as reported or mapped at ingest. Must match a row in `analytes_list_manual_edit.csv` (abbreviation for Activity ID) and later the WQX characteristic list. |
 | 5 | `result` | dbl | yes | see rule | Numeric value. NA is allowed only for a non-detect where the lab reported no number (`resultflag == "U"`); 2025 has 3 such TSS rows. |
-| 6 | `units` | chr | yes | no | WQX capitalization, e.g. `mg/L`, `ug/L`, `uS/cm`, `deg C`, `NTU`, `MPN/100ml`, `None`. See "Known contract violations". |
+| 6 | `units` | chr | yes | no | A code in `reference/wqx_templates/wqx_uom_codes.csv` (the WQX UoM list), or a spelling listed in `project_unit_spellings.csv`. The project emits `mg/L` and `ug/L` (WQP and the accepted 2021 upload use these; the UoM list has `mg/l`, `ug/l`) and `cfu/100ml`, `uS/cm`, `deg C`, `NTU`, `None`. Capitalization variants of one unit must not both appear. |
 | 7 | `resultflag` | chr | yes | no | `=` (detected), `U` (not detected), `J` (estimated, below LOQ). `format_wqx.R` also accepts `ND` as not detected. |
 | 8 | `loq` | dbl | yes | yes | Limit of quantitation, in `units`. NA for YSI and some FC/TSS. |
 | 9 | `lod` | dbl | yes | yes | Limit of detection / method detection level, in `units`. NA for YSI. |
@@ -65,11 +68,11 @@ the extra raw columns that field data does not need (`percent_recovered`,
 1. All 24 columns present with the types above (`Date`, `hms`, `dbl`, `chr`).
 2. `lab_name`, `analyte`, `units`, `resultflag`, `analytical_method`, `epa_analysis_id`, `context_code`, `monitoring_location_id`, `sample_type`, `collect_date`, `run_date`, `sample` have no NA.
 3. `resultflag %in% c("=", "U", "J", "ND")`. `result` is non-NA unless `resultflag` is `U` or `ND`.
-4. `units` uses WQX capitalization; no lowercase `mg/l`.
+4. `units` is in the WQX UoM list or `project_unit_spellings.csv`; no unit appears under two capitalizations.
 5. `monitoring_location_id` matches `^[0-9]+$` (no prefix) and is present in `site_coordinates`.
 6. No lab QC sample types (`MB`, `LCS`, `LCSD`, `MS`, `MSD`, `CB`, `OS`, `ICV`, `CCV`, `LLQC`, `QCS`, `ICB`, `CVC`, `IB`).
 7. `sample_condition` is NA or in `{Field Duplicate, Field Blank, Trip Blank}`.
-8. `analyte` is in the analyte abbreviation list; `analytical_method` is in the fraction, preservative, and container lookups (unmapped values should stop the run, not silently produce NA).
+8. `analyte` is in the analyte abbreviation list (error). `analytical_method` should be in the fraction, preservative, and container lookups: currently a warning, because the sheets do not yet cover every method (promote to an error once they do).
 9. No duplicated key of (`monitoring_location_id`, `collect_date`, `analyte`, `result_sample_fraction`, `sample_condition`, `epa_analysis_id`). Activity ID uniqueness is what the WQX import depends on.
 
 ## Known contract violations in the current 2025 `dat`
