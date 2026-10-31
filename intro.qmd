@@ -1,11 +1,20 @@
 # Introduction
 
-This is a book created from markdown and executable code.
+This project prepares one year of Kenai River Baseline Water Quality Monitoring data, collected by the Kenai Watershed Forum, for submission to the U.S. EPA Water Quality Exchange (WQX) through CDX. Once submitted, the data are published through EPA's Water Quality Portal (WQP), where the [report repository](https://github.com/Kenai-Watershed-Forum/kenai-river-wqx) reads them for display and interpretation.
 
-See @knuth84 for additional discussion of literate programming.
+## One year at a time
 
-```{r}
-1 + 1
-```
+The pipeline is a template that is run for a single data year. The working year is set in `config.yml` (sampling dates and raw file paths) and in the year configuration chunk of `project_year/<year>.qmd`. Raw lab files for that year are placed in `data/`, which is not tracked in git.
 
-<https://www.citizenscience.gov/catalog/554/#>
+## Pipeline steps
+
+1. **Part A: ingestion.** Lab files (SGS metals, nutrients and BTEX; SWWTP fecal coliform and TSS; field YSI and turbidity) are read and combined into one data frame, `dat`. Lab QC rows are written to `other/output/intermediate/lab_qaqc_data/` and excluded.
+2. **Part B: WQX formatting.** `functions/format_wqx.R` joins site coordinates, sample fraction, preservative and container information, and builds Activity IDs.
+3. **Part C: QA/QC checklist.** A 42-question checklist based on ADEC guidance, with data flags applied from `reference/wqx_templates/<year>_data_flag_decisions.csv`.
+4. **Part D: CDX export.** `functions/generate_cdx_export.R` writes the upload files (`results_activities.csv`, `project.csv`, `station.csv`) to `other/output/`. It requires station and project files downloaded manually from WQP into `other/input/WQX_downloads/`.
+
+Lookup tables (site names, analysis codes, analyte abbreviations, holding times) are in `reference/wqx_templates/`.
+
+## ID rule
+
+Upload files must use bare IDs with no `KENAI_WQX-` prefix, because WQX Web adds the prefix on import. The export script stops with an error if a prefixed ID is found.

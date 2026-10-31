@@ -49,20 +49,20 @@ year <- 2025
 spring_sample_date <- "4/30/2025"
 summer_sample_date <- "7/23/2025"
 
-spring_data_dir <- here("other/input/2025/spring_2025_wqx_data")
-summer_data_dir <- here("other/input/2025/summer_2025_wqx_data")
-output_qaqc_dir <- here("other/output/intermediate", year)
+spring_data_dir <- here("data/spring_2025_wqx_data")
+summer_data_dir <- here("data/summer_2025_wqx_data")
+output_qaqc_dir <- here("output/intermediate", year)
 
-# Final WQX/CDX upload products land directly in other/output/
-wqx_intermediate_path <- here("other/output", paste0(year, "_kwf_baseline_results_wqx.csv"))
-flagged_export_path   <- here("other/output", paste0(year, "_export_data_flagged.csv"))
-flag_decisions_path   <- here("other/input/wqx_templates",
+# Final WQX/CDX upload products land directly in output/
+wqx_intermediate_path <- here("output", paste0(year, "_kwf_baseline_results_wqx.csv"))
+flagged_export_path   <- here("output", paste0(year, "_export_data_flagged.csv"))
+flag_decisions_path   <- here("year_files",
                                paste0(year, "_data_flag_decisions.csv"))
 
 cfg <- list(
   year                  = year,
-  templates_dir         = here("other/input/wqx_templates"),
-  wqx_template_file     = here("other/input/wqx_templates",
+  templates_dir         = here("reference/wqx_templates"),
+  wqx_template_file     = here("year_files",
                                 paste0("AWQMS_KWF_Baseline_", year, ".xlsx")),
   spring_data_dir       = spring_data_dir,
   summer_data_dir       = summer_data_dir,
@@ -75,12 +75,12 @@ cfg <- list(
   summer_sample_date    = summer_sample_date
 )
 
-dir.create(here("other/output"),                                                    recursive = TRUE, showWarnings = FALSE)
+dir.create(here("output"),                                                    recursive = TRUE, showWarnings = FALSE)
 dir.create(output_qaqc_dir,                                                         recursive = TRUE, showWarnings = FALSE)
-dir.create(here("other/output/intermediate/field_qa_qc_data/metals_total_diss"),    recursive = TRUE, showWarnings = FALSE)
-dir.create(here("other/output/intermediate/field_qa_qc_data/completeness_measures"),recursive = TRUE, showWarnings = FALSE)
-dir.create(here("other/output/intermediate/misc"),                                  recursive = TRUE, showWarnings = FALSE)
-dir.create(here("other/output/intermediate/lab_qaqc_data"),                         recursive = TRUE, showWarnings = FALSE)
+dir.create(here("output/intermediate/field_qa_qc_data/metals_total_diss"),    recursive = TRUE, showWarnings = FALSE)
+dir.create(here("output/intermediate/field_qa_qc_data/completeness_measures"),recursive = TRUE, showWarnings = FALSE)
+dir.create(here("output/intermediate/misc"),                                  recursive = TRUE, showWarnings = FALSE)
+dir.create(here("output/intermediate/lab_qaqc_data"),                         recursive = TRUE, showWarnings = FALSE)
 ```
 
 ------------------------------------------------------------------------
@@ -814,7 +814,7 @@ cat("TSS rows:", nrow(dat_tss),
 # DUP sites (e.g. "Soldotna Creek-DUP") are separated by the site lookup table.
 # Physically impossible values excluded (negative pH, DO > 20 mg/L).
 
-ysi_path <- here("other/input/2025",
+ysi_path <- here("data",
                   "2025 Kenai Agency Baseline YSI ProQuatro and Turbidity Data.xlsx")
 
 ysi_param_map <- c(
@@ -992,7 +992,7 @@ cat("Sites:", n_distinct(dat$monitoring_location_id), "\n")
 # precedence; the lookup table fills in unset fractions (nutrients, FC, TSS).
 #
 # Requires: dat, cfg   Produces: dat, dat_raw, all_dat; writes cfg$wqx_intermediate_path
-source(here("other/misc/qaqc_repo_transition/functions/format_wqx.R"))
+source(here("functions/format_wqx.R"))
 ```
 
 ### Provisional Results (Prior to QA/QC Review)
@@ -1041,7 +1041,7 @@ Yes. Analytical methods from the approved 2023 QAPP were employed.
 **3.) Were field duplicates, blanks, and/or other QC samples collected as planned?**
 
 ```{r q03-planned, message=FALSE, warning=FALSE}
-# ADAPT: Create other/input/2025/spring_2025_wqx_data/planned_samples_2025.xlsx
+# ADAPT: Create data/spring_2025_wqx_data/planned_samples_2025.xlsx
 # following the template format to enable full planned-vs-actual comparison.
 # Until that file exists, actual sample counts are used as a proxy.
 
@@ -1087,7 +1087,7 @@ total_samples_collected_summary
 **5.) Is a copy of the Chain of Custody included with the laboratory reports?**
 
 ```{r q05}
-# SGS COC on file: other/input/2025/spring_2025_wqx_data/SGS/1251731_COC.pdf
+# SGS COC on file: data/spring_2025_wqx_data/SGS/1251731_COC.pdf
 # SWWTP: FC and TSS results sheets serve as lab records.
 # MANUAL: Confirm SWWTP documentation meets project requirements.
 ```
@@ -1225,7 +1225,7 @@ holdtime_dat <- left_join(holdtime_dat, max_holding_times,
   ))
 
 write.csv(holdtime_dat,
-          here("other/output/intermediate/field_qa_qc_data/holding_time_calcs.csv"),
+          here("output/intermediate/field_qa_qc_data/holding_time_calcs.csv"),
           row.names = FALSE)
 
 cat("Hold time failures:", sum(holdtime_dat$hold_time_pass == "N", na.rm = TRUE), "\n")
@@ -1253,7 +1253,7 @@ diss_total_dat <- dat |>
     )
   )
 
-dir_diss <- here("other/output/intermediate/field_qa_qc_data/metals_total_diss")
+dir_diss <- here("output/intermediate/field_qa_qc_data/metals_total_diss")
 
 for (elem in diss_total_analytes) {
   elem_dat <- diss_total_dat |>
@@ -1324,7 +1324,7 @@ rpd_eligible_dat <- rpd_check_dat |>
 rpd_exceed <- rpd_eligible_dat |> filter(!is.na(rpd_pct), rpd_pct > threshold)
 
 write.csv(rpd_check_dat,
-          here("other/output/intermediate/field_qa_qc_data/rpd_check_dat.csv"),
+          here("output/intermediate/field_qa_qc_data/rpd_check_dat.csv"),
           row.names = FALSE)
 
 cat("RPD-eligible pairs:", nrow(rpd_eligible_dat), "\n")
@@ -1366,7 +1366,7 @@ matrix_spike_limits <- read.csv(
 matrix_spike_fails <- matrix_spike_limits |> filter(rec_limit_pass == "N")
 
 write.csv(matrix_spike_fails,
-          here("other/output/intermediate/lab_qaqc_data",
+          here("output/intermediate/lab_qaqc_data",
                paste0("matrix_spike_recovery_fails_", year, ".csv")),
           row.names = FALSE)
 
@@ -1384,7 +1384,7 @@ if (nrow(matrix_spike_fails) > 0) matrix_spike_fails
 
 ```{r q21}
 # MANUAL: Record flagging decisions in:
-# other/input/wqx_templates/2025_data_flag_decisions.csv
+# year_files/2025_data_flag_decisions.csv
 # That file is joined in Part D (apply_qaqc_flags.R).
 ```
 
@@ -1425,7 +1425,7 @@ From the QAPP, CMA = primary samples collected / usable samples submitted (goal:
 ```{r apply-flags, message=FALSE, warning=FALSE}
 # Join flag decisions and write flagged export CSV.
 # IMPORTANT: This chunk must run before Q25 and Q26.
-source(here("other/misc/qaqc_repo_transition/functions/apply_qaqc_flags.R"))
+source(here("functions/apply_qaqc_flags.R"))
 ```
 
 ```{r q25-cma, message=FALSE}
@@ -1455,7 +1455,7 @@ completeness_summary_param <- completeness_wide |>
   )
 
 write.csv(completeness_summary_param,
-          here("other/output/intermediate/field_qa_qc_data/completeness_measures/cma_parameter.csv"))
+          here("output/intermediate/field_qa_qc_data/completeness_measures/cma_parameter.csv"))
 
 cma_dat    <- read.csv(cfg$flagged_export_path) |> clean_names()
 cma_total  <- nrow(cma_dat)
@@ -1493,7 +1493,7 @@ cmb_by_method <- cmb_wide |>
   )
 
 write.csv(cmb_by_method,
-          here("other/output/intermediate/field_qa_qc_data/completeness_measures/cmb_parameter.csv"))
+          here("output/intermediate/field_qa_qc_data/completeness_measures/cmb_parameter.csv"))
 
 total_planned  <- sum(planned_samples_summary$expected_results_n, na.rm = TRUE)
 cmb_n          <- sum(cmb_by_method$flag_N, na.rm = TRUE)
@@ -1631,7 +1631,7 @@ chr_num <- export_dat |>
   tally()
 
 write.csv(chr_num,
-          here("other/output/intermediate/misc",
+          here("output/intermediate/misc",
                paste0("characteristic_count_", year, ".csv")),
           row.names = FALSE)
 chr_num
@@ -1711,7 +1711,7 @@ if (!file.exists(wqp_project_file)) {
   message("Part D skipped: WQP downloads not yet present in ", cfg$wqx_downloads_dir,
           "\nDownload project, station, and results files from WQP before running.")
 } else {
-  source(here("other/misc/qaqc_repo_transition/functions/generate_cdx_export.R"))
+  source(here("functions/generate_cdx_export.R"))
 }
 ```
 
@@ -1721,9 +1721,9 @@ The following files are ready for upload to the EPA Water Quality Exchange Centr
 
 ```{r cdx-file-summary, message=FALSE}
 cdx_files <- c(
-  here("other/output/results_activities.csv"),
-  here("other/output/project.csv"),
-  here("other/output/station.csv")
+  here("output/results_activities.csv"),
+  here("output/project.csv"),
+  here("output/station.csv")
 )
 
 for (f in cdx_files) {
