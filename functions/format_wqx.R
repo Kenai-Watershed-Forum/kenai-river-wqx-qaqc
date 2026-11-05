@@ -37,6 +37,18 @@ site_coords <- read_excel(
   mutate(monitoring_location_id = as.character(monitoring_location_id))
 dat <- left_join(dat, site_coords)
 
+# Site code (KBL_*) prefixes every Activity ID. The `adec_site_names` column
+# `MonitoringLocationIdentifier` holds this code, not a WQP identifier.
+site_codes <- read_excel(
+  file.path(cfg$templates_dir, "wqx_template_matching_table.xlsx"),
+  sheet = "adec_site_names"
+) %>%
+  remove_empty() %>%
+  transmute(monitoring_location_id = as.character(monitoring_location_id),
+            site_code = MonitoringLocationIdentifier)
+dat <- left_join(dat, site_codes, by = "monitoring_location_id")
+rm(site_codes)
+
 
 ############ c.) assign "result sample fraction" (e.g. filtered, dissolved, etc.) ############
 # If Part A already set result_sample_fraction (e.g., to distinguish dissolved from total
@@ -112,8 +124,10 @@ dat %<>%
 
 
 ########### h.) "Activity ID" code shortening ######################
-# Activity ID = concatenation of Location ID, date, analyte abbreviation,
-# and (if present) sample_condition. Max 55 characters.
+# Activity ID = concatenation of site code (KBL_*), date, analyte abbreviation,
+# and (if present) sample_condition. Max 55 characters. This is the final form
+# uploaded to CDX (no KENAI_WQX- prefix; WQX Web adds it). generate_cdx_export.R
+# uses it unchanged and check_cdx_ids() validates it.
 
 ## a.) analyte abbreviations
 write.csv(
@@ -148,9 +162,9 @@ dat %<>%
     `Activity Media Subdivision Name`     = "Surface Water",
     # create Activity ID conditionally on sample_condition presence
     `Activity ID` = case_when(
-      is.na(sample_condition) ~ paste0(`Monitoring Location ID`, "-",
+      is.na(sample_condition) ~ paste0(site_code, "-",
                                         collect_date, "-", analyte_abbreviation),
-      !is.na(sample_condition) ~ paste0(`Monitoring Location ID`, "-",
+      !is.na(sample_condition) ~ paste0(site_code, "-",
                                          collect_date, "-", analyte_abbreviation,
                                          "-", sample_condition_abbrv)
     ),

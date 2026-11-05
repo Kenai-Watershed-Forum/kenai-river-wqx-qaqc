@@ -8,10 +8,10 @@
 # This script reads export_dat from the global environment. export_dat should
 # already have time_zone = "AKDT" applied (done in the Q32 chunk).
 #
-# REVIEW: This script contains a filter that excludes Phosphorus results from
-#
-# This script reads export_dat from the global environment. export_dat should
-# already have time_zone = "AKDT" applied (done in the Q32 chunk).
+# Monitoring Location ID and Activity ID are NOT rebuilt here: format_wqx.R builds
+# them in their final upload form (bare numeric location ID; Activity ID starting
+# with the KBL_* site code). check_cdx_ids() validates them before any ID-bearing
+# file is written.
 #
 # REVIEW: This script contains a filter that excludes Phosphorus results from
 # EPA Method 200.8. This filter was valid for 2021 because Method 200.8 was not
@@ -33,6 +33,8 @@
 #   output/station.csv
 
 
+source(here::here("functions/check_cdx_ids.R"))
+
 # ── Results and Activities ──────────────────────────────────────────────────────
 
 # Label flagged observations as "Rejected," non-flagged as "Accepted"
@@ -50,40 +52,24 @@ export_dat %<>%
 export_dat %<>%
   filter(!(characteristic_name == "Phosphorus" & result_analytical_method_id == "200.8"))
 
-# Re-join WQP site location info (site names) needed for Activity ID construction
-site_name_match <- read_excel(
+# Valid site IDs and codes come from the adec_site_names sheet
+known_sites <- read_excel(
   file.path(cfg$templates_dir, "wqx_template_matching_table.xlsx"),
   sheet = "adec_site_names"
-) %>% remove_empty()
-export_dat <- left_join(export_dat, site_name_match)
-
-# Re-join analyte abbreviations for Activity ID construction
-analyte_abbrev <- read.csv(file.path(cfg$templates_dir, "analytes_list_manual_edit.csv"))
-colnames(analyte_abbrev) <- c("characteristic_name", "analyte_abbreviation")
-analyte_abbrev %<>% select(characteristic_name, analyte_abbreviation)
-export_dat %<>% left_join(analyte_abbrev)
-
-# Extract sample_condition abbreviation from existing activity_id column
-export_dat %<>%
-  mutate(sample_condition_abbrv = case_when(
-    grepl("DUP",   activity_id) ~ "DUP",
-    grepl("Blank", activity_id) ~ "Blank"
-  ))
+) %>%
+  remove_empty() %>%
+  transmute(monitoring_location_id = as.character(monitoring_location_id),
+            site_code = MonitoringLocationIdentifier)
 
 # Finalize column structure to match CDX import configuration
 export_dat %<>%
   mutate(
     `Project ID`                           = 10000007,
-    `Monitoring Location ID`               = MonitoringLocationIdentifier,
+    # Defensive strip; check_cdx_ids() still stops on any leftover prefix elsewhere
+    `Monitoring Location ID`               = sub("^KENAI_WQX-", "", as.character(monitoring_location_id)),
     `Activity Media Name`                  = activity_media_name,
     `Activity Media Subdivision Name`      = activity_media_subdivision_name,
-    `Activity ID` = case_when(
-      is.na(sample_condition_abbrv) ~
-        paste0(`MonitoringLocationName`, "-", activity_start_date, "-", analyte_abbreviation),
-      !is.na(sample_condition_abbrv) ~
-        paste0(`MonitoringLocationName`, "-", activity_start_date, "-",
-               analyte_abbreviation, "-", sample_condition_abbrv)
-    ),
+    `Activity ID`                          = activity_id,
     `Activity Start Date`                  = activity_start_date,
     `Activity Start Time`                  = activity_start_time,
     `Activity Start Time Zone`             = "AKDT",
@@ -143,8 +129,7 @@ wqx_colnames <- read_excel(cfg$wqx_template_file,
   colnames()
 export_dat %<>% select(one_of(wqx_colnames))
 
-# Write final results and activities CSV for CDX upload
-write.csv(export_dat, here::here("output/results_activities.csv"), row.names = FALSE)
+# results_activities.csv is written at the end of this script, after the ID check.
 
 
 # ── Project CSV ──────────────────────────────────────────────────────────────────
@@ -176,7 +161,9 @@ project_upload <- read.csv(
     ProjectAttachmentType
   )
 
-write.csv(project_upload, here::here("output/project.csv"), row.names = FALSE)
+# na = "" is required: WQX Web's CSV importer expects blank fields for nulls, not
+# literal "NA" text, which can trigger an unhandled parser error on import.
+write.csv(project_upload, here::here("output/project.csv"), row.names = FALSE, na = "")
 
 
 # ── Station CSV ──────────────────────────────────────────────────────────────────
@@ -186,6 +173,8 @@ station_upload <- read.csv(
   file.path(cfg$wqx_downloads_dir, "station/station.csv")
 ) |>
   dplyr::filter(grepl("KBL", MonitoringLocationName)) |>
+  # WQP identifiers carry the org prefix, which WQX Web re-adds on import
+  dplyr::mutate(MonitoringLocationIdentifier = sub("^KENAI_WQX-", "", MonitoringLocationIdentifier)) |>
   dplyr::select(
     MonitoringLocationIdentifier,
     MonitoringLocationName,
@@ -207,4 +196,9 @@ station_upload <- read.csv(
     TRUE ~ HorizontalCollectionMethodName
   ))
 
-write.csv(station_upload, here::here("output/station.csv"), row.names = FALSE)
+# ── ID check, then write ID-bearing files ────────────────────────────────────────
+# Stops before writing if any ID would be rejected or misfiled by WQX Web.
+check_cdx_ids(export_dat, station_upload, known_sites)
+
+write.csv(export_dat, here::here("output/results_activities.csv"), row.names = FALSE, na = "")
+write.csv(station_upload, here::here("output/station.csv"), row.names = FALSE, na = "")

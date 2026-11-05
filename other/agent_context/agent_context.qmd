@@ -64,3 +64,16 @@ additional notes
 note 1: The guerron-orejuela 2016 report especially has a lot of trend analyses (space or time) for some parameters, by site/season (i think just the ones identified of concern, eg zinc). they are included in the chapters of each parameter. i want to assess what it would look like to implement this in this quarto book. i would like the option to implement this for each parameter chapter, though I may not choose to do so for all of them. also i think some of the plots could be partially combined, eg to show the different seasons in two seperate facets of the same plot. or maybe even a plot that shows trendlines for all summer tributary sites, another one for summer main stem sites, another one for spring tributary sites, and another for summer tributary sites. each facet should indicate the n= quantity of observations. guerron-orejeula fit a polynomial line to each plot; i am unsure if we shoul proceed that way or some other way.
 
 assess this request help plan for implementation. ask questions and interview me before proceeding as necessary. do not guess if you are unsure, ask or reference external sources to ensure compliance
+
+11/5/2026
+
+I'm working in this qaqc template repo. The sibling report repo is at D:\GitHub\kenai-river-wqx (GitHub: Kenai-Watershed-Forum/kenai-river-wqx). We finished uploading the 2021 data to CDX and re-integrating it into that book, and learned several lessons I want built into this template.
+
+1.  Read D:\GitHub\kenai-river-wqx\other\documents\cdx\_lessons_2021.md. For the detail behind any item, grep (don't read whole) D:\GitHub\kenai-river-wqx\other\agent\_context\session\_log.md, specifically the entries from 2026-10-14 through 2026-11-02, and D:\GitHub\kenai-river-wqx\AGENTS.md. Treat the report repo as read-only.
+2.  Compare each lesson against this repo's current code, templates and docs (the ingest and format functions, `cdx_upload.qmd`, `project_year/2025.qmd`, the contract check plan in other/agent_context/plans/2026-10-28-qaqc-repo-as-parameterized-template.md). For each lesson, tell me whether it is already handled, partly handled, or missing, and where.
+3.  Do not edit anything yet. Give me a table of the gaps, a proposed fix for each (code guard, contract check, doc change, or test), and a suggested order. Show the plan and wait for my approval, one decision at a time.
+4.  Style: no em-dashes. Explain any code before implementing it.
+
+Additional notes
+
+I hjave

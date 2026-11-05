@@ -97,3 +97,97 @@ test_that("lab_qc minimal contract", {
   expect_true(has_issue(good, "qc_group", lab_qc = mutate(qc, qc_group = "bogus")))
   expect_true(has_issue(good, "lab_qc missing", lab_qc = select(qc, -qc_group)))
 })
+
+test_that("site code is cross-checked against baseline_sites.csv and adec_site_names", {
+  # Work on a copy of the reference folder so the real tables stay untouched
+  tmp <- file.path(tempdir(), paste0("ref_", sample.int(1e6, 1)))
+  dir.create(file.path(tmp, "wqx_templates"), recursive = TRUE)
+  on.exit(unlink(tmp, recursive = TRUE), add = TRUE)
+  file.copy(list.files(file.path(ref, "wqx_templates"), full.names = TRUE),
+            file.path(tmp, "wqx_templates"))
+  file.copy(file.path(ref, "baseline_sites.csv"), tmp)
+
+  bl <- utils::read.csv(file.path(tmp, "baseline_sites.csv"), colClasses = "character")
+  row <- which(sub("^KENAI_WQX-", "", bl$MonitoringLocationIdentifier) == site_id)
+  skip_if(length(row) != 1, "test site is not in baseline_sites.csv")
+
+  tmp_xlsx <- file.path(tmp, "wqx_templates/wqx_template_matching_table.xlsx")
+  sheets <- readxl::excel_sheets(tmp_xlsx)
+  all_sheets <- setNames(lapply(sheets, readxl::read_excel, path = tmp_xlsx), sheets)
+  write_sheets <- function(adec) {
+    all_sheets$adec_site_names <- adec
+    writexl::write_xlsx(all_sheets, tmp_xlsx)
+  }
+  adec <- all_sheets$adec_site_names
+  adec_row <- which(as.character(adec$monitoring_location_id) == site_id)
+  skip_if(length(adec_row) != 1, "test site is not in adec_site_names")
+  chk <- function(...) issues_for(good, ref_dir = tmp)$check
+
+  # Unmodified copy agrees
+  expect_false(any(grepl("site code|baseline_sites", chk(), ignore.case = TRUE)))
+
+  # Class letter flipped in baseline_sites.csv
+  bl2 <- bl
+  bl2$tributary_mainstem[row] <- ifelse(bl$tributary_mainstem[row] == "mainstem", "tributary", "mainstem")
+  utils::write.csv(bl2, file.path(tmp, "baseline_sites.csv"), row.names = FALSE)
+  expect_true(any(grepl("class (m or t) disagrees", chk(), fixed = TRUE)))
+
+  # River mile changed in baseline_sites.csv
+  bl3 <- bl
+  bl3$river_mile[row] <- as.character(as.numeric(bl$river_mile[row]) + 5)
+  utils::write.csv(bl3, file.path(tmp, "baseline_sites.csv"), row.names = FALSE)
+  expect_true(any(grepl("river mile disagrees", chk(), fixed = TRUE)))
+
+  # Site missing from baseline_sites.csv: warning only
+  utils::write.csv(bl[-row, ], file.path(tmp, "baseline_sites.csv"), row.names = FALSE)
+  d <- issues_for(good, ref_dir = tmp)
+  expect_equal(d$severity[grepl("not in baseline_sites.csv", d$check, fixed = TRUE)], "warning")
+  utils::write.csv(bl, file.path(tmp, "baseline_sites.csv"), row.names = FALSE)
+
+  # Malformed code in the adec sheet
+  bad <- adec
+  bad$MonitoringLocationIdentifier[adec_row] <- "KBL_x_1.5"
+  write_sheets(bad)
+  expect_true(any(grepl("not of the form KBL_", chk(), fixed = TRUE)))
+
+  # No code for the site
+  none <- adec[-adec_row, ]
+  write_sheets(none)
+  expect_true(any(grepl("has no site code", chk(), fixed = TRUE)))
+})
+
+test_that("site coordinates must be ASCII, numeric and inside Alaska", {
+  tmp <- file.path(tempdir(), paste0("ref_", sample.int(1e6, 1)))
+  dir.create(file.path(tmp, "wqx_templates"), recursive = TRUE)
+  on.exit(unlink(tmp, recursive = TRUE), add = TRUE)
+  file.copy(list.files(file.path(ref, "wqx_templates"), full.names = TRUE),
+            file.path(tmp, "wqx_templates"))
+  file.copy(file.path(ref, "baseline_sites.csv"), tmp)
+
+  tmp_xlsx <- file.path(tmp, "wqx_templates/wqx_template_matching_table.xlsx")
+  sheets <- readxl::excel_sheets(tmp_xlsx)
+  all_sheets <- setNames(lapply(sheets, readxl::read_excel, path = tmp_xlsx), sheets)
+  coords <- all_sheets$site_coordinates
+  row <- which(as.character(coords$monitoring_location_id) == site_id)
+  skip_if(length(row) != 1, "test site is not in site_coordinates")
+
+  # Write the sheet with the test site's coordinates replaced (as text, so any value is allowed)
+  with_coords <- function(lat, lon) {
+    cc <- coords
+    cc$latitude <- as.character(cc$latitude)
+    cc$longitude <- as.character(cc$longitude)
+    cc$latitude[row] <- lat
+    cc$longitude[row] <- lon
+    all_sheets$site_coordinates <- cc
+    writexl::write_xlsx(all_sheets, tmp_xlsx)
+    issues_for(good, ref_dir = tmp)$check
+  }
+  lat0 <- "60.5"; lon0 <- "-151.2"
+
+  expect_false(any(grepl("site_coordinates latitude", with_coords(lat0, lon0), fixed = TRUE)))
+  expect_true(any(grepl("non-ASCII", with_coords(lat0, "\u2212151.2"), fixed = TRUE)))
+  expect_true(any(grepl("not numeric", with_coords(lat0, "abc"), fixed = TRUE)))
+  expect_true(any(grepl("not numeric", with_coords(NA_character_, lon0), fixed = TRUE)))
+  expect_true(any(grepl("Alaska bounds", with_coords(lat0, "151.2"), fixed = TRUE)))
+  expect_true(any(grepl("Alaska bounds", with_coords("6.05", lon0), fixed = TRUE)))
+})
