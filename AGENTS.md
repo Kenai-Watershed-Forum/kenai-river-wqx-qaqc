@@ -240,6 +240,7 @@ User-stated pathway to ADEC: (1) KWF submits data to EPA CDX (WQX); (2) ADEC acc
 - Integrated Report: ADEC assesses waters against standards every two years (CWA 303(d) and 305(b)) and issues a call for data (2026 report: closed 2025-02-28; next cycle dates unconfirmed). It also accepts data continuously.
 - CALM (2020 edition text in `other/documents/md/`; a newer edition may exist): QAPPs, lab transmittals, COCs, calibration records and lab qualifications should be available on request. Data qualification rules (data levels, minimum sample size, confidence level) decide whether data are used.
 - Implications: because ADEC reads from WQP, the quality of the CDX upload (IDs, fractions, units, status codes, no duplicates) is what ADEC sees; fixes after upload mean delete and re-upload. The assessed output and the 42-question checklist serve as the QA/QC documentation ADEC may request. Open: whether any KWF data also reaches ADEC by another route (duplicate risk); whether the assessed flags should align with CALM data qualification rules.
+- Status (2026-11-09): the user was asked to paste or save the Integrated Report hub content (data submission requirements, Kenai assessment units) because it cannot be read here; and whether to align assessed flags with CALM rules is undecided. No code changed for this context.
 
 **README checklist plan (items to include when README is rewritten):**
 
@@ -329,6 +330,6 @@ Notable Q2/Q3 wording (most commonly diverged in past): - **Q2:** "Were there an
 - No em-dashes; use a colon, comma, semicolon or parentheses. Minimal AI-writing tropes.
 - All ingest scripts must emit `mg/L` (WQX capitalization).
 - Do not interpret trends in text.
-- On CRLF files (`format_wqx.R`, `generate_cdx_export.R`, `check_dat_contract.R`, `check_cdx_ids.R`) the edit tool fails on multi-line matches; insert with R `readLines`/`writeLines(sep = "\r\n")` and check for doubled CRs. Test files are LF.
+- On CRLF files (`format_wqx.R`, `generate_cdx_export.R`, `check_dat_contract.R`, `check_cdx_ids.R`) the edit tool fails on multi-line matches; insert with R `readLines`/`writeLines(sep = "\r\n")` and check for doubled CRs. Test files are LF. Write with `con <- file(f, "wb"); writeLines(l, con, sep = "\r\n")`: text-mode `writeLines(sep = "\r\n")` on Windows doubles the CRs (hit 2026-11-09 on AGENTS.md; strip with `sub("\r+$", "", ...)` and rewrite).
 - When running testthat or readxl from the R session, progress-bar noise swamps output; use `reporter = "silent"` and `as.data.frame(results)`.
 - Before implementing code, explain what it does and why, and wait for confirmation. Present decisions one at a time, not as a batch.
