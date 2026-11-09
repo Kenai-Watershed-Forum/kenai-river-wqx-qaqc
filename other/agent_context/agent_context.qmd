@@ -76,4 +76,6 @@ I'm working in this qaqc template repo. The sibling report repo is at D:\GitHub\
 
 Additional notes
 
-I hjave
+11/9/2026
+
+I am ready to pick up where we last left off. Recall the the overarching goal is to prepare this repo as a template that can be used to prepare annual data for upload to epa cdx. the data uploaded there will then be integrated in to the report published through <https://github.com/Kenai-Watershed-Forum/kenai-river-wqx> and also the EPA Hows My Waterway map.

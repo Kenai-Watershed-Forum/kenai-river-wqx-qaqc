@@ -162,6 +162,13 @@ check_dat_contract <- function(dat,
   analytes <- utils::read.csv(file.path(ref_dir, "wqx_templates/analytes_list_manual_edit.csv"),
                               colClasses = "character")$analyte
   add("analyte not in analytes_list_manual_edit.csv", !dat$analyte %in% analytes, dat$analyte)
+  # NA is allowed here: TSS and FC leave it for format_wqx.R to fill. Exact match, since WQX is
+  # case-sensitive; the list is a snapshot of the Results template (Allowed Values tab).
+  fractions <- utils::read.csv(file.path(ref_dir, "wqx_templates/wqx_sample_fraction_codes.csv"),
+                               colClasses = "character")$sample_fraction
+  add("result_sample_fraction not in the WQX Sample Fraction list",
+      !is.na(dat$result_sample_fraction) & !dat$result_sample_fraction %in% fractions,
+      dat$result_sample_fraction)
   for (sh in c("result_sample_fraction", "chemical_preservative", "sample_container_type_color")) {
     methods <- readxl::read_excel(match_xlsx, sheet = sh)$analytical_method
     # Warning, not error: format_wqx.R left-joins these sheets, so an unlisted method gets NA

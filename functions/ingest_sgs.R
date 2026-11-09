@@ -16,6 +16,16 @@
 sgs_lab_qc_types <- c("MB", "LCS", "LCSD", "MS", "MSD", "CB", "OS",
                       "ICV", "CCV", "LLQC", "QCS", "ICB", "CVC", "IB")
 
+# Columns that must hold numbers (checked on read)
+sgs_numeric_cols <- c("result", "loq", "lod", "repdl", "amount_spiked", "initial_conc",
+                      "percent_recovered", "rec_limit_low", "rec_limit_high", "sample_rpd",
+                      "rpd_limit_low", "rpd_limit_high")
+
+# to_numeric_strict() lives in numeric_utils.R
+if (!exists("to_numeric_strict", mode = "function")) {
+  source(here::here("functions", "numeric_utils.R"), local = FALSE)
+}
+
 ingest_sgs <- function(season,
                        config,
                        data_dir      = here::here("data"),
@@ -34,6 +44,11 @@ ingest_sgs <- function(season,
   raw <- read_excel(path, sheet = spec$sheet) |>
     clean_names() |>
     remove_empty(which = c("rows", "cols"))
+
+  # Stop on text such as "O.18" instead of letting it become a silent NA
+  for (cn in intersect(sgs_numeric_cols, names(raw))) {
+    raw[[cn]] <- to_numeric_strict(raw[[cn]], paste0(basename(path), " column ", cn), raw$sample_id)
+  }
 
   # Dates arrive as "MM/DD/YYYY HH:MM" strings
   raw <- raw |>

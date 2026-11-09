@@ -57,6 +57,15 @@ test_that("units must be WQX codes and must not mix capitalization", {
   expect_true(has_issue(mixed, "different capitalization"))
 })
 
+test_that("result_sample_fraction must be a WQX value or NA", {
+  pat <- "result_sample_fraction not in the WQX Sample Fraction list"
+  expect_false(has_issue(good, pat))
+  expect_false(has_issue(mutate(good, result_sample_fraction = NA_character_), pat))
+  expect_true(has_issue(mutate(good, result_sample_fraction = "total"), pat))
+  expect_true(has_issue(mutate(good, result_sample_fraction = "Totl"), pat))
+  expect_true(has_issue(mutate(good, result_sample_fraction = ""), pat))
+})
+
 test_that("location IDs must be bare digits and known", {
   expect_true(has_issue(mutate(good, monitoring_location_id = paste0("KENAI_WQX-", site_id)),
                         "not bare digits"))
