@@ -7,7 +7,7 @@ Two repos form the Kenai River Baseline Water Quality Monitoring pipeline (Kenai
 - **`kenai-river-wqx-qaqc`** (this repo, https://github.com/Kenai-Watershed-Forum/kenai-river-wqx-qaqc): a **single-year template**. It takes any one project year's raw lab files through ingestion, QA/QC, WQX formatting and CDX export, and produces a draft (preliminary) report like the 2025 one. It repeats the process that `appendix_a` documents in the report repo.
 - **`kenai-river-wqx`** (report repo, https://github.com/Kenai-Watershed-Forum/kenai-river-wqx, stays active and standalone): a Quarto book on long-term trends and observations. It reads data from EPA's Water Quality Portal (WQP), not from this repo. Its `chapters/appendix_a.qmd` is a worked example of taking one annual dataset through QA/QC and is the canonical text for the 42 QA/QC questions.
 
-Flow: this repo submits data to EPA WQX via CDX, EPA publishes to WQP, the report repo reads from WQP. The same uploaded data also feeds the EPA How's My Waterway map (user's stated goal, 2026-11-09: the template prepares annual data for CDX upload).
+Flow: this repo submits data to EPA WQX via CDX, EPA publishes to WQP, the report repo reads from WQP. The same uploaded data also feeds the EPA How's My Waterway map (user's stated goal, 2026-11-09: the template prepares annual data for CDX upload). ADEC then accesses the data from WQP (see "ADEC and Integrated Report Context").
 
 **Pending: historical data scan (2026-11-09).** Before step 3 of the CDX lessons plan, the user wants all 2014-2024 data scanned to learn what the template must handle. The user will arrange `other/input/<year>/` systematically (suggested: same structure as `data/`, with a `_docs/` folder and a short `_notes.txt` where a year differs) and says when ready; I should prompt for it. State on 2026-11-09: year folders 2014-2024 exist with varied layouts; 2021 holds only a `.docx` (corrected 2021 files are in the report repo); `Lab Measurements 2013-2017 BH 20220805/` also exists; 2025 is in `data/`. Planned scan is read-only: labs and file layouts, site-label spellings (test `resolve_rm_site` and the SGS name table), method codes and units against the lookup sheets, non-numeric text via `to_numeric_strict`, and gaps in the 24-column contract. Output is a gap table by year. Open questions put to the user: compare against 2025 as baseline; include the 2013-2017 lab-measurement workbooks.
 
@@ -231,6 +231,26 @@ Sources `format_wqx.R`. Joins coordinates, result_sample_fraction (coalesce Part
 Sources `generate_cdx_export.R`. Guarded by `file.exists()` check on WQP project file, prints a message and skips if WQP downloads not yet present. Requires `other/input/WQX_downloads/` to be populated manually from WQP before running.
 
 ------------------------------------------------------------------------
+
+## ADEC and Integrated Report Context (2026-11-09)
+
+User-stated pathway to ADEC: (1) KWF submits data to EPA CDX (WQX); (2) ADEC accesses the data from WQP. KWF does not submit to ADEC separately. Links the user wants considered: https://integrated-report-adec.hub.arcgis.com/ (JS-rendered; contents not read) and https://dec.alaska.gov/water/water-quality/ambient-water-quality-data (403 on direct fetch; read via search snippet only).
+
+- ADEC's ambient data page: WQX is the submission route to EPA, WQP the retrieval route. ADEC keeps its own database (AWQMS) and pushes from it to WQX; ADEC also takes voluntary submissions through the Water Quality Data Manager (Amber Bethe, 907-269-7955, as listed on the page).
+- Integrated Report: ADEC assesses waters against standards every two years (CWA 303(d) and 305(b)) and issues a call for data (2026 report: closed 2025-02-28; next cycle dates unconfirmed). It also accepts data continuously.
+- CALM (2020 edition text in `other/documents/md/`; a newer edition may exist): QAPPs, lab transmittals, COCs, calibration records and lab qualifications should be available on request. Data qualification rules (data levels, minimum sample size, confidence level) decide whether data are used.
+- Implications: because ADEC reads from WQP, the quality of the CDX upload (IDs, fractions, units, status codes, no duplicates) is what ADEC sees; fixes after upload mean delete and re-upload. The assessed output and the 42-question checklist serve as the QA/QC documentation ADEC may request. Open: whether any KWF data also reaches ADEC by another route (duplicate risk); whether the assessed flags should align with CALM data qualification rules.
+
+**README checklist plan (items to include when README is rewritten):**
+
+1. Copy the template to a new repo; put only that year's raw lab files in `data/`.
+2. Edit `config.yml` (dates, file paths, trip blank sites, TSS LOD/LOQ, FC and TSS run and receipt date/time from the COCs).
+3. Add new SGS duplicate/blank ID rows to `sgs_site_names_matching_table.xlsx` as needed; fill `year_files/` (flag decisions, YSI corrections, trip blank crews).
+4. Run ingest, contract checks, QA/QC document, WQX format and CDX export; resolve all guard failures.
+5. Upload to CDX via WQX Web (`cdx_upload.qmd`); verify in WQP once indexed (days, not 24 to 48 hours).
+6. Retain the supporting documents for ADEC requests (COCs, lab reports, calibration records, QAPP version, completed checklist).
+7. Note for reviewers: ADEC obtains the data from WQP after the CDX upload; no separate ADEC submission is made. Contact the ADEC Water Quality Data Manager for questions or to confirm this.
+8. Report repo (`kenai-river-wqx`) reads the data from WQP after indexing.
 
 ## Book and Docs (2026-10-28)
 

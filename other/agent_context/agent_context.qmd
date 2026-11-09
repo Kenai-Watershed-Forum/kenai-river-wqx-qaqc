@@ -79,3 +79,11 @@ Additional notes
 11/9/2026
 
 I am ready to pick up where we last left off. Recall the the overarching goal is to prepare this repo as a template that can be used to prepare annual data for upload to epa cdx. the data uploaded there will then be integrated in to the report published through <https://github.com/Kenai-Watershed-Forum/kenai-river-wqx> and also the EPA Hows My Waterway map.
+
+additional notes 1
+
+Two links that I want to ensure whose context is included and considered as part of this effort:
+
+<https://integrated-report-adec.hub.arcgis.com/>
+
+<https://dec.alaska.gov/water/water-quality/ambient-water-quality-data>
