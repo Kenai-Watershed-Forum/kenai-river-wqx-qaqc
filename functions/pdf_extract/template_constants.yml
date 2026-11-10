@@ -1,0 +1,40 @@
+# Project constants for Stage 2 (map_ars_to_template.R). Nothing here is year-specific.
+# Values follow the 2014 Analytica example workbook and the rules given for the
+# spring 2017 work. A blank value ("") leaves the template column empty.
+
+constants:
+  "Project ID": "KWF_WQX"
+  "Activity Media Name": "Water"
+  "Activity Media Subdivision Name": "Surface water"
+  "Activity Start Time Zone": "AKST"
+  "Activity End Time Zone": "AKST"
+  "Activity Depth/Height Measure": "6"
+  "Activity Depth/Height Unit": "inch"
+  "Analysis Start Time Zone": "AKST"
+  "Result Detection Limit Type 1": "Practical Quantitation Limit"
+  "Result Detection Limit Type 2": "Method Detection Limit"
+  # Not stated in the rules or the PDFs; left blank until decided.
+  "Result Status ID": ""
+
+qualifiers:
+  non_detect: "U"
+  below_pql: "J"      # detected at or above the MDL and below the PQL
+
+# QC record used for Percent Recovered, Spike, LCL and UCL (matched on prep
+# batch, method ID and analyte). One of LCS, MS, MSD.
+recovery_qc_type: "LCS"
+
+# First matching rule wins. Patterns are case-insensitive regular expressions
+# applied to Client Sample Name.
+sample_classes:
+  - pattern: "trip\\s*blank"
+    sample_condition: "Trip Blank"
+    activity_type: "Quality Control Sample-Field Blank"
+  - pattern: "\\b(dup|duplicate)\\b"
+    sample_condition: "DUP"
+    activity_type: "Quality Control Field Replicate Msr/Obs"
+default_activity_type: "Field Msr/Obs"
+
+# Client Sample Names that are lab QC samples, never field samples; the mapper
+# stops if one reaches `results`.
+lab_qc_name_pattern: "^(MB|Batch QC|LCS|MS|MSD)$"
