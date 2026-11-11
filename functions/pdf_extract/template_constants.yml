@@ -20,6 +20,13 @@ qualifiers:
   non_detect: "U"
   below_pql: "J"      # detected at or above the MDL and below the PQL
 
+# Result Detection Condition written for each qualifier. Non-detects carry a blank
+# Result Value, qualifier U and this condition, the same convention format_wqx.R uses
+# for the annual pipeline (decided 2026-11-10: one convention for every year).
+detection_conditions:
+  non_detect: "Not Detected"
+  below_pql: "Present Below Quantification Limit"
+
 # QC record used for Percent Recovered, Spike, LCL and UCL (matched on prep
 # batch, method ID and analyte). One of LCS, MS, MSD.
 recovery_qc_type: "LCS"
@@ -29,7 +36,7 @@ recovery_qc_type: "LCS"
 sample_classes:
   - pattern: "trip\\s*blank"
     sample_condition: "Trip Blank"
-    activity_type: "Quality Control Sample-Field Blank"
+    activity_type: "Quality Control Sample-Trip Blank"
   - pattern: "\\b(dup|duplicate)\\b"
     sample_condition: "DUP"
     activity_type: "Quality Control Field Replicate Msr/Obs"
