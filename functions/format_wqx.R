@@ -115,6 +115,11 @@ dat <- left_join(dat, bottle_type_color)
 
 rm(site_coords, result_sample_fraction, chemical_preservative, bottle_type_color)
 
+# In-situ methods (YSI/Hach meters) have no container or preservative; their lookup
+# misses are intentional and thermal preservative is blanked below.
+in_situ_methods <- read.csv(file.path(cfg$templates_dir, "in_situ_methods.csv"),
+                            colClasses = "character")$analytical_method
+
 
 ############ g.) assign "Statistical Base Code" column ##############
 dat %<>%
@@ -142,12 +147,8 @@ analyte_abbrev %<>% select(analyte, analyte_abbreviation)
 dat %<>% left_join(analyte_abbrev)
 
 ## b.) sample_condition abbreviations
-dat %<>%
-  mutate(sample_condition_abbrv = case_when(
-    sample_condition == "Field Duplicate" ~ "DUP",
-    sample_condition == "Trip Blank"      ~ "Blank"
-  ))
-
+source(here::here("functions/activity_coding.R"))
+dat %<>% mutate(sample_condition_abbrv = condition_abbrev(sample_condition))
 
 ############ i.) prepare final WQX column format ###############################
 # Create column structure from the WQX template. Column names must match exactly.
@@ -175,12 +176,7 @@ dat %<>%
     `Activity Latitude`                   = latitude,
     `Activity Longitude`                  = longitude,
     `Activity Source Map Scale`           = "",
-    `Activity Type` = case_when(
-      sample_condition == "Field Duplicate" ~ "Quality Control Field Replicate Msr/Obs",
-      sample_condition == "Blank"           ~ "Quality Control Sample-Trip Blank",
-      sample_type == "TB"                   ~ "Quality Control Sample-Trip Blank",
-      TRUE ~ "Field Msr/Obs"
-    ),
+    `Activity Type`                       = activity_type(sample_condition, sample_type),
     # All samples are surface grab samples; depth assigned as ~6 inches (~15 cm)
     `Activity Depth/Height Measure`       = 15,
     `Activity Depth/Height Unit`          = "cm",
@@ -203,7 +199,7 @@ dat %<>%
     `Result Value Type`                   = "Actual",
     `Result Comment`                      = "",
     `Sample Collection Method ID`         = "",
-    `Equipment ID`                        = "Water Bottle",
+    `Equipment ID`                        = if_else(analytical_method %in% in_situ_methods, "Probe/Sensor", "Water Bottle"),
     `Result Detection Condition`          = result_detection_condition,
     `Result Detection Limit Type 1`       = "Limit of Quantitation",
     `Result Detection Limit Value 1`      = loq,
@@ -219,7 +215,7 @@ dat %<>%
     `Analysis Start Time`                 = run_time,
     `Biological Intent`                   = "",
     `Subject Taxonomic Name`              = "",
-    `Thermal Preservative`                = "Cold packs",
+    `Thermal Preservative`                = if_else(analytical_method %in% in_situ_methods, "", "Cold packs"),
     `Sample Container Type`               = sample_container_type,
     `Sample Container Color`              = sample_container_color,
     `Chemical Preservative`               = preservative,

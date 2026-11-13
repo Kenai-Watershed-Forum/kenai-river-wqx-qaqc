@@ -86,7 +86,19 @@ test_that("lookup and duplicate-key rules fire", {
   expect_true(has_issue(mutate(good, analyte = "Unobtainium"), "analyte not in analytes_list"))
   expect_true(has_issue(bind_rows(good, good), "duplicate result key"))
   unmapped <- mutate(good, analytical_method = "NOPE")
-  expect_equal(filter(issues_for(unmapped), grepl("matching table", check))$severity[1], "warning")
+  expect_equal(filter(issues_for(unmapped), grepl("matching table", check))$severity[1], "error")
+})
+
+test_that("in-situ methods are exempt from the preservative and container sheets only", {
+  in_situ <- utils::read.csv(file.path(ref, "wqx_templates/in_situ_methods.csv"))$analytical_method[1]
+  checks <- issues_for(mutate(good, analytical_method = in_situ))$check
+  expect_false(any(grepl("chemical_preservative|sample_container_type_color", checks)))
+})
+
+test_that("every in-situ method has a fraction row", {
+  in_situ <- utils::read.csv(file.path(ref, "wqx_templates/in_situ_methods.csv"))$analytical_method
+  fr <- readxl::read_excel(match_xlsx, sheet = "result_sample_fraction")$analytical_method
+  expect_true(all(in_situ %in% fr))
 })
 
 test_that("config consistency is enforced", {
