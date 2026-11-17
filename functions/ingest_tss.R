@@ -16,7 +16,7 @@
 #   files$tss$<season>            path, sheet, run_date, run_time (required: copy "DATE OF
 #                                 ANALYSIS" and "TIME" from the lab sheet header),
 #                                 rec_date, rec_time (optional: chain of custody)
-#   tss$lod, tss$loq              reporting limits, mg/L (QAPP Table 5)
+#   tss$dl, tss$lod, tss$loq      detection and reporting limits, mg/L (QAPP Table 5)
 #
 # TSS is analyzed one to a few days after collection, so collect_date and run_date
 # differ and neither is derived from the other.
@@ -50,9 +50,11 @@ ingest_tss <- function(season,
   if (is.na(collect_date)) stop("config.yml sampling$", season, "_date is missing", call. = FALSE)
 
   lod <- suppressWarnings(as.numeric(config$tss$lod))
-  loq <- suppressWarnings(as.numeric(config$tss$loq))
-  if (length(lod) != 1 || length(loq) != 1 || is.na(lod) || is.na(loq) || lod >= loq) {
-    stop("config.yml tss$lod and tss$loq must be set, with lod < loq (mg/L).", call. = FALSE)
+  loq <- suppressWarnings(as.numeric(config$tss$loq))
+dl  <- suppressWarnings(as.numeric(config$tss$dl))
+  if (length(lod) != 1 || length(loq) != 1 || is.na(lod) || is.na(loq) || lod >= loq ||
+    length(dl) != 1 || is.na(dl) || dl > lod) {
+    stop("config.yml tss$dl, tss$lod and tss$loq must be set, with dl <= lod < loq (mg/L).", call. = FALSE)
   }
 
   run_date <- if (is.null(spec$run_date)) as.Date(NA) else as.Date(spec$run_date)
@@ -146,7 +148,7 @@ ingest_tss <- function(season,
       analytical_method = "2540-D",
       result,
       resultflag  = flag(result),
-      repdl       = loq,
+      repdl       = loq, loq = loq, dl = dl,
       units       = "mg/L",
       amount_spiked = NA_real_, initial_conc = NA_real_, percent_recovered = NA_real_,
       rec_limit_low = NA_real_, rec_limit_high = NA_real_, sample_rpd = NA_real_,
@@ -186,7 +188,7 @@ ingest_tss <- function(season,
       units        = "mg/L",
       resultflag,
       loq          = loq,
-      lod          = lod,
+      lod          = lod, dl = dl,
       collect_date = collect_date,
       collect_time = parse_clock(sample_time),
       rec_date     = rec_date,

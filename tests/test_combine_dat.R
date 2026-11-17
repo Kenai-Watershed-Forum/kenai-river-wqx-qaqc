@@ -20,7 +20,7 @@ cfg <- list(
 
 make_dat <- function(date, lab, sample) tibble::tibble(
   sample = sample, lab_sample = "L1", lab_name = lab, analyte = analyte, result = 1.5,
-  units = "mg/L", resultflag = "=", loq = 1, lod = 0.5,
+  units = "mg/L", resultflag = "=", loq = 1, lod = 0.5, dl = 0.25,
   collect_date = as.Date(date), collect_time = hms::as_hms("10:00:00"),
   rec_date = as.Date(NA), rec_time = hms::as_hms(NA),
   run_date = as.Date(date), run_time = hms::as_hms("08:00:00"),

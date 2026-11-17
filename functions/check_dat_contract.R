@@ -40,7 +40,7 @@ check_dat_contract <- function(dat,
     ~name,                    ~class,
     "sample",                 "chr",  "lab_sample",             "chr",  "lab_name",               "chr",
     "analyte",                "chr",  "result",                 "dbl",  "units",                  "chr",
-    "resultflag",             "chr",  "loq",                    "dbl",  "lod",                    "dbl",
+    "resultflag",             "chr",  "loq",                    "dbl",  "lod",                    "dbl",  "dl",                     "dbl",
     "collect_date",           "Date", "collect_time",           "hms",  "rec_date",               "Date",
     "rec_time",               "hms",  "run_date",               "Date", "run_time",               "hms",
     "analytical_method",      "chr",  "epa_analysis_id",        "chr",  "context_code",           "chr",
@@ -75,6 +75,9 @@ check_dat_contract <- function(dat,
   add("resultflag not one of =, U, J, ND", !dat$resultflag %in% flags_ok, dat$resultflag)
   add("result is NA but resultflag is not U or ND",
       is.na(dat$result) & !dat$resultflag %in% c("U", "ND"), dat$analyte)
+
+  add("dl greater than loq or lod", (!is.na(dat$dl) & !is.na(dat$loq) & dat$dl > dat$loq) |
+                                         (!is.na(dat$dl) & !is.na(dat$lod) & dat$dl > dat$lod), dat$analyte)
 
   # ---- 4. Units ---------------------------------------------------------------------------
   units_check <- function(x, data, label) {

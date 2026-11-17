@@ -17,7 +17,7 @@ sgs_lab_qc_types <- c("MB", "LCS", "LCSD", "MS", "MSD", "CB", "OS",
                       "ICV", "CCV", "LLQC", "QCS", "ICB", "CVC", "IB")
 
 # Columns that must hold numbers (checked on read)
-sgs_numeric_cols <- c("result", "loq", "lod", "repdl", "amount_spiked", "initial_conc",
+sgs_numeric_cols <- c("result", "loq", "lod", "dl", "repdl", "amount_spiked", "initial_conc",
                       "percent_recovered", "rec_limit_low", "rec_limit_high", "sample_rpd",
                       "rpd_limit_low", "rpd_limit_high")
 
@@ -109,7 +109,7 @@ ingest_sgs <- function(season,
       )
     ) |>
     select(sample_type, qc_group, analyte, analytical_method, result, resultflag,
-           repdl, units, amount_spiked, initial_conc, percent_recovered,
+           repdl, loq, dl, units, amount_spiked, initial_conc, percent_recovered,
            rec_limit_low, rec_limit_high, sample_rpd, rpd_limit_low, rpd_limit_high,
            anl_batch, prp_batch, sdg, lab_sample_id, sample_id, collect_date,
            run_date, dissolved, lab_name, season)
@@ -123,7 +123,7 @@ ingest_sgs <- function(season,
     ) |>
     select(
       sample = sample_id, lab_sample = lab_sample_id, lab_name, analyte, result,
-      units, resultflag, loq, lod, collect_date, collect_time, rec_date, rec_time,
+      units, resultflag, loq, lod, dl, collect_date, collect_time, rec_date, rec_time,
       run_date, run_time, analytical_method, epa_analysis_id, context_code,
       monitoring_location_id, note, sample_type, sample_condition, dissolved,
       result_sample_fraction

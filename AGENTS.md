@@ -2,12 +2,11 @@
 
 Core memory loads every session; keep it short (target 11 KB). Details live in `other/agent_context/topics/` (read the relevant file on demand, see "Topic index"). Pre-split original: `other/agent_context/archive/AGENTS_2026-11-13_pre-split.md`. Put new detail in a topic file, not here; put test-fixture counts and validation narratives in the session log or topic files.
 
-## Next steps (updated 2026-11-13)
+## Next steps (updated 2026-11-16)
 
-1. Memory split done 2026-11-13. Optional later pass: trim test-fixture detail inside the topic files.
-2. Phase B: done 2026-11-13 (`combine_dat.R` runs the ingests and the contract check; lookup sheets cover SW8260D, 2540-D, 9222D and the YSI methods; lookup check is now an error; `in_situ_methods.csv` marks YSI as having no container or preservative). Left: CDX lessons step 3 remainder (Method Speciation, characteristic-name mapping) waits on the historical data scan. Unconfirmed: whether WQX accepts `Probe/Sensor` as Equipment ID. FC container color `Clear` confirmed; TSS preservative left blank (optional field).
-3. Phase C: `qaqc.qmd`. Done 2026-11-13: field blank coding (`activity_coding.R`), `assess_lab_qc.R` (Q20; blank fail = detected at or above `repdl`; missing limits are Not evaluable). Open task: LLQC has no acceptance limits (ask SGS; `topics/known_issues.md`); the Q20 section must say LLQC was not evaluated. Left: `qaqc.qmd` skeleton (Setup, Part A format, Part B Q1-Q42 ported in batches, Part C assess), Q17 fixes, write `assessed_results.csv` and `lab_qc_assessed.csv`. When the template design is complete, delete every `project_year/####.qmd` (2014-2025); keep only the year-agnostic template.
-4. Historical reconcile (2014-2018 PDF workbooks) waits on the user's Decision 2 (write WQX names into `Characteristic Name`, recommended, or project names); open decisions are listed in `topics/pdf_extraction.md`.
+1. Phase B done 2026-11-13. Left: CDX lessons step 3 remainder (Method Speciation, characteristic-name mapping; waits on the historical scan); WQX trial import questions. Detail: `topics/pending_tasks.md`.
+2. Phase C (`qaqc.qmd`) in progress. Done: field blanks, `assess_lab_qc` (Q20), `assess_rpd` (Q19), `dl` column. NEXT in order: blank rules in `assess_lab_qc`; `assign_qc_status()` (Accepted/Rejected only; design in `topics/known_issues.md`); qualifier definitions and usability statement; completeness check; `qaqc.qmd` skeleton and Q1-Q42 port. Full list, open questions and SGS questions: `topics/pending_tasks.md`. Since spring 2026 the City of Kenai plant runs all TSS. Delete `project_year/####.qmd` once the template design is complete.
+3. Historical reconcile (2014-2018 PDF workbooks) waits on the user's Decision 2 (write WQX names into `Characteristic Name`, recommended, or project names); open decisions are listed in `topics/pdf_extraction.md`.
 
 ## Repo Relationship and Purpose
 
@@ -18,7 +17,7 @@ Two repos form the Kenai River Baseline Water Quality Monitoring pipeline (Kenai
 
 Flow: this repo submits to EPA WQX via CDX, EPA publishes to WQP, the report repo reads WQP. The same data feeds the EPA How's My Waterway map. ADEC accesses the data from WQP (no separate ADEC submission; see `topics/adec_and_docs.md`).
 
-**Pending: historical data scan (2026-11-09).** Before CDX lessons step 3, the user wants all 2014-2024 data scanned (read-only) to learn what the template must handle: labs and layouts, site-label spellings (`resolve_rm_site`, SGS name table), method codes and units against the lookup sheets, non-numeric text (`to_numeric_strict`), gaps in the 24-column contract. Output: a gap table by year. The user arranges `other/input/<year>/` and says when ready; prompt for it. Open questions: compare against 2025 as baseline; include the 2013-2017 lab-measurement workbooks. The PDF extraction work (`topics/pdf_extraction.md`) prepares the PDF-only years.
+**Pending: historical data scan (2026-11-09).** Before CDX lessons step 3, the user wants all 2014-2024 data scanned read-only to learn what the template must handle; output is a gap table by year. The user arranges `other/input/<year>/` and says when ready; prompt for it. Detail: `topics/pending_tasks.md`.
 
 **Divergence:** the report repo keeps its own copies of the ingest and format code in `functions/appendix_a_scripts/` (copies in `other/misc/report_repo_scripts/`). Their relation to `functions/` here is undecided; fixes in one are not in the other.
 
@@ -44,7 +43,7 @@ Design record: `other/agent_context/plans/2026-10-28-qaqc-repo-as-parameterized-
 | D | `prelim_report.qmd` generalized from `other/documents/preliminary_report_2025/2025_preliminary_summary.qmd`; its setup chunk (about lines 200-530) is replaced by reading `assessed_results.csv` | Pending |
 | E | Blank the template, keep trimmed example, update both repos' docs | Pending |
 
-Key decisions: `dat` has 24 columns (`reference/dat_contract.md`); field blanks use Activity Type `Quality Control Sample-Field Blank` and Activity ID suffix `FB`; `lab_qc_dat` holds all 14 SGS lab QC codes plus any `(surr)` analyte and never flows to the WQX export; `prelim_report.qmd` reads only `output/assessed_results.csv`, `config.yml` and reference data.
+Key decisions: `dat` has 25 columns (24 plus `dl`, added 2026-11-16; `reference/dat_contract.md`); field blanks use Activity Type `Quality Control Sample-Field Blank` and Activity ID suffix `FB`; `lab_qc_dat` holds all 14 SGS lab QC codes plus any `(surr)` analyte and never flows to the WQX export; `prelim_report.qmd` reads only `output/assessed_results.csv`, `config.yml` and reference data.
 
 ## ID rule
 
@@ -85,6 +84,7 @@ Governance PDFs stay in the report repo's `other/agent_context/`; text versions 
 | `topics/lookups_and_ids.md` | Lookup sheets, the 22 location IDs, ID guard history |
 | `topics/adec_and_docs.md` | ADEC/Integrated Report context, README checklist plan, book and docs |
 | `topics/known_issues.md` | Known issues, QA/QC question numbering and wording |
+| `topics/pending_tasks.md` | Start of every session and after a compact: full next steps, open questions, agreed order |
 | `archive/legacy_2025qmd.md` | Only when porting or reading the old inline `2025.qmd` pipeline or `2023.qmd` |
 
 ## Report-Repo Items (tracked in `kenai-river-wqx`, not done here)

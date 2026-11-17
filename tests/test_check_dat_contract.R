@@ -17,7 +17,7 @@ cfg <- list(year = 2031, sampling = list(spring_date = "2031-05-01", summer_date
 
 good <- tibble::tibble(
   sample = "S1", lab_sample = "L1", lab_name = "LabA", analyte = analyte, result = 1.5,
-  units = "mg/L", resultflag = "=", loq = 1, lod = 0.5,
+  units = "mg/L", resultflag = "=", loq = 1, lod = 0.5, dl = 0.25,
   collect_date = as.Date("2031-05-01"), collect_time = hms::as_hms("10:00:00"),
   rec_date = as.Date("2031-05-02"), rec_time = hms::as_hms("09:00:00"),
   run_date = as.Date("2031-05-03"), run_time = hms::as_hms("08:00:00"),
@@ -211,4 +211,12 @@ test_that("site coordinates must be ASCII, numeric and inside Alaska", {
   expect_true(any(grepl("not numeric", with_coords(NA_character_, lon0), fixed = TRUE)))
   expect_true(any(grepl("Alaska bounds", with_coords(lat0, "151.2"), fixed = TRUE)))
   expect_true(any(grepl("Alaska bounds", with_coords("6.05", lon0), fixed = TRUE)))
+})
+
+test_that("dl must not exceed lod or loq; dl may be NA", {
+  expect_true(has_issue(mutate(good, dl = 0.75), "dl greater than loq or lod"))
+  expect_true(has_issue(mutate(good, dl = 2, lod = NA_real_), "dl greater than loq or lod"))
+  expect_false(has_issue(mutate(good, dl = NA_real_), "dl greater than loq or lod"))
+  expect_true(has_issue(mutate(good, dl = "0.25"), "wrong column type"))
+  expect_true(has_issue(select(good, -dl), "columns missing"))
 })

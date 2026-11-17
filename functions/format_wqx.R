@@ -204,10 +204,11 @@ dat %<>%
     `Result Detection Limit Type 1`       = "Limit of Quantitation",
     `Result Detection Limit Value 1`      = loq,
     `Result Detection Limit Unit 1`       = units,
-    # lod = "limit of detection" = "method detection level"
-    `Result Detection Limit Type 2`       = "Method Detection Level",
-    `Result Detection Limit Value 2`      = lod,
-    `Result Detection Limit Unit 2`       = units,
+    # dl = lab detection limit (SGS DL) = WQX method detection level; lod is not exported.
+    # Type 2 and its unit are blank when dl is NA (WQX requires a value with a type).
+    `Result Detection Limit Type 2`       = if_else(is.na(dl), NA_character_, "Method Detection Level"),
+    `Result Detection Limit Value 2`      = dl,
+    `Result Detection Limit Unit 2`       = if_else(is.na(dl), NA_character_, units),
     `Laboratory Accreditation Indicator`  = "",
     `Laboratory Name`                     = lab_name,
     `Laboratory Sample ID`                = lab_sample,

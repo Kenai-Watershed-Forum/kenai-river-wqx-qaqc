@@ -31,6 +31,9 @@ sgs:
 
 tss:
   # Reporting limits for SM21-2540-+D (QAPP v3 Table 5). Check against the SWWTP lab report each year.
+  # dl is the SGS-style detection limit (QAPP DL); lod is the cutoff for a "U" result (kept equal to dl).
+  # The same limits apply to both the Soldotna and City of Kenai plants.
+  dl: 0.31    # mg/L
   lod: 0.31   # mg/L
   loq: 1.0    # mg/L
 
