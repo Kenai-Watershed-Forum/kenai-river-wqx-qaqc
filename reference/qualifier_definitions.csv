@@ -1,0 +1,31 @@
+table,code,definition,source,note
+qualifier,=,Result was quantified at or above the reporting limit; no qualifier applied,Project convention,Written to Result Qualifier as "="
+qualifier,*,The analyte has exceeded allowable regulatory or control limits,QAPP v3 Table 7,
+qualifier,!,Surrogate out of control limits,QAPP v3 Table 7,
+qualifier,B,Indicates the analyte is found in a blank associated with the sample,QAPP v3 Table 7,
+qualifier,E,Detection Limit (i.e. maximum method detection limit),QAPP v3 Table 7,Definition is identical to DL in the QAPP; likely a QAPP typo
+qualifier,J,The quantitation is an estimation,QAPP v3 Table 7,Maps to WQX detection condition Present Below Quantification Limit
+qualifier,U,Indicates the analyte was analyzed for but not detected,QAPP v3 Table 7,Maps to WQX detection condition Not Detected
+qualifier,ND,Indicates the analyte is not detected,QAPP v3 Table 7,
+qualifier,GT,Greater Than,QAPP v3 Table 7,
+qualifier,LT,Less Than,QAPP v3 Table 7,
+qualifier,TNTC,Too Numerous To Count,QAPP v3 Table 7,
+qualifier,DL,Detection Limit (i.e. maximum method detection limit),QAPP v3 Table 7,
+qualifier,LOD,Limit of Detection (i.e. 1/2 of the LOQ),QAPP v3 Table 7,SGS data uses 0.75 x LOQ; question for SGS
+qualifier,LOQ,Limit of Quantitation (i.e. reporting or practical quantitation limit),QAPP v3 Table 7,
+qualifier,QCF,Result failed a QA/QC check (lab QC batch rule; blank rule; or duplicate RPD criterion) and carries Result Status Rejected,Project convention,Appended to Result Qualifier; reason in Result Comment as "QC FAIL: <reason>"; free-form qualifier acceptance by WQX unconfirmed
+qc_sample_type,CCV/CVA/CVB,Continuing Calibration Verification,QAPP v3 Table 7,
+qc_sample_type,CCCV/CVC/CVCA/CVCB,Closing Continuing Calibration Verification,QAPP v3 Table 7,
+qc_sample_type,ICV,Initial Calibration Verification,QAPP v3 Table 7,
+qc_sample_type,LCS(D),Laboratory Control Spike (Duplicate),QAPP v3 Table 7,
+qc_sample_type,LLQC/LLIQC,Low Level Quantitation Check,QAPP v3 Table 7,Not evaluated by the pipeline; acceptance limits not documented
+qc_sample_type,MS(D),Matrix Spike (Duplicate),QAPP v3 Table 7,Failure rejects only the parent sample (matrix-specific)
+qc_sample_type,MB,Method Blank,QAPP v3 Table 7,
+qc_sample_type,IB,Instrument Blank,QAPP v3 Table 7,
+qc_sample_type,RPD,Relative Percent Difference,QAPP v3 Table 7,
+qc_sample_type,CL,Control Limit,QAPP v3 Table 7,
+qc_sample_type,DF,Analytical Dilution Factor,QAPP v3 Table 7,
+detection_condition,Not Detected,Analyte not detected; reported with qualifier U,WQX,
+detection_condition,Present Below Quantification Limit,Analyte detected below the reporting limit; reported with qualifier J,WQX,
+status,Accepted,Result passed all QA/QC checks applied by the pipeline,Project convention,Field and trip blank results are Accepted and listed in the blank check
+status,Rejected,Result failed one or more QA/QC checks; retained in the dataset and flagged QCF,Project convention,Rejected results remain public

@@ -1,0 +1,18 @@
+# QAPP revision notes (running list)
+
+Purpose: every place where the pipeline had to interpret, fill a gap in, or depart from QAPP v3 (May 2023, Addendum April 2024) is recorded here, with how and why, so the next QAPP update (about every 5 years) can fix it. Rule agreed 2026-11-17: the current QAPP's intent is the guide; where we interpolate to keep the application logical, the report text describes how and why, and an entry is added here. Report text that interpolates should say so explicitly.
+
+| Topic | QAPP v3 text | Issue | How the pipeline handles it | Suggested QAPP change |
+|---|---|---|---|---|
+| Completeness measures A and B | Measure 1 "collected divided by usable" goal 85%; measure 2 "planned divided by usable" goal 60% (p. 22-23) | Both ratios are inverted as worded (would exceed 100%); the QAPP's own formula is (T - (I + NC)) / T, which is usable over expected | A = Accepted results / results collected; B = Accepted results / planned results (decided 2026-11-17) | State both as usable divided by collected and usable divided by planned; say whether "usable" means Result Status Accepted; say the unit (results vs samples) and whether QC samples count |
+| Completeness vs ADEC | ADEC 2026 guidance: 80-90% per analytical parameter and field measurement type | Goal 85% is inside the range; 60% secondary goal is below it; ADEC's formula (T expected) matches the QAPP's measure B numerically | Show QAPP goals as primary, ADEC range beside them | Justify the 60% goal or state which measure ADEC's 80-90% applies to |
+| Completeness reporting | Report needs a completeness table per analyte (scheduled, collected and valid, goal) and per site | No planned-sample design is in the QAPP in machine-readable form | Template supplies a planned-samples design file (user to provide a generalized template) | Add a planned-sample table by site, event and analyte |
+| Qualifier E | Table 7 defines E identically to DL | Probable typo | Copied as written in `reference/qualifier_definitions.csv`, with a note | Correct the definition of E |
+| LOD definition | Table 7: LOD is 1/2 of the LOQ | SGS EDD data give LOD as 0.75 x LOQ | Pipeline uses EDD values; question to SGS pending | Reconcile with SGS and state the rule |
+| Blank criterion | QAPP does not state a blank acceptance limit | ADEC 2026 uses a result at or above the LOQ; QAPP-silent otherwise | QAPP-style rule: any detection in a blank fails; ADEC rule shown beside it; results below 5x the blank result in the same batch are Rejected (KWF project convention, `qc: blank_multiple` in `config.yml`) | State the blank rule and the multiple |
+| LLQC | Table 7 lists LLQC; no limits | No acceptance limits documented | LLQC rows are not evaluated | Give LLQC limits or drop the sample type |
+| MS/MSD failures | No scope stated | Matrix failures do not indicate a batch problem | Failure rejects only the parent sample | State the scope of rejection for each QC type |
+| Rejected results | No rule on public status | | Rejected results stay in the dataset with status Rejected and qualifier QCF | State how rejected data are reported to WQX |
+| Field and trip blanks | | No rule for rejecting associated results | Reported and listed; do not reject other results (user decision) | State whether a failing field blank rejects the associated sample |
+
+Add rows as new interpolations arise (Q17 holding times, Q19 RPD, and others as `qaqc.qmd` is ported).

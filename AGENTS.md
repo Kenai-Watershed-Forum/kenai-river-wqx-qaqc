@@ -2,10 +2,10 @@
 
 Core memory loads every session; keep it short (target 11 KB). Details live in `other/agent_context/topics/` (read the relevant file on demand, see "Topic index"). Pre-split original: `other/agent_context/archive/AGENTS_2026-11-13_pre-split.md`. Put new detail in a topic file, not here; put test-fixture counts and validation narratives in the session log or topic files.
 
-## Next steps (updated 2026-11-16)
+## Next steps (updated 2026-11-17)
 
 1. Phase B done 2026-11-13. Left: CDX lessons step 3 remainder (Method Speciation, characteristic-name mapping; waits on the historical scan); WQX trial import questions. Detail: `topics/pending_tasks.md`.
-2. Phase C (`qaqc.qmd`) in progress. Done: field blanks, `assess_lab_qc` (Q20, blank rules QAPP/ADEC), `assess_rpd` (Q19), `dl` column, `sample_batches`, `assign_qc_status()`, `finalize_qc_status()`, export wiring (`qc_status` to Result Status ID, `QCF`, Result Comment; `blank_multiple: 5` in `config.yml`). Run order: combine_dat, assess_lab_qc, assign_qc_status, format_wqx, apply_qaqc_flags, generate_cdx_export. NEXT in order: qualifier definitions (`reference/qualifier_definitions.csv`) and usability statement; completeness check; `qaqc.qmd` skeleton and Q1-Q42 port (Q17 rebuild). Details, open questions, SGS questions: `topics/pending_tasks.md`; QC design: `topics/known_issues.md`. Since spring 2026 the City of Kenai plant runs all TSS. Delete `project_year/####.qmd` once the template design is complete.
+2. Phase C (`qaqc.qmd`) in progress. Done: field blanks, `assess_lab_qc`, `assess_rpd`, `dl` column, `sample_batches`, `assign_qc_status()`, `finalize_qc_status()`, export wiring (run order: combine_dat, assess_lab_qc, assign_qc_status, format_wqx, apply_qaqc_flags, generate_cdx_export; `blank_multiple: 5` in `config.yml`), `reference/qualifier_definitions.csv`, `reference/usability_statement.md` (fixed policy text, no placeholders), completeness definitions (A = Accepted / collected, B = Accepted / planned; QAPP wording is inverted). NEXT: `qaqc.qmd` skeleton (proposal in `topics/pending_tasks.md` item 5, awaiting user OK), then Q1-Q42 port (Q17 rebuild). Where we interpolate from the QAPP, say so in the report text and add a row to `topics/qapp_revision_notes.md`. User will supply a planned-samples template on request. Since spring 2026 the City of Kenai plant runs all TSS. Delete `project_year/####.qmd` once the template design is complete.
 3. Historical reconcile (2014-2018 PDF workbooks) waits on the user's Decision 2 (write WQX names into `Characteristic Name`, recommended, or project names); open decisions are listed in `topics/pdf_extraction.md`.
 
 ## Repo Relationship and Purpose
@@ -84,6 +84,7 @@ Governance PDFs stay in the report repo's `other/agent_context/`; text versions 
 | `topics/lookups_and_ids.md` | Lookup sheets, the 22 location IDs, ID guard history |
 | `topics/adec_and_docs.md` | ADEC/Integrated Report context, README checklist plan, book and docs |
 | `topics/known_issues.md` | Known issues, QA/QC question numbering and wording |
+| `topics/qapp_revision_notes.md` | Porting any QAPP-based question; every QAPP interpolation gets a row (for the next QAPP update) |
 | `topics/pending_tasks.md` | Start of every session and after a compact: full next steps, open questions, agreed order |
 | `archive/legacy_2025qmd.md` | Only when porting or reading the old inline `2025.qmd` pipeline or `2023.qmd` |
 
