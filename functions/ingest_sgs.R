@@ -148,7 +148,14 @@ ingest_sgs <- function(season,
     stop("SGS units contain a non-WQX capitalization of mg/L", call. = FALSE)
   }
 
-  list(dat = dat, lab_qc = lab_qc)
+  # Batch IDs for assign_qc_status(); kept out of `dat` so the contract is unchanged
+  sample_batches <- raw[!is_lab_qc, ] |>
+    filter(!is.na(result)) |>
+    transmute(lab_name = "SGS", lab_sample = lab_sample_id, collect_date, analyte,
+              analytical_method, dissolved, anl_batch, prp_batch) |>
+    distinct()
+
+  list(dat = dat, lab_qc = lab_qc, sample_batches = sample_batches)
 }
 
 # Duplicates rows whose `sample` is a multi-site trip blank, one row per covered site.

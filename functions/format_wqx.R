@@ -6,7 +6,8 @@
 # provisional WQX intermediate CSV.
 #
 # Requires in global env:
-#   dat         -- standardized field results (see dat column contract in AGENTS.md)
+#   dat         -- standardized field results (see dat column contract in AGENTS.md); may also
+#                  carry qc_status and qc_fail_reason from assign_qc_status()
 #   cfg         -- list with keys: templates_dir, wqx_template_file, wqx_intermediate_path
 #   year        -- integer data year (also used for Activity ID)
 #   spring_sample_date -- character "M/D/YYYY"
@@ -26,6 +27,11 @@
 # (Already filtered upstream in Part A -- this is a safety note only)
 # dat %<>%
 #   filter(!sample_condition %in% c("Lab Blank","Positive Control"))
+
+
+# Row key carried to the intermediate CSV so QC results trace back to dat rows.
+# qc_status and qc_fail_reason (assign_qc_status()) ride along the same way.
+if (!"dat_row" %in% names(dat)) dat$dat_row <- seq_len(nrow(dat))
 
 
 ############ b.) match latitude and longitude coordinates to sites ##################
@@ -226,11 +232,16 @@ dat %<>%
 # Save a full-width copy before reducing to template columns (used in QA/QC analyses)
 all_dat <- dat
 
-# Reduce to just those columns listed in the WQX template
+# A lookup join that multiplies rows would break the dat_row key
+if (anyDuplicated(dat$dat_row) > 0) {
+  stop("format_wqx: a lookup join duplicated dat rows (dat_row not unique)", call. = FALSE)
+}
+
+# Reduce to just those columns listed in the WQX template (plus the QC key columns)
 wqx_colnames <- read_excel(cfg$wqx_template_file,
                              sheet = "KWF Baseline AWQMS Template") %>%
   colnames()
-dat %<>% select(one_of(wqx_colnames))
+dat %<>% select(one_of(wqx_colnames), any_of(c("dat_row", "qc_status", "qc_fail_reason")))
 
 # Export provisional WQX-formatted results
 write.csv(dat, cfg$wqx_intermediate_path, row.names = FALSE)

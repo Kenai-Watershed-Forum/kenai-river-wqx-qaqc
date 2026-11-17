@@ -1,54 +1,68 @@
 # apply_qaqc_flags.R
 #
-# Reads the provisional WQX intermediate CSV, joins the manually-determined flag
-# decisions, writes the flagged export CSV, and leaves export_dat in the global
-# environment for downstream QA/QC calculations (Q25 CMA, Q26 CMB, etc.).
+# Reads the provisional WQX intermediate CSV, finishes the QC status (Q19 field duplicate
+# failures and the manual decisions file, on top of the lab QC status already carried from
+# assign_qc_status()), writes the flagged export CSV, and leaves export_dat and rpd_pairs in
+# the global environment for downstream QA/QC calculations (Q19, Q25 CMA, Q26 CMB, etc.).
 #
 # This script must run before Q25 and Q26, which both read from cfg$flagged_export_path.
-# The flagging chunk is placed at Q25 (before completeness measures) so that CMA
-# and CMB calculations read from a freshly-written file in the same render pass.
 #
 # Requires in global env:
 #   cfg -- list with keys:
-#     cfg$wqx_intermediate_path  (provisional WQX CSV written by format_wqx.R)
-#     cfg$flag_decisions_path    ({year}_data_flag_decisions.csv -- manually created)
+#     cfg$wqx_intermediate_path  (provisional WQX CSV written by format_wqx.R; includes
+#                                 dat_row, qc_status and qc_fail_reason)
+#     cfg$flag_decisions_path    ({year}_data_flag_decisions.csv, manually created; header only
+#                                 is fine)
 #     cfg$flagged_export_path    (output: flagged export CSV)
+#   packages: dplyr, janitor, lubridate; functions/assess_rpd.R and functions/finalize_qc_status.R
+#             are sourced here.
 #
 # Produces in global env:
-#   export_dat  (flagged, ready for downstream QA/QC chunks and generate_cdx_export.R)
+#   export_dat  (snake_case columns plus qc_status, qc_fail_reason, flag; read by generate_cdx_export.R)
+#   rpd_pairs   (assess_rpd() output: both guidance rules per duplicate pair, for Q19)
 #
 # Also writes:
 #   cfg$flagged_export_path  (e.g., output/{year}_export_data_flagged.csv)
 
+source(here::here("functions/assess_rpd.R"))
+source(here::here("functions/finalize_qc_status.R"))
 
-# Read in data formatted for export
-export_dat <- read.csv(cfg$wqx_intermediate_path) %>%
+# Intermediate CSV with the original WQX column names (assess_rpd() expects them)
+wqx_export <- read.csv(cfg$wqx_intermediate_path, check.names = FALSE,
+                       colClasses = c(`Monitoring Location ID` = "character"))
+for (cn in c("qc_status", "qc_fail_reason")) {
+  if (!cn %in% names(wqx_export)) {
+    stop("apply_qaqc_flags: the intermediate CSV has no ", cn, " column. Run assign_qc_status() ",
+         "on dat before format_wqx.R.", call. = FALSE)
+  }
+}
+
+rpd_pairs <- assess_rpd(wqx_export)
+
+export_dat <- wqx_export %>%
   clean_names() %>%
-  transform(activity_start_date = ymd(activity_start_date))
-
-# Apply manually-chosen data flags.
-# The flag_decisions CSV contains one row per flagged result, with columns:
-#   activity_start_date, characteristic_name (or other join key), flag = "Y", notes
-# Rows absent from flag_decisions default to flag = "N" (Accepted).
-flag_decisions <- read.csv(cfg$flag_decisions_path,
-                          colClasses = c(
-                            activity_start_date    = "character",
-                            characteristic_name    = "character",
-                            monitoring_location_id = "character",
-                            flag                   = "character",
-                            notes                  = "character"
-                          )) %>%
-  select(-notes) %>%
-  transform(activity_start_date = mdy(activity_start_date))
-
-export_dat <- export_dat %>%
+  transform(activity_start_date = ymd(activity_start_date)) %>%
   mutate(monitoring_location_id = as.character(monitoring_location_id))
 
-export_dat <- full_join(export_dat, flag_decisions) %>%
-  mutate(flag = case_when(
-    is.na(flag) ~ "N",
-    TRUE ~ "Y"
-  )) %>%
+# Manual decisions: one row per flagged result with activity_start_date (M/D/YYYY),
+# characteristic_name, monitoring_location_id, flag = "Y" and notes.
+manual_flags <- NULL
+if (file.exists(cfg$flag_decisions_path)) {
+  manual_flags <- read.csv(cfg$flag_decisions_path,
+                           colClasses = c(
+                             activity_start_date    = "character",
+                             characteristic_name    = "character",
+                             monitoring_location_id = "character",
+                             flag                   = "character",
+                             notes                  = "character"
+                           )) %>%
+    transform(activity_start_date = mdy(activity_start_date))
+} else {
+  warning("apply_qaqc_flags: no manual decisions file at ", cfg$flag_decisions_path,
+          "; continuing without manual flags.", call. = FALSE)
+}
+
+export_dat <- finalize_qc_status(export_dat, rpd_pairs, manual_flags) %>%
   filter(!is.na(activity_id))
 
 write.csv(export_dat, cfg$flagged_export_path, row.names = FALSE)

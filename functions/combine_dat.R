@@ -8,9 +8,10 @@
 #   config <- yaml::read_yaml(here::here("config.yml"))
 #   res <- combine_dat(config)
 #   dat <- res$dat; lab_qc_dat <- res$lab_qc; ysi_excluded <- res$ysi_excluded
+#   res$sample_batches  # batch IDs per sample result, for assign_qc_status()
 #
 # Stops (via check_dat_contract) on any contract error. `ingest_fns` can be overridden with
-# stub functions for tests; each must return list(dat, lab_qc[, excluded]).
+# stub functions for tests; each must return list(dat, lab_qc[, sample_batches, excluded]).
 
 combine_dat <- function(config,
                         data_dir = here::here("data"),
@@ -35,9 +36,11 @@ combine_dat <- function(config,
     mutate(monitoring_location_id = as.character(monitoring_location_id))
   lab_qc <- bind_rows(lapply(parts, `[[`, "lab_qc")) |>
     mutate(across(any_of("monitoring_location_id"), as.character))
+  sample_batches <- bind_rows(lapply(parts, `[[`, "sample_batches"))
 
   issues <- check_dat_contract(dat, config, lab_qc = lab_qc, ref_dir = ref_dir,
                                stop_on_error = stop_on_error)
 
-  list(dat = dat, lab_qc = lab_qc, ysi_excluded = ysi$excluded, issues = issues)
+  list(dat = dat, lab_qc = lab_qc, sample_batches = sample_batches,
+       ysi_excluded = ysi$excluded, issues = issues)
 }

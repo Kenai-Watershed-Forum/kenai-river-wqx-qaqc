@@ -152,7 +152,8 @@ dl              = 1,
       amount_spiked = NA_real_, initial_conc = NA_real_, percent_recovered = NA_real_,
       rec_limit_low = NA_real_, rec_limit_high = NA_real_, sample_rpd = NA_real_,
       rpd_limit_low = NA_real_, rpd_limit_high = NA_real_,
-      anl_batch = NA_character_, prp_batch = NA_character_, sdg = NA_character_,
+      anl_batch = paste(lab_name, analytical_method, season, sep = "-"),
+      prp_batch = NA_character_, sdg = NA_character_,
       lab_sample_id = dish_number,
       sample_id     = sample_location_rm,
       collect_date  = collect_date,
@@ -188,5 +189,12 @@ dl              = 1,
       result_sample_fraction = NA_character_
     )
 
-  list(dat = dat, lab_qc = lab_qc)
+  # No lab batch IDs: each lab, method and season file is one batch
+  sample_batches <- dat |>
+    transmute(lab_name, lab_sample, collect_date, analyte, analytical_method, dissolved,
+              anl_batch = paste(lab_name, analytical_method, season, sep = "-"),
+              prp_batch = NA_character_) |>
+    distinct()
+
+  list(dat = dat, lab_qc = lab_qc, sample_batches = sample_batches)
 }

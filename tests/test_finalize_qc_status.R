@@ -1,0 +1,82 @@
+# Tests for functions/finalize_qc_status.R. Synthetic rows only.
+#
+# Run: testthat::test_file(here::here("tests/test_finalize_qc_status.R"))
+
+library(testthat)
+source(here::here("functions", "finalize_qc_status.R"))
+
+orig <- "Field Msr/Obs"
+rep_type <- "Quality Control Field Replicate Msr/Obs"
+
+mk_export <- function() {
+  data.frame(
+    dat_row = 1:5,
+    monitoring_location_id = c("1", "1", "1", "2", "1"),
+    activity_start_date = "2025-04-30",
+    characteristic_name = c("Zinc", "Zinc", "Zinc", "Zinc", "Lead"),
+    result_sample_fraction = "Total",
+    result_analytical_method_id = "200.8",
+    result_unit = "ug/L",
+    activity_type = c(orig, rep_type, "Sample-Routine", orig, orig),
+    qc_status = c("Accepted", "Accepted", "Accepted", "Accepted", "Rejected"),
+    qc_fail_reason = c(NA, NA, NA, NA, "Lab QC fail (CCV)"),
+    stringsAsFactors = FALSE
+  )
+}
+mk_rpd <- function(qapp = "Fail") {
+  data.frame(monitoring_location_id = "1", activity_start_date = "2025-04-30",
+             characteristic_name = "Zinc", sample_fraction = "Total", method_id = "200.8",
+             unit = "ug/L", rpd_pct = 33.3, threshold = 20, qapp_v3 = qapp,
+             stringsAsFactors = FALSE)
+}
+
+test_that("a failing duplicate pair rejects the original and the replicate only", {
+  out <- finalize_qc_status(mk_export(), mk_rpd("Fail"))
+  expect_equal(out$qc_status, c("Rejected", "Rejected", "Accepted", "Accepted", "Rejected"))
+  expect_match(out$qc_fail_reason[1], "Field duplicate RPD fail \\(QAPP v3\\): 33.3% exceeds 20%")
+  expect_equal(out$flag, c("Y", "Y", "N", "N", "Y"))
+})
+
+test_that("passing and not evaluable pairs reject nothing", {
+  for (r in c("Pass", "Not evaluable")) {
+    out <- finalize_qc_status(mk_export(), mk_rpd(r))
+    expect_equal(out$qc_status[1:2], c("Accepted", "Accepted"))
+  }
+})
+
+test_that("existing lab QC reasons are kept and joined with new ones", {
+  ex <- mk_export(); ex$qc_status[1] <- "Rejected"; ex$qc_fail_reason[1] <- "Blank fail"
+  out <- finalize_qc_status(ex, mk_rpd("Fail"))
+  expect_match(out$qc_fail_reason[1], "^Blank fail; Field duplicate")
+  expect_equal(out$qc_fail_reason[5], "Lab QC fail (CCV)")
+})
+
+test_that("manual decisions reject matching rows with the note as the reason", {
+  man <- data.frame(monitoring_location_id = "2", activity_start_date = as.Date("2025-04-30"),
+                    characteristic_name = "Zinc", flag = "Y", notes = "cooler warm",
+                    stringsAsFactors = FALSE)
+  out <- finalize_qc_status(mk_export(), NULL, man)
+  expect_equal(out$qc_status[4], "Rejected")
+  expect_equal(out$qc_fail_reason[4], "Manual flag: cooler warm")
+})
+
+test_that("a manual row that matches nothing warns; flag N rows are ignored", {
+  man <- data.frame(monitoring_location_id = c("9", "2"),
+                    activity_start_date = as.Date("2025-04-30"),
+                    characteristic_name = "Zinc", flag = c("Y", "N"), notes = NA_character_,
+                    stringsAsFactors = FALSE)
+  expect_warning(out <- finalize_qc_status(mk_export(), NULL, man), "matched no result")
+  expect_equal(out$qc_status[4], "Accepted")
+})
+
+test_that("NULL or empty inputs leave the status unchanged apart from the flag column", {
+  out <- finalize_qc_status(mk_export(), NULL, NULL)
+  expect_equal(out$qc_status, mk_export()$qc_status)
+  expect_equal(out$flag, c("N", "N", "N", "N", "Y"))
+  out2 <- finalize_qc_status(mk_export(), mk_rpd()[0, ], mk_rpd()[0, ])
+  expect_equal(out2$qc_status, mk_export()$qc_status)
+})
+
+test_that("missing columns stop with a message", {
+  expect_error(finalize_qc_status(mk_export()[, -1][, -1]), "missing column")
+})

@@ -29,6 +29,11 @@ sgs:
     "RM1.5&6.5 trip blank": [10000002, 10000005]   # Kenai City Dock, Cunningham Park
     "RM40&43 trip blank":   [10000027, 10000028]   # Bing's Landing, Upstream of Dow Island
 
+qc:
+  # A failing lab blank rejects detected sample results below blank_multiple x the blank result
+  # (same batch, analyte and method). The QAPP does not set a multiple; this is a project convention.
+  blank_multiple: 5
+
 tss:
   # Reporting limits for SM21-2540-+D (QAPP v3 Table 5). Check against the SWWTP lab report each year.
   # dl is the SGS-style detection limit (QAPP DL); lod is the cutoff for a "U" result (kept equal to dl).

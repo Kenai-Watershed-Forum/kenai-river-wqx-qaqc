@@ -1,7 +1,7 @@
 # generate_cdx_export.R
 #
 # Finalizes results_activities.csv for CDX upload by:
-#   - Assigning Result Status ID (Accepted/Rejected) based on flag column
+#   - Assigning Result Status ID (Accepted/Rejected) from qc_status; QCF qualifier and QC FAIL comment on Rejected rows
 #   - Reformatting columns to match CDX import configuration
 #   - Writing results_activities.csv, project.csv, and station.csv
 # 
@@ -38,12 +38,30 @@ source(here::here("functions/check_cdx_fractions.R"))
 
 # ── Results and Activities ──────────────────────────────────────────────────────
 
-# Label flagged observations as "Rejected," non-flagged as "Accepted"
+# Result Status ID is only Accepted or Rejected (QC pass or fail). Rejected results are
+# still uploaded and stay public: the failure is carried in Result Qualifier (project code
+# QCF, appended to the lab flag) and in Result Comment ("QC FAIL: <reason>").
+# "=" is not a lab qualifier, so a Rejected row with "=" gets QCF alone.
+# UNVERIFIED: whether WQX accepts QCF in Result Qualifier (needs a trial import).
+if (!all(c("qc_status", "qc_fail_reason") %in% names(export_dat)) ||
+    !all(export_dat$qc_status %in% c("Accepted", "Rejected"))) {
+  stop("generate_cdx_export: export_dat needs qc_status (Accepted/Rejected) and ",
+       "qc_fail_reason; run apply_qaqc_flags.R first.", call. = FALSE)
+}
 export_dat %<>%
-  mutate(`Result Status ID` = case_when(
-    flag == "Y" ~ "Rejected",
-    flag == "N" ~ "Accepted"
-  ))
+  mutate(
+    `Result Status ID` = qc_status,
+    result_qualifier = case_when(
+      qc_status != "Rejected" ~ as.character(result_qualifier),
+      is.na(result_qualifier) | result_qualifier %in% c("", "=") ~ "QCF",
+      TRUE ~ paste0(result_qualifier, ", QCF")
+    ),
+    # Result Comment holds up to 4000 characters
+    result_comment = if_else(
+      qc_status == "Rejected",
+      substr(paste0("QC FAIL: ", qc_fail_reason), 1, 4000),
+      as.character(result_comment))
+  )
 
 # REVIEW: Exclude Phosphorus results from EPA Method 200.8 (Dissolved Metals by ICP/MS).
 # This method was not part of the 2021 QAPP; only Total Phosphorus via SM21 4500-P-E
