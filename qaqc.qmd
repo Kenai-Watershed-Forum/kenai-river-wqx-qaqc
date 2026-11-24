@@ -50,19 +50,28 @@ dir.create(here("output/intermediate"), recursive = TRUE, showWarnings = FALSE)
 
 ## Pipeline Run
 
-Required order: combine_dat, assess_lab_qc, assign_qc_status, format_wqx, apply_qaqc_flags, generate_cdx_export. The `format_wqx.R`, `apply_qaqc_flags.R` and `generate_cdx_export.R` scripts read and write the global environment.
+Required order: combine_dat, assess_lab_qc, assign_qc_status, assess_holding_times, format_wqx, apply_qaqc_flags, generate_cdx_export. The `format_wqx.R`, `apply_qaqc_flags.R` and `generate_cdx_export.R` scripts read and write the global environment.
 
 ```{r pipeline, message=FALSE, warning=FALSE}
 fn_files <- c("resolve_rm_site", "numeric_utils", "clock_utils", "check_dat_contract",
               "ingest_sgs", "ingest_fc", "ingest_tss", "ingest_ysi", "combine_dat",
-              "assess_lab_qc", "assign_qc_status")
+              "assess_lab_qc", "assign_qc_status", "assess_holding_times")
 for (f in fn_files) source(here("functions", paste0(f, ".R")))
 
 res <- combine_dat(config)
 lab_qc <- assess_lab_qc(res$lab_qc)
 qc <- assign_qc_status(res$dat, res$sample_batches, lab_qc, config$qc$blank_multiple)
 dat <- qc$dat
+# Row key shared with format_wqx.R, which keeps an existing dat_row
+dat$dat_row <- seq_len(nrow(dat))
 lab_qc_actions <- qc$lab_qc_actions
+
+# Q17 hold times feed the QC status, so they are assessed before the export is finalized
+holding_times <- assess_holding_times(
+  dat,
+  read.csv(file.path(cfg$templates_dir, "sample_holding_times.csv")),
+  read.csv(file.path(cfg$templates_dir, "in_situ_methods.csv"), colClasses = "character")
+)
 
 source(here("functions/format_wqx.R"))
 source(here("functions/apply_qaqc_flags.R"))
@@ -232,12 +241,48 @@ Port note: Waits on the planned-samples template.
 
 **17.) Were preservation, hold time and temperature requirements met?**
 
-```{r q17}
-#| eval: false
-# AUTO: not yet ported from project_year/2025.qmd
+Hold time is the elapsed time from collection to the start of analysis, compared with `reference/wqx_templates/sample_holding_times.csv`. In-situ meter readings are Not applicable. A missing time of day is bracketed (earliest and latest possible elapsed time); a row is Not evaluable only when the answer depends on the missing value, or when the method has no limit in the table. A result that exceeds its limit is Rejected in the export (reason `Hold time exceeded`). Lab receipt is not used in the calculation; it is cross-checked only (collection, receipt and analysis must be in order).
+
+```{r q17-holdtimes}
+holding_times |>
+  filter(hold_status != "Not applicable") |>
+  summarise(
+    results = n(),
+    limit_hours = first(max_hold_hours),
+    max_elapsed_hours = if (all(is.na(elapsed_hours))) NA_real_ else max(elapsed_hours, na.rm = TRUE),
+    pass = sum(hold_status == "Pass"),
+    fail = sum(hold_status == "Fail"),
+    not_evaluable = sum(hold_status == "Not evaluable"),
+    .by = c(lab_name, epa_analysis_id)
+  )
 ```
 
-Port note: Rebuild: missing receipt is Not evaluable, YSI is Not applicable, a method with no holding time never defaults to Y.
+```{r q17-exceptions}
+holding_times |>
+  filter(hold_status %in% c("Fail", "Not evaluable") | receipt_check == "Out of order") |>
+  select(sample, analyte, lab_name, epa_analysis_id, elapsed_hours, max_hold_hours,
+         hold_status, hold_note, receipt_check)
+```
+
+The table above is empty when every evaluable result passed and every recorded receipt is in order.
+
+```{r q17-receipt}
+holding_times |>
+  filter(receipt_check != "Not applicable") |>
+  count(lab_name, receipt_check)
+```
+
+Receipt times for the wastewater treatment plant samples (fecal coliform and TSS) are sometimes hand-written on the chain of custody, so they are entered by hand in `config.yml` (`rec_date`, `rec_time`). "Not recorded" above means that entry is blank. Sample temperature at receipt and preservation are not in the lab data tables; confirm them against the laboratory receipt documentation and chain of custody and record the finding in the text below.
+
+```{r q17-preservation}
+dat |>
+  filter(!epa_analysis_id %in% read.csv(file.path(cfg$templates_dir, "in_situ_methods.csv"),
+                                        colClasses = "character")$analytical_method) |>
+  distinct(lab_name, epa_analysis_id, result_sample_fraction, preservative) |>
+  arrange(lab_name, epa_analysis_id)
+```
+
+MANUAL: receipt temperature and preservation finding (not yet written for this year).
 
 <br>
 

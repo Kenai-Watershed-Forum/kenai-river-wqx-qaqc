@@ -80,3 +80,18 @@ test_that("NULL or empty inputs leave the status unchanged apart from the flag c
 test_that("missing columns stop with a message", {
   expect_error(finalize_qc_status(mk_export()[, -1][, -1]), "missing column")
 })
+
+test_that("hold time failures are Rejected by dat_row with the hold note as reason", {
+  ht <- data.frame(dat_row = c(1, 2), hold_status = c("Fail", "Pass"),
+                   hold_note = c("Hold time exceeded: 7.0 h > 6 h", NA),
+                   stringsAsFactors = FALSE)
+  out <- finalize_qc_status(mk_export(), holding_times = ht)
+  expect_equal(out$qc_status[1:2], c("Rejected", "Accepted"))
+  expect_match(out$qc_fail_reason[1], "Hold time exceeded")
+  expect_equal(out$flag[1], "Y")
+  # Reason is appended to an existing lab QC reason
+  ht5 <- data.frame(dat_row = 5, hold_status = "Fail", hold_note = "Hold time exceeded",
+                    stringsAsFactors = FALSE)
+  out5 <- finalize_qc_status(mk_export(), holding_times = ht5)
+  expect_equal(out5$qc_fail_reason[5], "Lab QC fail (CCV); Hold time exceeded")
+})

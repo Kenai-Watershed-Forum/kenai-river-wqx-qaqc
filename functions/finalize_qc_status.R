@@ -16,9 +16,12 @@
 #   rpd_pairs     assess_rpd() output, or NULL
 #   manual_flags  data frame with monitoring_location_id, activity_start_date, characteristic_name,
 #                 flag, notes (optional column), or NULL. Unmatched "Y" rows give a warning.
+#   holding_times assess_holding_times() output, or NULL. Rows with hold_status "Fail" are Rejected
+#                 (matched on dat_row, which export_dat must carry) with hold_note as the reason.
 # Returns export_dat with qc_status, qc_fail_reason and flag ("Y" when Rejected, else "N").
 
 finalize_qc_status <- function(export_dat, rpd_pairs = NULL, manual_flags = NULL,
+                               holding_times = NULL,
                                original_type = "Field Msr/Obs",
                                replicate_type = "Quality Control Field Replicate Msr/Obs") {
   need <- c("qc_status", "qc_fail_reason", "activity_type", "monitoring_location_id",
@@ -54,6 +57,19 @@ finalize_qc_status <- function(export_dat, rpd_pairs = NULL, manual_flags = NULL
       reason <- add_reason(reason, idx,
         sprintf("Field duplicate RPD fail (QAPP v3): %.1f%% exceeds %g%%",
                 fails$rpd_pct[hit[idx]], fails$threshold[hit[idx]]))
+      rejected[idx] <- TRUE
+    }
+  }
+
+  # Q17: hold time failures, matched on dat_row
+  if (!is.null(holding_times) && nrow(holding_times) > 0) {
+    if (!"dat_row" %in% names(d)) {
+      stop("finalize_qc_status: export_dat needs dat_row to apply holding_times", call. = FALSE)
+    }
+    hf <- holding_times[holding_times$hold_status %in% "Fail", , drop = FALSE]
+    idx <- which(d$dat_row %in% hf$dat_row)
+    if (length(idx) > 0) {
+      reason <- add_reason(reason, idx, hf$hold_note[match(d$dat_row[idx], hf$dat_row)])
       rejected[idx] <- TRUE
     }
   }

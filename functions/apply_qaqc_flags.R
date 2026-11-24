@@ -14,6 +14,7 @@
 #     cfg$flag_decisions_path    ({year}_data_flag_decisions.csv, manually created; header only
 #                                 is fine)
 #     cfg$flagged_export_path    (output: flagged export CSV)
+#   holding_times  (assess_holding_times() output; hold time failures are Rejected)
 #   packages: dplyr, janitor, lubridate; functions/assess_rpd.R and functions/finalize_qc_status.R
 #             are sourced here.
 #
@@ -26,6 +27,12 @@
 
 source(here::here("functions/assess_rpd.R"))
 source(here::here("functions/finalize_qc_status.R"))
+
+# Required, not optional: a silent skip would leave hold time failures Accepted
+if (!exists("holding_times", inherits = TRUE)) {
+  stop("apply_qaqc_flags: run assess_holding_times() on dat and assign the result to ",
+       "holding_times first.", call. = FALSE)
+}
 
 # Intermediate CSV with the original WQX column names (assess_rpd() expects them)
 wqx_export <- read.csv(cfg$wqx_intermediate_path, check.names = FALSE,
@@ -62,7 +69,7 @@ if (file.exists(cfg$flag_decisions_path)) {
           "; continuing without manual flags.", call. = FALSE)
 }
 
-export_dat <- finalize_qc_status(export_dat, rpd_pairs, manual_flags) |>
+export_dat <- finalize_qc_status(export_dat, rpd_pairs, manual_flags, holding_times) |>
   filter(!is.na(activity_id))
 
 write.csv(export_dat, cfg$flagged_export_path, row.names = FALSE)

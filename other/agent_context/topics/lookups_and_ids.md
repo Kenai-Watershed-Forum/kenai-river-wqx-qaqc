@@ -69,3 +69,5 @@ On 2026-10-14 the 2021 files were uploaded with prefixed location IDs. WQP then 
 
 ------------------------------------------------------------------------
 
+
+`format_wqx.R` no longer writes `analytes_list.csv` (changed 2026-11-24; it dirtied the repo on every run). It now stops, naming the analytes, when one has no abbreviation in `analytes_list_manual_edit.csv`. `reference/wqx_templates/analytes_list.csv` is an unused leftover (delete candidate).

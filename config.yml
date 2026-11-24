@@ -13,7 +13,8 @@ files:
   # TSS run_date/run_time: copy "DATE OF ANALYSIS" and "TIME" from the lab sheet header (required).
   # TSS receipt (rec_date, rec_time) is not in the lab file; copy from the chain of custody (optional, warns if blank).
   # FC receipt (rec_date, rec_time) is not in the lab file; copy it from the chain of custody.
-  # Left blank, ingest_fc() warns and sets receipt to NA.
+  # Left blank, ingest_fc() warns and sets receipt to NA. Receipt times at the treatment plants are
+  # sometimes hand-written, so the operator may need to enter them. Q17 uses receipt only as a cross-check.
   fc:
     spring: {path: "spring_2025_wqx_data/SWWTP/KRWF Fecal 04-30-25.xls", rec_date: ~, rec_time: ~}
     summer: {path: "summer_2025_wqx_data/SWWTP/KRWF Fecal 07-23-25.xls", rec_date: ~, rec_time: ~}
