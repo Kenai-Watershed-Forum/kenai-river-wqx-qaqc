@@ -99,7 +99,7 @@ Governance PDFs stay in the report repo's `other/agent_context/`; text versions 
 - No em-dashes; use a colon, comma, semicolon or parentheses. Minimal AI-writing tropes.
 - All ingest scripts must emit `mg/L` (WQX capitalization).
 - Do not interpret trends in text.
-- Pipes: base `|>` only; no magrittr (`%>%`, `%<>%`; use `x <- x |> f()`). Live code cleaned 2026-11-24; `project_year/` and `other/misc/` copies are legacy and left as is. If OneDrive or another PC resyncs files as CRLF, re-strip CRs before editing.
+- Pipes: base `|>` only; no magrittr (`%>%`, `%<>%`; use `x <- x |> f()`). Live code cleaned 2026-11-24; `project_year/` and `other/misc/` copies are legacy and left as is. The repo moved out of OneDrive to `C:\_github\kwf\kenai-river-wqx-qaqc` (2026-11-24); if another PC or tool rewrites files as CRLF, re-strip CRs before editing.
 - Lessons learned: each year repo keeps `other/agent_context/lessons_learned/{year}_lessons_learned.md` (format in `other/agent_context/lessons_learned/_TEMPLATE_lessons_learned.md`). When the user points to one, follow `other/agent_context/lessons_learned/README.md` to triage and apply it to the template.
 - Line endings: all text files are LF (`.gitattributes` `text=auto eol=lf`, `.editorconfig`; normalized 2026-11-24). The edit tool works normally. If an edit fails on a multi-line match, check the file for CRs (`git ls-files --eol`).
 - When running testthat or readxl from the R session, use `reporter = "silent"` and `as.data.frame(results)` to avoid progress-bar noise.
