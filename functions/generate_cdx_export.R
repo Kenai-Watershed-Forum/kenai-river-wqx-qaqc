@@ -48,7 +48,7 @@ if (!all(c("qc_status", "qc_fail_reason") %in% names(export_dat)) ||
   stop("generate_cdx_export: export_dat needs qc_status (Accepted/Rejected) and ",
        "qc_fail_reason; run apply_qaqc_flags.R first.", call. = FALSE)
 }
-export_dat %<>%
+export_dat <- export_dat |>
   mutate(
     `Result Status ID` = qc_status,
     result_qualifier = case_when(
@@ -68,20 +68,20 @@ export_dat %<>%
 # was planned and approved. These results are retained in the flagged intermediate
 # file but are not submitted to CDX.
 # Confirm this applies for the current year before keeping this filter.
-export_dat %<>%
+export_dat <- export_dat |>
   filter(!(characteristic_name == "Phosphorus" & result_analytical_method_id == "200.8"))
 
 # Valid site IDs and codes come from the adec_site_names sheet
 known_sites <- read_excel(
   file.path(cfg$templates_dir, "wqx_template_matching_table.xlsx"),
   sheet = "adec_site_names"
-) %>%
-  remove_empty() %>%
+) |>
+  remove_empty() |>
   transmute(monitoring_location_id = as.character(monitoring_location_id),
             site_code = MonitoringLocationIdentifier)
 
 # Finalize column structure to match CDX import configuration
-export_dat %<>%
+export_dat <- export_dat |>
   mutate(
     `Project ID`                           = 10000007,
     # Defensive strip; check_cdx_ids() still stops on any leftover prefix elsewhere
@@ -144,9 +144,9 @@ export_dat %<>%
 
 # Reduce to template column set
 wqx_colnames <- read_excel(cfg$wqx_template_file,
-                             sheet = "KWF Baseline AWQMS Template") %>%
+                             sheet = "KWF Baseline AWQMS Template") |>
   colnames()
-export_dat %<>% select(one_of(wqx_colnames))
+export_dat <- export_dat |> select(one_of(wqx_colnames))
 
 # results_activities.csv is written at the end of this script, after the ID check.
 

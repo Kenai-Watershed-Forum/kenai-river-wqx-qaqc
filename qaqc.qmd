@@ -1,0 +1,486 @@
+---
+title: "Annual QA/QC Pipeline"
+---
+
+# Annual QA/QC Pipeline {.unnumbered}
+
+## Introduction
+
+This document runs one project year's raw lab files through ingestion, QA/QC evaluation, WQX formatting and CDX export. Everything year-specific is read from `config.yml`, `year_files/` and `reference/`.
+
+The structure of Part C follows the Data Evaluation Checklist provided by the Alaska Department of Environmental Conservation. Results that fail QA/QC are marked Rejected before upload to the EPA Water Quality Exchange (WQX); they remain in the public record.
+
+Question tags in Part C (AUTO, MANUAL, MIXED) are provisional and show how much of each answer the pipeline can compute. Chunks marked `eval: false` are not yet ported from `project_year/2025.qmd`.
+
+------------------------------------------------------------------------
+
+## Setup
+
+```{r setup, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(readxl)
+library(janitor)
+library(lubridate)
+library(here)
+
+config <- yaml::read_yaml(here("config.yml"))
+year <- config$year
+
+# format_wqx.R expects the spring date as M/D/YYYY
+spring_d <- ymd(config$sampling$spring_date)
+spring_sample_date <- sprintf("%d/%d/%d", month(spring_d), day(spring_d), year(spring_d))
+
+cfg <- list(
+  year                  = year,
+  templates_dir         = here("reference/wqx_templates"),
+  wqx_template_file     = here("year_files", paste0("AWQMS_KWF_Baseline_", year, ".xlsx")),
+  wqx_intermediate_path = here("output/intermediate", paste0(year, "_kwf_baseline_results_wqx.csv")),
+  flagged_export_path   = here("output/intermediate", paste0(year, "_export_data_flagged.csv")),
+  flag_decisions_path   = here("year_files", paste0(year, "_data_flag_decisions.csv")),
+  # Moves into the template layout when the repo is blanked (Phase E)
+  wqx_downloads_dir     = here("other/input/WQX_downloads"),
+  spring_sample_date    = spring_sample_date,
+  summer_sample_date    = config$sampling$summer_date
+)
+
+dir.create(here("output/intermediate"), recursive = TRUE, showWarnings = FALSE)
+```
+
+------------------------------------------------------------------------
+
+## Pipeline Run
+
+Required order: combine_dat, assess_lab_qc, assign_qc_status, format_wqx, apply_qaqc_flags, generate_cdx_export. The `format_wqx.R`, `apply_qaqc_flags.R` and `generate_cdx_export.R` scripts read and write the global environment.
+
+```{r pipeline, message=FALSE, warning=FALSE}
+fn_files <- c("resolve_rm_site", "numeric_utils", "clock_utils", "check_dat_contract",
+              "ingest_sgs", "ingest_fc", "ingest_tss", "ingest_ysi", "combine_dat",
+              "assess_lab_qc", "assign_qc_status")
+for (f in fn_files) source(here("functions", paste0(f, ".R")))
+
+res <- combine_dat(config)
+lab_qc <- assess_lab_qc(res$lab_qc)
+qc <- assign_qc_status(res$dat, res$sample_batches, lab_qc, config$qc$blank_multiple)
+dat <- qc$dat
+lab_qc_actions <- qc$lab_qc_actions
+
+source(here("functions/format_wqx.R"))
+source(here("functions/apply_qaqc_flags.R"))
+
+# The CDX export needs station and project downloads from WQP; skip when absent
+wqp_project_file <- file.path(cfg$wqx_downloads_dir, "project/project.csv")
+if (file.exists(wqp_project_file)) {
+  source(here("functions/generate_cdx_export.R"))
+} else {
+  message("generate_cdx_export skipped: WQP downloads not found in ", cfg$wqx_downloads_dir)
+}
+
+# Inputs for prelim_report.qmd
+write.csv(export_dat, here("output/assessed_results.csv"), row.names = FALSE)
+write.csv(lab_qc, here("output/lab_qc_assessed.csv"), row.names = FALSE)
+```
+
+------------------------------------------------------------------------
+
+## Part C: QA/QC Checklist
+
+**1.) Were the appropriate analytical methods used for all parameters?**
+
+```{r q01}
+#| eval: false
+# MANUAL: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**2.) Were there any deviations from the sampling plan?**
+
+```{r q02}
+#| eval: false
+# MANUAL: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**3.) Were field duplicates, blanks, and/or other QC samples collected as planned?**
+
+```{r q03}
+#| eval: false
+# MIXED: not yet ported from project_year/2025.qmd
+```
+
+Port note: Waits on the planned-samples template.
+
+<br>
+
+**4.) Do the laboratory reports provide results for all sites and parameters?**
+
+```{r q04}
+#| eval: false
+# MANUAL: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**5.) Is a copy of the Chain of Custody included with the laboratory reports?**
+
+```{r q05}
+#| eval: false
+# MANUAL: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**6.) Do the laboratory reports match the Chain of Custody and requested methods throughout?**
+
+```{r q06}
+#| eval: false
+# MANUAL: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**7.) Are the number of samples on the laboratory reports the same as on the Chain of Custody?**
+
+```{r q07}
+#| eval: false
+# MANUAL: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**8.) Was all supporting info provided in the laboratory report, such as reporting limits for all analyses and definitions?**
+
+```{r q08}
+#| eval: false
+# MANUAL: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**9.) Are site names, dates, and times correct and as expected?**
+
+```{r q09}
+#| eval: false
+# MIXED: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**10.) Were there any issues with instrument calibration?**
+
+```{r q10}
+#| eval: false
+# MANUAL: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**11.) Did the instruments perform as expected?**
+
+```{r q11}
+#| eval: false
+# MANUAL: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**12.) Was instrument calibration performed according to the QAPP and instrument recommendations?**
+
+```{r q12}
+#| eval: false
+# MANUAL: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**13.) Was instrument verification during the field season performed according to the QAPP and instrument recommendations?**
+
+```{r q13}
+#| eval: false
+# MANUAL: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**14.) Were instrument calibration verification logs or records kept?**
+
+```{r q14}
+#| eval: false
+# MANUAL: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**15.) Do the instrument data files site IDs, time stamps and file names match?**
+
+```{r q15}
+#| eval: false
+# MANUAL: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**16.) Is any insitu field data rejected and why?**
+
+```{r q16}
+#| eval: false
+# MANUAL: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**17.) Were preservation, hold time and temperature requirements met?**
+
+```{r q17}
+#| eval: false
+# AUTO: not yet ported from project_year/2025.qmd
+```
+
+Port note: Rebuild: missing receipt is Not evaluable, YSI is Not applicable, a method with no holding time never defaults to Y.
+
+<br>
+
+**18.) Are dissolved metal quantities less than total metals quantities?**
+
+```{r q18}
+#| eval: false
+# AUTO: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**19.) Are the duplicate sample(s) RPD (Relative Percent Difference) within range described in QAPP?**
+
+```{r q19}
+#| eval: false
+# MIXED: not yet ported from project_year/2025.qmd
+```
+
+Port note: QAPP v3 primary, ADEC 2026 beside it (assess_rpd).
+
+<br>
+
+**20.) Were there any laboratory discrepancies, errors, data qualifiers, or QC failures (review laboratory duplicates, matrix spikes and blanks)?**
+
+```{r q20}
+#| eval: false
+# MIXED: not yet ported from project_year/2025.qmd
+```
+
+Port note: assess_lab_qc and lab_qc_actions; LLQC not evaluated; blank multiple is a project convention.
+
+<br>
+
+**21.) Is any laboratory data rejected and why?**
+
+```{r q21}
+#| eval: false
+# MANUAL: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**22.) During the field season, review raw data files (EDDs, instrument records) as they are received. Document changes and corrections to methods as needed.**
+
+```{r q22}
+#| eval: false
+# MANUAL: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**23.) Is the dataset complete and did you receive the expected number of results?**
+
+```{r q23}
+#| eval: false
+# MANUAL: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**24.) Was the data collected representative of environmental conditions?**
+
+```{r q24}
+#| eval: false
+# MANUAL: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**25.) Does project meet Completeness Measure A criteria?**
+
+```{r q25}
+#| eval: false
+# AUTO: not yet ported from project_year/2025.qmd
+```
+
+Port note: Accepted results / results collected; QAPP interpolation, see topics/qapp_revision_notes.md.
+
+<br>
+
+**26.) Does project meet Completeness Measure B criteria?**
+
+```{r q26}
+#| eval: false
+# AUTO: not yet ported from project_year/2025.qmd
+```
+
+Port note: Accepted results / planned results; needs the planned-samples template.
+
+<br>
+
+**27.) Was the QA officer consulted for any data concerns?**
+
+```{r q27}
+#| eval: false
+# MANUAL: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**28.) Are the correct monitoring locations associated with the project? Are latitude and longitude filled out in a consistent format?**
+
+```{r q28}
+#| eval: false
+# MIXED: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**29.) Are the QAPP and other supporting documents attached?**
+
+```{r q29}
+#| eval: false
+# MANUAL: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**30.) Is all project metadata correct?**
+
+```{r q30}
+#| eval: false
+# MANUAL: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**31.) Is the organization ID correct?**
+
+```{r q31}
+#| eval: false
+# MANUAL: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**32.) Are the time zones consistent and correct (AKDT in summer)?**
+
+```{r q32}
+#| eval: false
+# MIXED: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**33.) Are all media types included? Media types appropriate to Characteristic?**
+
+```{r q33}
+#| eval: false
+# MIXED: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**34.) Check Sample Collection, Preparation and Preservation Methods, Thermal Preservative, Equipment ID, Activity Media. Is supporting information included and correct?**
+
+```{r q34}
+#| eval: false
+# MIXED: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**35.) Are all expected activity types present and are QC samples correctly identified?**
+
+```{r q35}
+#| eval: false
+# MIXED: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**36.) Is the Activity media subdivision filled in (if relevant)?**
+
+```{r q36}
+#| eval: false
+# MIXED: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**37.) For Water activity media, is the relative depth filled in?**
+
+```{r q37}
+#| eval: false
+# MIXED: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**38.) Is the number of results for each Characteristic correct?**
+
+```{r q38}
+#| eval: false
+# MIXED: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**39.) Do the range of result values make sense?**
+
+```{r q39}
+#| eval: false
+# MIXED: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**40.) Are units correct and consistent for each parameter?**
+
+```{r q40}
+#| eval: false
+# MIXED: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**41.) Are detection limits and laboratory qualifiers included for analytical results?**
+
+```{r q41}
+#| eval: false
+# MIXED: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+**42.) Are results trip blanks and/or field blanks above detection limits, and is any related data flagged as a result?**
+
+```{r q42}
+#| eval: false
+# MIXED: not yet ported from project_year/2025.qmd
+```
+
+<br>
+
+------------------------------------------------------------------------
+
+## Part D: CDX Export
+
+```{r cdx-file-summary, message=FALSE}
+cdx_files <- here("output", c("results_activities.csv", "project.csv", "station.csv"))
+tibble(file = basename(cdx_files),
+       rows = map_int(cdx_files, \(f) if (file.exists(f)) nrow(read.csv(f)) else NA_integer_))
+```
+

@@ -104,5 +104,71 @@
       "Working year",
       "Annual QA/QC Pipeline: 2025 Data"
     ]
+  },
+  {
+    "objectID": "qaqc.html",
+    "href": "qaqc.html",
+    "title": "2  Annual QA/QC Pipeline",
+    "section": "",
+    "text": "Annual QA/QC Pipeline",
+    "crumbs": [
+      "Working year",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Annual QA/QC Pipeline</span>"
+    ]
+  },
+  {
+    "objectID": "qaqc.html#introduction",
+    "href": "qaqc.html#introduction",
+    "title": "2  Annual QA/QC Pipeline",
+    "section": "2.1 Introduction",
+    "text": "2.1 Introduction\nThis document runs one project year’s raw lab files through ingestion, QA/QC evaluation, WQX formatting and CDX export. Everything year-specific is read from config.yml, year_files/ and reference/.\nThe structure of Part C follows the Data Evaluation Checklist provided by the Alaska Department of Environmental Conservation. Results that fail QA/QC are marked Rejected before upload to the EPA Water Quality Exchange (WQX); they remain in the public record.\nQuestion tags in Part C (AUTO, MANUAL, MIXED) are provisional and show how much of each answer the pipeline can compute. Chunks marked eval: false are not yet ported from project_year/2025.qmd.",
+    "crumbs": [
+      "Working year",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Annual QA/QC Pipeline</span>"
+    ]
+  },
+  {
+    "objectID": "qaqc.html#setup",
+    "href": "qaqc.html#setup",
+    "title": "2  Annual QA/QC Pipeline",
+    "section": "2.2 Setup",
+    "text": "2.2 Setup",
+    "crumbs": [
+      "Working year",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Annual QA/QC Pipeline</span>"
+    ]
+  },
+  {
+    "objectID": "qaqc.html#pipeline-run",
+    "href": "qaqc.html#pipeline-run",
+    "title": "2  Annual QA/QC Pipeline",
+    "section": "2.3 Pipeline Run",
+    "text": "2.3 Pipeline Run\nRequired order: combine_dat, assess_lab_qc, assign_qc_status, format_wqx, apply_qaqc_flags, generate_cdx_export. The format_wqx.R, apply_qaqc_flags.R and generate_cdx_export.R scripts read and write the global environment.",
+    "crumbs": [
+      "Working year",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Annual QA/QC Pipeline</span>"
+    ]
+  },
+  {
+    "objectID": "qaqc.html#part-c-qaqc-checklist",
+    "href": "qaqc.html#part-c-qaqc-checklist",
+    "title": "2  Annual QA/QC Pipeline",
+    "section": "2.4 Part C: QA/QC Checklist",
+    "text": "2.4 Part C: QA/QC Checklist\n1.) Were the appropriate analytical methods used for all parameters?\n\n2.) Were there any deviations from the sampling plan?\n\n3.) Were field duplicates, blanks, and/or other QC samples collected as planned?\nPort note: Waits on the planned-samples template.\n\n4.) Do the laboratory reports provide results for all sites and parameters?\n\n5.) Is a copy of the Chain of Custody included with the laboratory reports?\n\n6.) Do the laboratory reports match the Chain of Custody and requested methods throughout?\n\n7.) Are the number of samples on the laboratory reports the same as on the Chain of Custody?\n\n8.) Was all supporting info provided in the laboratory report, such as reporting limits for all analyses and definitions?\n\n9.) Are site names, dates, and times correct and as expected?\n\n10.) Were there any issues with instrument calibration?\n\n11.) Did the instruments perform as expected?\n\n12.) Was instrument calibration performed according to the QAPP and instrument recommendations?\n\n13.) Was instrument verification during the field season performed according to the QAPP and instrument recommendations?\n\n14.) Were instrument calibration verification logs or records kept?\n\n15.) Do the instrument data files site IDs, time stamps and file names match?\n\n16.) Is any insitu field data rejected and why?\n\n17.) Were preservation, hold time and temperature requirements met?\nPort note: Rebuild: missing receipt is Not evaluable, YSI is Not applicable, a method with no holding time never defaults to Y.\n\n18.) Are dissolved metal quantities less than total metals quantities?\n\n19.) Are the duplicate sample(s) RPD (Relative Percent Difference) within range described in QAPP?\nPort note: QAPP v3 primary, ADEC 2026 beside it (assess_rpd).\n\n20.) Were there any laboratory discrepancies, errors, data qualifiers, or QC failures (review laboratory duplicates, matrix spikes and blanks)?\nPort note: assess_lab_qc and lab_qc_actions; LLQC not evaluated; blank multiple is a project convention.\n\n21.) Is any laboratory data rejected and why?\n\n22.) During the field season, review raw data files (EDDs, instrument records) as they are received. Document changes and corrections to methods as needed.\n\n23.) Is the dataset complete and did you receive the expected number of results?\n\n24.) Was the data collected representative of environmental conditions?\n\n25.) Does project meet Completeness Measure A criteria?\nPort note: Accepted results / results collected; QAPP interpolation, see topics/qapp_revision_notes.md.\n\n26.) Does project meet Completeness Measure B criteria?\nPort note: Accepted results / planned results; needs the planned-samples template.\n\n27.) Was the QA officer consulted for any data concerns?\n\n28.) Are the correct monitoring locations associated with the project? Are latitude and longitude filled out in a consistent format?\n\n29.) Are the QAPP and other supporting documents attached?\n\n30.) Is all project metadata correct?\n\n31.) Is the organization ID correct?\n\n32.) Are the time zones consistent and correct (AKDT in summer)?\n\n33.) Are all media types included? Media types appropriate to Characteristic?\n\n34.) Check Sample Collection, Preparation and Preservation Methods, Thermal Preservative, Equipment ID, Activity Media. Is supporting information included and correct?\n\n35.) Are all expected activity types present and are QC samples correctly identified?\n\n36.) Is the Activity media subdivision filled in (if relevant)?\n\n37.) For Water activity media, is the relative depth filled in?\n\n38.) Is the number of results for each Characteristic correct?\n\n39.) Do the range of result values make sense?\n\n40.) Are units correct and consistent for each parameter?\n\n41.) Are detection limits and laboratory qualifiers included for analytical results?\n\n42.) Are results trip blanks and/or field blanks above detection limits, and is any related data flagged as a result?",
+    "crumbs": [
+      "Working year",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Annual QA/QC Pipeline</span>"
+    ]
+  },
+  {
+    "objectID": "qaqc.html#part-d-cdx-export",
+    "href": "qaqc.html#part-d-cdx-export",
+    "title": "2  Annual QA/QC Pipeline",
+    "section": "2.5 Part D: CDX Export",
+    "text": "2.5 Part D: CDX Export\n\n\n# A tibble: 3 × 2\n  file                    rows\n  &lt;chr&gt;                  &lt;int&gt;\n1 results_activities.csv   883\n2 project.csv               NA\n3 station.csv               NA",
+    "crumbs": [
+      "Working year",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Annual QA/QC Pipeline</span>"
+    ]
   }
 ]

@@ -27,6 +27,7 @@ Migration status: the pipeline is being moved from per-year QMDs (`project_year/
 5. Run the pipeline. Fix intake problems in the working copy of the code; do not work around them downstream.
 6. Check `reference/dat_contract.md` invariants. The pipeline stops on a units-case mismatch (`mg/L`).
 7. Render the report and review outputs in `output/`.
+8. Keep a lessons file: copy `other/agent_context/lessons_learned/_TEMPLATE_lessons_learned.md` to `other/agent_context/lessons_learned/{year}_lessons_learned.md`, add entries as problems come up, and finish it after the CDX upload is verified. The main template repo applies it to the template; see `other/agent_context/lessons_learned/README.md`.
 
 ## Archive checklist
 

@@ -95,3 +95,9 @@ I need a basic tool that can extract data from lab report pdfs and transcribe th
 
 I am ready to continue working on the overall goal of this project, which is to create a template repo that that i can use to prepare all data from one project year for submission to the epa cdx. help me make a plan for where to pick up.\
 note: i am worried about high token consumption with this project. often with the first posit assistant inquiry after compaction, \>35k tokens will be consumed. can we implement a strategy to address this? i dont know the best way to do it. help me make a plan. as an idea: remove completed/unneeded info from the agents.md file and archive them in the session_log.md or session_log_archive? but i think we're already doing that
+
+11/24/2026
+
+It seems like it would be a good idea to audit this repo for use of magrittr pipes e.g. %\<\>%, and update to best practices which do not involve that kind of package dependency.
+
+this repo is intended to be a template that will be copied each year to assess one years worth of data. each year will present an opportunity to learn lessons and develop conventions that may be applicable for other years. as such, at the completion of data archival tasks i want the repo to contain something like a "\[year\]\_*lessons*\_learned" file. the idea would after each year qa/qc and upload to cdx is complete, i would open the main template repo, point posit assistant to an annual lessons_learned file, then and ask it to update the template as needed using the new info and lessons

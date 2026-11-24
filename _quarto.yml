@@ -13,7 +13,7 @@ book:
     - references.qmd
     - part: "Working year"
       chapters:
-      - project_year/2025.qmd
+      - qaqc.qmd
     - part: "Procedures"
       chapters:
       - cdx_upload.qmd

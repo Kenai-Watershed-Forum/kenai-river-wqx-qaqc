@@ -39,9 +39,9 @@ for (cn in c("qc_status", "qc_fail_reason")) {
 
 rpd_pairs <- assess_rpd(wqx_export)
 
-export_dat <- wqx_export %>%
-  clean_names() %>%
-  transform(activity_start_date = ymd(activity_start_date)) %>%
+export_dat <- wqx_export |>
+  clean_names() |>
+  transform(activity_start_date = ymd(activity_start_date)) |>
   mutate(monitoring_location_id = as.character(monitoring_location_id))
 
 # Manual decisions: one row per flagged result with activity_start_date (M/D/YYYY),
@@ -55,14 +55,14 @@ if (file.exists(cfg$flag_decisions_path)) {
                              monitoring_location_id = "character",
                              flag                   = "character",
                              notes                  = "character"
-                           )) %>%
+                           )) |>
     transform(activity_start_date = mdy(activity_start_date))
 } else {
   warning("apply_qaqc_flags: no manual decisions file at ", cfg$flag_decisions_path,
           "; continuing without manual flags.", call. = FALSE)
 }
 
-export_dat <- finalize_qc_status(export_dat, rpd_pairs, manual_flags) %>%
+export_dat <- finalize_qc_status(export_dat, rpd_pairs, manual_flags) |>
   filter(!is.na(activity_id))
 
 write.csv(export_dat, cfg$flagged_export_path, row.names = FALSE)
