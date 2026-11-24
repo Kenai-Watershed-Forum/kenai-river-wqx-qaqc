@@ -1,0 +1,13 @@
+# Store and check out text files with LF on every machine, so edits and diffs
+# do not depend on each user's core.autocrlf setting.
+* text=auto eol=lf
+
+# Binary formats: never touch line endings.
+*.pdf binary
+*.xlsx binary
+*.xls binary
+*.mdb binary
+*.png binary
+*.jpg binary
+*.rds binary
+*.RData binary
