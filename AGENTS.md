@@ -99,7 +99,7 @@ Governance PDFs stay in the report repo's `other/agent_context/`; text versions 
 - No em-dashes; use a colon, comma, semicolon or parentheses. Minimal AI-writing tropes.
 - All ingest scripts must emit `mg/L` (WQX capitalization).
 - Do not interpret trends in text.
-- CRLF files (`format_wqx.R`, `generate_cdx_export.R`, `check_dat_contract.R`, `check_cdx_ids.R`, `extract_ars_pdf.R`, `AGENTS.md`): the edit tool fails on multi-line matches; insert with R `readLines`/`writeLines` and check for doubled CRs. Write with `con <- file(f, "wb"); writeLines(l, con, sep = "\r\n")` (text-mode `writeLines(sep = "\r\n")` on Windows doubles the CRs; strip with `sub("\r+$", "", ...)` and rewrite). Test files are LF.
+- Line endings: all text files are LF (`.gitattributes` `text=auto eol=lf`, `.editorconfig`; normalized 2026-11-24). The edit tool works normally. If an edit fails on a multi-line match, check the file for CRs (`git ls-files --eol`).
 - When running testthat or readxl from the R session, use `reporter = "silent"` and `as.data.frame(results)` to avoid progress-bar noise.
 - Before implementing code, explain what it does and why, and wait for confirmation. Present decisions one at a time.
 - Corrections to hand-entered data go in a separate `<name>_corrected.xlsx` beside the original (changes shaded, logged on a `corrections_log` sheet); never modify the original. Keep the key's own conventions unless the user decides otherwise.
