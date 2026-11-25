@@ -76,3 +76,7 @@ Phase E (to do): `config.yml` holds 2025 fixture values for `year`, `sampling`, 
 - Q40: one unit per characteristic and in `wqx_uom_codes.csv`; drop the legacy chunk that rewrote `mg/l` and overwrote the export.
 - Q41: LOQ present on lab rows, detection limit when available, non-detect has a detection condition, qualifiers in the domain list; probe rows exempt.
 - Q42: trip and field blank detections listed with same-date primary results, reuse `qc: blank_multiple`; flagging only through `flag_decisions`, never automatic.
+
+## Q33 built 2026-11-25 (render currently STOPS at Q33 by design)
+- Added `reference/wqx_domains/` (ActivityMedia.CSV, Characteristic.CSV, README), `functions/check_wqx_domain.R`, `tests/test_check_wqx_domain.R` (3 pass), `config.yml` `wqx:` block; `format_wqx.R` reads media and subdivision from `cfg`.
+- Q33 finding (2025 fixture): `Characteristic Name` is written from the project `analyte` (format_wqx.R line ~210), so 7 names are not accepted WQX names: Dissolved Oxygen, P & M -Xylene, Specific Conductance, Total Nitrate/Nitrite-N, Total Phosphorus, Water Temperature, Xylenes (total). WQX equivalents exist for most (e.g. "Dissolved oxygen (DO)", "Specific conductance", "Temperature, water", "Nitrate + Nitrite", "Phosphorus", "Xylene"). This is the pending characteristic-name mapping (Decision 2). Needs the user's decision before Q34 can render.

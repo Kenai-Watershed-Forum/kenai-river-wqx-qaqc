@@ -78,3 +78,10 @@ ysi:
   ph_min: 0
   ph_max: 14
   do_max: 20   # mg/L
+
+# WQX values written to every upload row; must be names in the WQX domain lists (checked in Q33, Q36)
+wqx:
+  activity_media_name: "Water"
+  activity_media_subdivision_name: "Surface Water"
+  # Date reference/wqx_domains/*.CSV were downloaded from https://cdx.epa.gov/wqx/download/DomainValues/
+  domain_download_date: "2026-11-25"

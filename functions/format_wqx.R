@@ -8,7 +8,8 @@
 # Requires in global env:
 #   dat         -- standardized field results (see dat column contract in AGENTS.md); may also
 #                  carry qc_status and qc_fail_reason from assign_qc_status()
-#   cfg         -- list with keys: templates_dir, wqx_template_file, wqx_intermediate_path
+#   cfg         -- list with keys: templates_dir, wqx_template_file, wqx_intermediate_path,
+#                  activity_media_name, activity_media_subdivision_name
 #   year        -- integer data year (also used for Activity ID)
 #   spring_sample_date -- character "M/D/YYYY"
 #
@@ -179,8 +180,8 @@ dat_raw <- dat
 dat <- dat |>
   mutate(
     `Monitoring Location ID`              = monitoring_location_id,
-    `Activity Media Name`                 = "Water",
-    `Activity Media Subdivision Name`     = "Surface Water",
+    `Activity Media Name`                 = cfg$activity_media_name,
+    `Activity Media Subdivision Name`     = cfg$activity_media_subdivision_name,
     # create Activity ID conditionally on sample_condition presence
     `Activity ID` = case_when(
       is.na(sample_condition) ~ paste0(site_code, "-",

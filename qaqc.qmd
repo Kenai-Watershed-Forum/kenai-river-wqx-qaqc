@@ -42,6 +42,8 @@ cfg <- list(
   planned_samples_path  = here("year_files/planned_samples.xlsx"),
   # Moves into the template layout when the repo is blanked (Phase E)
   wqx_downloads_dir     = here("other/input/WQX_downloads"),
+  activity_media_name   = config$wqx$activity_media_name,
+  activity_media_subdivision_name = config$wqx$activity_media_subdivision_name,
   spring_sample_date    = spring_sample_date,
   summer_sample_date    = config$sampling$summer_date
 )
@@ -1052,10 +1054,38 @@ MANUAL: confirm that field and lab clocks were set to local Alaska time, and not
 
 **33.) Are all media types included? Media types appropriate to Characteristic?**
 
+Every upload row carries the Activity Media Name set in `config.yml` (`wqx: activity_media_name`), and each Characteristic Name is checked against EPA's WQX Characteristic domain list (accepted names only). Both lists are copies of EPA's downloads in `reference/wqx_domains/` (downloaded `r config$wqx$domain_download_date`; see the README there). This program samples surface water only, so one media type is expected; the check confirms that the configured value is valid and that no row is blank or different.
+
 ```{r q33}
-#| eval: false
-# MIXED: not yet ported from project_year/2025.qmd
+source(here("functions/check_wqx_domain.R"))
+
+media_cfg <- config$wqx$activity_media_name
+media_bad <- check_wqx_domain(export_dat$activity_media_name, "ActivityMedia")
+char_bad <- check_wqx_domain(export_dat$characteristic_name, "Characteristic")
+
+q33_checks <- tibble(
+  check = c("Configured media name is in the WQX Activity Media list",
+            "Every export row has a valid Activity Media Name",
+            "Every export row has the configured media name",
+            "Every Characteristic Name is an accepted WQX name"),
+  passed = c(!is.null(media_cfg) && media_cfg %in% read_wqx_domain("ActivityMedia"),
+             nrow(media_bad) == 0,
+             all(export_dat$activity_media_name == media_cfg, na.rm = TRUE),
+             nrow(char_bad) == 0)
+)
+q33_checks
+
+export_dat |> count(activity_media_name, name = "n_results")
 ```
+
+```{r q33-stop}
+if (any(!q33_checks$passed)) {
+  stop("Q33: media or characteristic name not accepted by WQX: ",
+       paste(c(media_bad$value, char_bad$value), collapse = "; "))
+}
+```
+
+MANUAL: confirm that no non-water media (sediment, tissue, air) were sampled this year (not yet written for this year).
 
 <br>
 
