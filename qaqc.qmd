@@ -24,6 +24,8 @@ library(lubridate)
 library(here)
 
 config <- yaml::read_yaml(here("config.yml"))
+source(here("functions", "check_config.R"))
+check_config(config)
 year <- config$year
 
 # format_wqx.R expects the spring date as M/D/YYYY
@@ -701,7 +703,9 @@ Project policy: all results are submitted under the monitoring locations already
 
 `reference/baseline_sites.csv` is the single source of site coordinates for the whole pipeline: the locations and coordinates registered in CDX. The ingest contract check, the Activity Latitude and Longitude in the export, and this section all read it (its identifiers carry the `KENAI_WQX-` prefix, removed here to match the upload IDs; the contract check and `format_wqx.R` stop if a location is not in that file).
 
-Places the crews actually sample that differ from a registered location are recorded by the user in `year_files/sampled_locations.csv` (columns `monitoring_location_id`, `sampled_latitude`, `sampled_longitude`, `notes`; a header-only file means no differences). Nothing in the pipeline can detect a changed sampling location, so fill this file in each year from field records. Entries that differ from the registered coordinates by more than the tolerance below are listed for your attention, because the QAPP coordinates no longer describe where samples are collected. Assumption: `baseline_sites.csv` holds the coordinates registered in CDX; it was checked against the Water Quality Portal listing of the organization's locations on 2026-11-25 (agreement to within rounding) and should be re-checked whenever sites change.
+Places the crews actually sample that differ from a registered location are recorded by the user in `year_files/sampled_locations.csv` (columns `monitoring_location_id`, `sampled_latitude`, `sampled_longitude`, `notes`; a header-only file means no differences). Nothing in the pipeline can detect a changed sampling location, so fill this file in each year from field records. Entries that differ from the registered coordinates by more than the tolerance below are listed for your attention, because the QAPP coordinates no longer describe where samples are collected. Assumption: `baseline_sites.csv` holds the coordinates registered in CDX; it was last checked against the Water Quality Portal listing of the organization's locations on `r config$sites$verified_date` (set in `config.yml`; update it when you re-check) and should be re-checked whenever sites change. Every ID in `sampled_locations.csv` must exist in `baseline_sites.csv` (the render stops otherwise); IDs with no results this year raise a warning.
+
+Format consistency: every coordinate in the export is taken from `baseline_sites.csv`, so all locations share one source and format. The checks below therefore test that each value is numeric, that longitude is negative, and that it matches the registered value, rather than comparing the number of decimal places.
 
 ```{r q28-check}
 # Differences below this distance are treated as rounding
@@ -733,6 +737,12 @@ sampled_sites <- if (file.exists(sampled_path)) {
          sampled_note = character())
 }
 
+unknown_sampled <- setdiff(sampled_sites$monitoring_location_id, ref_sites$monitoring_location_id)
+if (length(unknown_sampled) > 0) {
+  stop("year_files/sampled_locations.csv has IDs not in reference/baseline_sites.csv: ",
+       paste(unknown_sampled, collapse = ", "))
+}
+
 site_check <- export_dat |>
   distinct(monitoring_location_id, activity_latitude, activity_longitude) |>
   mutate(
@@ -751,6 +761,12 @@ site_check <- export_dat |>
     sampled_differs = in_reference & !is.na(sampled_lat) &
       haversine_m(sampled_lat, sampled_lon, ref_lat, ref_lon) > tolerance_m
   )
+
+sampled_no_results <- setdiff(sampled_sites$monitoring_location_id, site_check$monitoring_location_id)
+if (length(sampled_no_results) > 0) {
+  warning("sampled_locations.csv lists locations with no results this year (ignored): ",
+          paste(sampled_no_results, collapse = ", "), call. = FALSE)
+}
 
 site_check |>
   summarise(
@@ -786,7 +802,8 @@ coord_diffs <- site_check |>
   ) |>
   select(monitoring_location_id, river_mile, issue,
          sampled_latitude = sampled_lat, sampled_longitude = sampled_lon,
-         registered_latitude = ref_lat, registered_longitude = ref_lon, distance_m) |>
+         registered_latitude = ref_lat, registered_longitude = ref_lon, distance_m,
+         sampled_note) |>
   arrange(monitoring_location_id)
 
 # Carry over notes typed into a previous version of the file
@@ -799,6 +816,11 @@ if (file.exists(q28_path)) {
     coord_diffs$notes <- coalesce(prior, "")
   }
 }
+# Seed empty notes from the user's sampled_locations.csv note
+coord_diffs <- coord_diffs |>
+  mutate(notes = if_else(notes == "" & issue == "Sampled location differs from QAPP-registered location",
+                         coalesce(sampled_note, ""), notes)) |>
+  select(-sampled_note)
 
 write_csv(coord_diffs, q28_path)
 coord_diffs
@@ -865,37 +887,166 @@ MANUAL: confirm the registered location list in CDX still matches the QAPP and t
 
 **29.) Are the QAPP and other supporting documents attached?**
 
+The documents attached to the project in CDX are set in `config.yml` (`cdx:`). The QAPP filename is written to `project.csv` as `ProjectAttachmentFileName` by `generate_cdx_export.R`; the file itself is attached by hand in WQX Web.
+
 ```{r q29}
-#| eval: false
-# MANUAL: not yet ported from project_year/2025.qmd
+cdx_docs <- tibble(
+  document = c("QAPP", rep("Supporting document", length(config$cdx$supporting_documents))),
+  filename = c(config$cdx$qapp_filename, unlist(config$cdx$supporting_documents))
+) |>
+  mutate(
+    # Informational: the PDFs are often kept outside the repo
+    found_in_repo = tolower(filename) %in% tolower(basename(
+      list.files(here(c("other", "reference", "year_files")), recursive = TRUE)))
+  )
+cdx_docs
 ```
+
+`found_in_repo = FALSE` is informational only (the attachment is uploaded from wherever you keep it). The QAPP filename must be the currently approved version.
+
+MANUAL: confirm that the QAPP named above is the approved version and is attached to the project in CDX, and list any other supporting documents attached (not yet written for this year).
 
 <br>
 
 **30.) Is all project metadata correct?**
 
+The project metadata submitted to CDX is set in `config.yml` (`cdx:`) and written to `project.csv` and to the `Project ID` column of the results file by `generate_cdx_export.R`. The table shows what will be submitted, and the checks below test structure only (values present, ID numeric, URL form, and agreement with the WQP project record when that download is available).
+
 ```{r q30}
-#| eval: false
-# MANUAL: not yet ported from project_year/2025.qmd
+project_meta <- tibble(
+  field = c("Project ID", "Project name", "QAPP approved", "QAPP approval agency",
+            "Project description URL", "QAPP filename"),
+  value = c(config$cdx$project_id, config$cdx$project_name, config$cdx$qapp_approved,
+            config$cdx$qapp_approval_agency, config$cdx$project_description_url,
+            config$cdx$qapp_filename) |> as.character()
+)
+
+wqp_project <- if (file.exists(wqp_project_file)) read_csv(wqp_project_file, show_col_types = FALSE) else NULL
+
+project_checks <- tibble(
+  check = c("All fields filled", "Project ID is numeric", "QAPP approved is Yes or No",
+            "Description is a web address",
+            "Project ID and name match the WQP project record"),
+  passed = c(
+    all(!is.na(project_meta$value) & nzchar(project_meta$value)),
+    grepl("^[0-9]+$", as.character(config$cdx$project_id)),
+    config$cdx$qapp_approved %in% c("Yes", "No"),
+    grepl("^https?://", config$cdx$project_description_url),
+    if (is.null(wqp_project)) NA else
+      any(as.character(wqp_project$ProjectIdentifier) == as.character(config$cdx$project_id) &
+            wqp_project$ProjectName == config$cdx$project_name)
+  )
+)
+
+project_meta
+project_checks
 ```
+
+`passed = NA` on the last check means the WQP project download was not available, so the comparison with the registered project was not made. Any `FALSE` needs fixing in `config.yml` before upload.
+
+```{r q30-stop}
+if (any(project_checks$passed %in% FALSE)) {
+  stop("Q30 project metadata check failed: ",
+       paste(project_checks$check[project_checks$passed %in% FALSE], collapse = "; "))
+}
+```
+
+MANUAL: confirm the project ID, name, QAPP approval status and agency, and description URL against the project record in WQX Web, and note any change since last year (not yet written for this year).
 
 <br>
 
 **31.) Is the organization ID correct?**
 
+The organization ID is set in `config.yml` (`cdx: organization_id`). WQX Web prepends it, followed by a hyphen, to every uploaded location and activity ID, so the upload files must carry bare IDs and the registered locations must already carry this prefix.
+
 ```{r q31}
-#| eval: false
-# MANUAL: not yet ported from project_year/2025.qmd
+org_id <- config$cdx$organization_id
+org_prefix <- paste0(org_id, "-")
+
+has_prefix <- function(x) !is.na(x) & startsWith(as.character(x), org_id)
+
+org_checks <- tibble(
+  check = c("Organization ID is set",
+            "Every registered location in baseline_sites.csv starts with the organization ID",
+            "No location ID in the export carries the prefix",
+            "No activity ID in the export carries the prefix",
+            "Organization ID matches the WQP project record"),
+  passed = c(
+    !is.null(org_id) && !is.na(org_id) && nzchar(org_id),
+    all(startsWith(read_csv(here("reference/baseline_sites.csv"), show_col_types = FALSE)$MonitoringLocationIdentifier,
+                   org_prefix)),
+    !any(has_prefix(export_dat$monitoring_location_id)),
+    !any(has_prefix(export_dat$activity_id)),
+    if (is.null(wqp_project) || !"OrganizationIdentifier" %in% names(wqp_project)) NA else
+      all(wqp_project$OrganizationIdentifier == org_id)
+  )
+)
+
+tibble(organization_id = org_id, upload_prefix_added_by_wqx_web = org_prefix)
+org_checks
 ```
+
+`passed = NA` on the last check means the WQP project download was not available. Any `FALSE` needs fixing before upload.
+
+```{r q31-stop}
+if (any(org_checks$passed %in% FALSE)) {
+  stop("Q31 organization ID check failed: ",
+       paste(org_checks$check[org_checks$passed %in% FALSE], collapse = "; "))
+}
+```
+
+MANUAL: confirm that the organization ID matches the one shown in your WQX Web account (not yet written for this year).
 
 <br>
 
 **32.) Are the time zones consistent and correct (AKDT in summer)?**
 
+All sampling is in the Kenai watershed, so the correct zone follows from the date alone: AKDT from the second Sunday of March to the first Sunday of November, AKST otherwise (`akt_zone()` in `functions/clock_utils.R`, from the time zone database). The results file has no time zone columns. The WQX Web import configuration adds Activity Start and Analysis Start Time Zone as a constant (`cdx: import_config_time_zone` in `config.yml`, `AKDT` in the saved import configuration), so this check confirms that every activity and analysis date falls in that zone. If any date is AKST, the import configuration must be changed before upload.
+
 ```{r q32}
-#| eval: false
-# MIXED: not yet ported from project_year/2025.qmd
+zone_tbl <- bind_rows(
+  tibble(date_type = "Activity start", date = as.Date(export_dat$activity_start_date)),
+  tibble(date_type = "Analysis start", date = ymd(export_dat$analysis_start_date))
+) |>
+  filter(!is.na(date)) |>
+  distinct() |>
+  mutate(expected_zone = akt_zone(date),
+         import_config_zone = config$cdx$import_config_time_zone,
+         consistent = expected_zone == import_config_zone) |>
+  arrange(date_type, date)
+zone_tbl
+
+# Zone labels cannot show that the recorded clock times are local (a logger set to UTC would
+# shift times by 8-9 hours), so activity start times are checked against a daytime window.
+window_start_h <- 5
+window_end_h <- 22
+
+time_window <- export_dat |>
+  mutate(start_hour = suppressWarnings(lubridate::hour(lubridate::hms(as.character(activity_start_time))))) |>
+  filter(!is.na(start_hour)) |>
+  summarise(n_with_time = n(),
+            earliest_hour = min(start_hour), latest_hour = max(start_hour),
+            n_outside_window = sum(start_hour < window_start_h | start_hour >= window_end_h),
+            .by = activity_start_date) |>
+  arrange(activity_start_date)
+time_window
 ```
+
+`n_outside_window` counts activity start times before 05:00 or at or after 22:00 (a plausibility window chosen for daytime field sampling, not a QAPP rule). Results with no recorded time are not counted.
+
+```{r q32-stop}
+if (any(!zone_tbl$consistent)) {
+  stop("Q32: dates outside ", config$cdx$import_config_time_zone, ": ",
+       paste(unique(zone_tbl$date[!zone_tbl$consistent]), collapse = ", "),
+       ". Change the time zone constant in the WQX Web import configuration and config.yml.")
+}
+if (any(time_window$n_outside_window > 0)) {
+  warning("Q32: some activity start times fall outside ", window_start_h, ":00-", window_end_h,
+          ":00; check that clocks were set to local time.", call. = FALSE)
+}
+```
+
+MANUAL: confirm that field and lab clocks were set to local Alaska time, and note any event close to a daylight-saving change (not yet written for this year).
 
 <br>
 

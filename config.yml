@@ -5,7 +5,6 @@ sampling:
   spring_date: "2025-04-30"
   summer_date: "2025-07-23"
 
-# All paths are relative to data/ (raw lab files for the working year only)
 # Completeness goals: QAPP v3 (A 85%, B 60%); ADEC 2026 guidance range 80-90%
 completeness:
   goal_a: 0.85
@@ -13,6 +12,29 @@ completeness:
   adec_min: 0.80
   adec_max: 0.90
 
+# CDX project submission. qapp_filename is the PDF attached to the project in CDX
+# (written to project.csv as ProjectAttachmentFileName); update it when a new QAPP version is approved.
+cdx:
+  # WQX organization ID; WQX Web prepends "<organization_id>-" to uploaded location and activity IDs (shown in Q31)
+  organization_id: "KENAI_WQX"
+  # Time zone the WQX Web import configuration applies to Activity Start and Analysis Start Time
+  # Zone (a constant in the saved .cfg). Q32 checks every date is in this zone.
+  import_config_time_zone: "AKDT"
+  # Project metadata submitted to CDX (shown in Q30; confirm against WQX Web each year)
+  project_id: 10000007
+  project_name: "Agency Baseline"
+  qapp_approved: "Yes"
+  qapp_approval_agency: "EPA"
+  project_description_url: "https://www.kenaiwatershed.org/kenai-river-baseline-water-quality-monitoring/"
+  qapp_filename: "KenaiWatershedForum_QAPP_v3_2023_with_Addendum_April_2024.pdf"
+  # Other documents attached to the project in CDX (listed in Q29 for you to confirm)
+  supporting_documents: []
+
+# Date reference/baseline_sites.csv was last compared with the WQP station list (shown in Q28)
+sites:
+  verified_date: "2026-11-25"
+
+# All paths are relative to data/ (raw lab files for the working year only)
 files:
   sgs:
     spring: {path: "spring_2025_wqx_data/SGS/spring_2025_kenai_baseline_sgs_results.xlsx", sheet: "Sheet8"}

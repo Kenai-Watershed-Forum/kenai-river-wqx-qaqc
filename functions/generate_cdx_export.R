@@ -5,8 +5,10 @@
 #   - Reformatting columns to match CDX import configuration
 #   - Writing results_activities.csv, project.csv, and station.csv
 # 
-# This script reads export_dat from the global environment. export_dat should
-# already have time_zone = "AKDT" applied (done in the Q32 chunk).
+# This script reads export_dat from the global environment. The results file carries no time
+# zone columns: the WQX Web import configuration adds Activity Start and Analysis Start Time
+# Zone as constants (config.yml cdx: import_config_time_zone), and Q32 checks that every
+# date falls in that zone.
 #
 # Monitoring Location ID and Activity ID are NOT rebuilt here: format_wqx.R builds
 # them in their final upload form (bare numeric location ID; Activity ID starting
@@ -83,7 +85,7 @@ known_sites <- read_excel(
 # Finalize column structure to match CDX import configuration
 export_dat <- export_dat |>
   mutate(
-    `Project ID`                           = 10000007,
+    `Project ID`                           = config$cdx$project_id,
     # Defensive strip; check_cdx_ids() still stops on any leftover prefix elsewhere
     `Monitoring Location ID`               = sub("^KENAI_WQX-", "", as.character(monitoring_location_id)),
     `Activity Media Name`                  = activity_media_name,
@@ -91,10 +93,8 @@ export_dat <- export_dat |>
     `Activity ID`                          = activity_id,
     `Activity Start Date`                  = activity_start_date,
     `Activity Start Time`                  = activity_start_time,
-    `Activity Start Time Zone`             = "AKDT",
     `Activity End Date`                    = activity_end_date,
     `Activity End Time`                    = activity_end_time,
-    `Activity End Time Zone`               = "AKDT",
     `Activity Latitude`                    = activity_latitude,
     `Activity Longitude`                   = activity_longitude,
     `Activity Source Map Scale`            = activity_source_map_scale,
@@ -153,21 +153,23 @@ export_dat <- export_dat |> select(one_of(wqx_colnames))
 
 # ── Project CSV ──────────────────────────────────────────────────────────────────
 # Read from the WQP download, then apply corrections needed for CDX upload:
-#   - Keep only the Agency Baseline project row
-#   - Update QAPP approval status and approving agency (v3 approved by EPA Region 10, May 2023)
-#   - Set ProjectDescriptionText to the project home page URL
+#   - Keep only the project row named in config.yml (cdx: project_name)
+#   - Set QAPP approval status and approving agency from config.yml
+#   - Set ProjectDescriptionText to the project home page URL from config.yml
 #   - Attach the QAPP PDF filename and type
 #
-# REVIEW: Update ProjectAttachmentFileName if a newer QAPP version was approved.
+# The attachment filename comes from config.yml (cdx: qapp_filename); `config` is the
+# parsed config.yml in the calling environment.
+stopifnot(is.character(config$cdx$qapp_filename), nzchar(config$cdx$qapp_filename))
 project_upload <- read.csv(
   file.path(cfg$wqx_downloads_dir, "project/project.csv")
 ) |>
-  dplyr::filter(ProjectName == "Agency Baseline") |>
+  dplyr::filter(ProjectName == config$cdx$project_name) |>
   dplyr::mutate(
-    QAPPApprovedIndicator     = "Yes",
-    QAPPApprovalAgencyName    = "EPA",
-    ProjectDescriptionText    = "https://www.kenaiwatershed.org/kenai-river-baseline-water-quality-monitoring/",
-    ProjectAttachmentFileName = "KenaiWatershedForum_QAPP_v3_2023_with_Addendum_April_2024.pdf",
+    QAPPApprovedIndicator     = config$cdx$qapp_approved,
+    QAPPApprovalAgencyName    = config$cdx$qapp_approval_agency,
+    ProjectDescriptionText    = config$cdx$project_description_url,
+    ProjectAttachmentFileName = config$cdx$qapp_filename,
     ProjectAttachmentType     = "QAPP"
   ) |>
   dplyr::select(

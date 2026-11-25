@@ -1,2 +1,2 @@
 monitoring_location_id,river_mile,issue,sampled_latitude,sampled_longitude,registered_latitude,registered_longitude,distance_m,notes
-10000020,19,Sampled location differs from QAPP-registered location,60.48175453,-151.1306816,60.482318,-151.127053,208.4,
+10000020,19,Sampled location differs from QAPP-registered location,60.48175453,-151.1306816,60.482318,-151.127053,208.4,"2025 test-fixture entry: crews sample here, about 208 m from the registered location; describe the reason when writing the report"

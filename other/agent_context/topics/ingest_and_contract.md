@@ -67,3 +67,7 @@ Settled rules for the remaining functions:
 
 ------------------------------------------------------------------------
 
+
+## Time zones (Q32, 2026-11-25)
+
+The results upload file has no time zone columns (the AWQMS template lacks them, and the old `"AKDT"` assignments in `generate_cdx_export.R` were dropped by the template select; removed). The WQX Web import configuration (`other/documents/EPA_WQX_templates/cdx_import_config_results_activities_20261028.cfg`) adds Activity Start and Analysis Start Time Zone as the constant `AKDT`; there is no End Time Zone (end time is blank). `config.yml` `cdx: import_config_time_zone` mirrors it. Q32 uses `akt_zone(date)` (`clock_utils.R`, tests in `tests/test_clock_utils_akt_zone.R`) and stops if any activity or analysis date is not in that zone; it also warns on activity start times outside 05:00-22:00 (plausibility window, not a QAPP rule). A winter event would need the import configuration changed (option B: real zone columns plus a re-mapped import config, not done).

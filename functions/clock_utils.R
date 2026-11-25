@@ -24,3 +24,15 @@ parse_clock_text <- function(x) {
   if (grepl("^\\d{1,2}:\\d{2}$", x)) x <- paste0(x, ":00")
   hms::as_hms(x)
 }
+
+# Alaska time zone abbreviation ("AKDT" or "AKST") for a date. All sampling is in the Kenai
+# watershed, so the zone follows from the date alone (daylight time runs from the second Sunday
+# of March to the first Sunday of November); the tz database supplies the rules. Noon is used so
+# the transition hour (2 a.m.) cannot matter. NA dates return NA.
+akt_zone <- function(date) {
+  d <- as.Date(date)
+  out <- rep(NA_character_, length(d))
+  ok <- !is.na(d)
+  out[ok] <- format(as.POSIXct(paste(d[ok], "12:00:00"), tz = "America/Anchorage"), "%Z")
+  out
+}
