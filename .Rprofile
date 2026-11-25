@@ -89,11 +89,16 @@ setHook("rstudio.sessionInit", function(...) {
   git_pull_prompt()
 }, action = "append")
 
-.Last <- function() {
-  if (interactive() && requireNamespace("rstudioapi", quietly = TRUE)) {
-    git_push_reminder()
+# Capture the function in a closure: rm(list = ls()) deletes
+# git_push_reminder but not the dot-named .Last, which then fails at exit
+.Last <- local({
+  reminder <- git_push_reminder
+  function() {
+    if (interactive() && requireNamespace("rstudioapi", quietly = TRUE)) {
+      reminder()
+    }
   }
-}
+})
 
 # Confirm that .Rprofile has loaded
 print("✅ .Rprofile is running correctly")
