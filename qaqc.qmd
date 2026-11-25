@@ -37,6 +37,7 @@ cfg <- list(
   wqx_intermediate_path = here("output/intermediate", paste0(year, "_kwf_baseline_results_wqx.csv")),
   flagged_export_path   = here("output/intermediate", paste0(year, "_export_data_flagged.csv")),
   flag_decisions_path   = here("year_files", paste0(year, "_data_flag_decisions.csv")),
+  planned_samples_path  = here("year_files/planned_samples.xlsx"),
   # Moves into the template layout when the repo is blanked (Phase E)
   wqx_downloads_dir     = here("other/input/WQX_downloads"),
   spring_sample_date    = spring_sample_date,
@@ -50,13 +51,19 @@ dir.create(here("output/intermediate"), recursive = TRUE, showWarnings = FALSE)
 
 ## Pipeline Run
 
-Required order: combine_dat, assess_lab_qc, assign_qc_status, assess_holding_times, format_wqx, apply_qaqc_flags, generate_cdx_export. The `format_wqx.R`, `apply_qaqc_flags.R` and `generate_cdx_export.R` scripts read and write the global environment.
+Required order: planned-samples gate, combine_dat, assess_lab_qc, assign_qc_status, assess_holding_times, format_wqx, apply_qaqc_flags, generate_cdx_export. The `format_wqx.R`, `apply_qaqc_flags.R` and `generate_cdx_export.R` scripts read and write the global environment.
+
+The planned-samples gate reads `year_files/planned_samples.xlsx` (what was planned for this year, filled in before the run) and stops the run, listing every problem, until the workbook is complete. Q23, Q25 and Q26 use the same plan.
 
 ```{r pipeline, message=FALSE, warning=FALSE}
 fn_files <- c("resolve_rm_site", "numeric_utils", "clock_utils", "check_dat_contract",
               "ingest_sgs", "ingest_fc", "ingest_tss", "ingest_ysi", "combine_dat",
-              "assess_lab_qc", "assign_qc_status", "assess_holding_times")
+              "assess_lab_qc", "assign_qc_status", "assess_holding_times",
+              "planned_samples")
 for (f in fn_files) source(here("functions", paste0(f, ".R")))
+
+planned_plan <- check_planned_samples(read_planned_samples(cfg$planned_samples_path))
+planned <- expand_planned_samples(planned_plan)
 
 res <- combine_dat(config)
 lab_qc <- assess_lab_qc(res$lab_qc)
@@ -527,10 +534,77 @@ MANUAL: corrections made outside the code (lab reissues, hand-edited files, corr
 
 **23.) Is the dataset complete and did you receive the expected number of results?**
 
-```{r q23}
-#| eval: false
-# MANUAL: not yet ported from project_year/2025.qmd
+Expected results come from `year_files/planned_samples.xlsx`, checked by the gate in the pipeline run. Expected = planned primary results plus planned field QC results (field duplicates, field blanks, trip blanks). Lab-internal QC (method blanks, LCS, matrix spikes) is not counted. The QAPP does not say whether planned field QC counts toward the expected total; see `topics/qapp_revision_notes.md`. Season is the sampling event nearest to each result's collection date. Every planned result not received counts as a shortfall.
+
+```{r q23-compare}
+# Final QC status lives in export_dat; dat_row links the two tables
+planned_cmp <- compare_planned_to_dat(
+  planned,
+  dat |> left_join(select(export_dat, dat_row, qc_status), by = "dat_row"),
+  config$sampling$spring_date, config$sampling$summer_date
+)
+
+planned_cmp |>
+  summarise(
+    planned  = sum(planned),
+    received = sum(received) - sum(unplanned),
+    missing  = sum(missing),
+    .by = c(season, sample_type)
+  ) |>
+  mutate(sample_type = factor(sample_type,
+                              c("Primary", "Field Duplicate", "Field Blank", "Trip Blank"))) |>
+  arrange(season, sample_type)
 ```
+
+The table above counts only planned results in `received`; results collected but not planned are listed separately below and stay out of the expected total.
+
+```{r q23-totals}
+planned_cmp |>
+  summarise(
+    planned  = sum(planned),
+    received = sum(received) - sum(unplanned),
+    missing  = sum(missing),
+    .by = sample_type
+  ) |>
+  bind_rows(
+    summarise(planned_cmp, sample_type = "All planned",
+              planned = sum(planned), received = sum(received) - sum(unplanned),
+              missing = sum(missing))
+  )
+```
+
+Planned results not received, by season, sample type, analyte and fraction, with the river miles affected.
+
+```{r q23-missing}
+site_rm <- read_planned_samples(cfg$planned_samples_path)$sites |>
+  transmute(monitoring_location_id = as.character(monitoring_location_id), river_mile)
+
+planned_cmp |>
+  filter(missing > 0) |>
+  left_join(site_rm, by = "monitoring_location_id") |>
+  summarise(
+    missing     = sum(missing),
+    river_miles = paste(sort(unique(river_mile)), collapse = "; "),
+    .by = c(season, sample_type, analyte, sample_fraction)
+  ) |>
+  arrange(season, sample_type, desc(missing), analyte)
+```
+
+The table above is empty when no planned result is missing.
+
+Results received but not planned (not counted in the expected total, and never raise the accepted count).
+
+```{r q23-unplanned}
+planned_cmp |>
+  filter(unplanned > 0) |>
+  left_join(site_rm, by = "monitoring_location_id") |>
+  select(season, sample_type, river_mile, analyte, sample_fraction, unplanned) |>
+  arrange(season, river_mile, analyte)
+```
+
+The table above is empty when every received result was planned.
+
+MANUAL: reasons for each shortfall (for example, sites the crews could not reach, lost or broken samples, lab omissions) and whether each unplanned result was deliberate (not yet written for this year).
 
 <br>
 

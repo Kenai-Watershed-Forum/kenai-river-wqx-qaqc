@@ -30,7 +30,7 @@ Phase C: `qaqc.qmd`. Done: field blank coding (`activity_coding.R`), `assess_lab
 ## Q19 (done 2026-11-24)
 Decided with the user: fecal coliform has no QAPP v3 criterion (Table 5), so `rpd_threshold()` returns NA and its pairs are `No criterion` (never reject). The Gemini notebook guide's coliform rules (30% ADEC tier, absolute-difference waiver, ratio rejection) are cited to the ADEC Field Sampling Guidance 2024 and the ADEC Kenai River 2023 report, neither in the repo; not adopted. Add those PDFs to `other/documents/md/` to revisit. A QAPP v3 fail with one result below the LOQ (`needs_decision`, e.g. detect vs non-detect) is not auto-rejected: `check_rpd_decisions()` stops `apply_qaqc_flags.R` until a Y/N row exists in the flag decisions file; Y rejects both results. Test-fixture 2025: the pipeline currently STOPS on dissolved lead at 10000015, 7/23/2025 (7.36 vs U; DL 0.5, LOD 1.5, LOQ 2). The user must add the Y/N row; none was invented. Tests: 22 in test_assess_rpd, 25 in test_finalize_qc_status. Note: qaqc.qmd had CRLF endings again and was re-stripped.
 
-## Planned-samples template design (agreed 2026-11-24; workbook BUILT 2026-11-24, code not yet written)
+## Planned-samples template design (agreed 2026-11-24; workbook, code and Q23 DONE 2026-11-24; Q3, Q25, Q26 still to port)
 
 Built: `functions/build_planned_samples_template.R` (dev tool; refuses to overwrite a filled workbook), `reference/analyte_groups.csv`, `year_files/planned_samples.xlsx` (sheets README, analyte_rules, qc_samples, site_list). `analyte_rules` has `site_rule` all/range/list plus `rm_min`, `rm_max`, `add_rm`, `exclude_rm`, `needs_confirm`; BTEX is `list` at RM 1.5, 6.5, 40, 43, summer only (QAPP v3 field manual). CODE WRITTEN 2026-11-24: `functions/planned_samples.R` (`read_planned_samples`, `check_planned_samples` gate, `expand_planned_samples`, `compare_planned_to_dat` returning planned/received/accepted/accepted_planned/missing/unplanned per season, site, analyte, sample type) with 33 tests in `tests/test_planned_samples.R`. Missing planned results all count as shortfalls; reasons go in the narrative. Still to do: wire the gate and comparison into `qaqc.qmd` (Q3, Q23, then Q25 and Q26 counts); the gate is not yet in the pipeline run order. Decided 2026-11-24: dissolved metals `rm_max` = 30 (QAPP B.5, "at and downstream of RM 30"; the QAPP is the authority). Results collected but not planned (for example 2025 fixture dissolved metals at the RM 31 mainstem site) are listed as "unplanned" in a separate Q23 table and stay out of the completeness denominator. Ask the crews whether RM 31 dissolved metals were deliberate.
 
@@ -44,6 +44,12 @@ Workbook `year_files/planned_samples.xlsx`, filled in each year before the QA/QC
 - Q3 compares the QC sheet with `dat`; Q23 compares the expanded plan with `dat`; Q25 and Q26 use the same expected counts.
 - Open: `lab_name` is `Hach` for turbidity rows (an instrument, not a lab); check whether it feeds WQX Laboratory Name.
 - QAPP wording conflicts are in `qapp_revision_notes.md`.
+
+### Q23 (done 2026-11-24)
+
+The gate is wired into the `pipeline` chunk of `qaqc.qmd` (sources `planned_samples.R`, runs `check_planned_samples(read_planned_samples(cfg$planned_samples_path))`, then `expand_planned_samples()` into `planned`; the run stops until the workbook is complete). Chunks: `q23-compare` (builds `planned_cmp`, joining `dat` to `export_dat$qc_status` by `dat_row`; reuse for Q25 and Q26), `q23-totals`, `q23-missing`, `q23-unplanned`, then a MANUAL line for shortfall reasons. `year_files/planned_samples.xlsx` holds 2025 example answers until Phase E blanks it (total Fe, Cu and Zn use `site_rule = range`, `rm_max = 30`; trip blanks are one row per cooler listing the sites it covers, counted one result per analyte per site). The shipped-workbook test blanks its own answer cells, so it works for a blank or filled workbook. A QAPP row was added for multi-site trip blank counting. Fixture counts exist only in the session; never record them as expectations.
+
+Remaining: Q3 (QC sheet vs `dat`), Q25 and Q26 from `planned_cmp` (A = Accepted / collected; B = `accepted_planned` / planned), Q24 prose prompt, Q28-Q42.
 
 ## Q22 (done 2026-11-24)
 

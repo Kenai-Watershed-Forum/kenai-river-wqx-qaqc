@@ -121,9 +121,12 @@ test_that("QC samples match on sample type and season uses the nearest event dat
   expect_equal(cmp$unplanned[cmp$sample_type == "Primary"], 1L)
 })
 
-test_that("the shipped template passes the gate once its answers are filled in", {
+test_that("the workbook passes the gate once its answers are filled in", {
   skip_if_not(file.exists(here::here("year_files/planned_samples.xlsx")))
   plan <- read_planned_samples()
+  # Blank the answer cells so the test holds for a blank or a filled workbook
+  plan$rules$spring[plan$rules$needs_confirm %in% "Y"] <- NA
+  plan$qc$river_mile[1] <- NA
   expect_error(check_planned_samples(plan), "needs attention")
   plan$rules$spring[is.na(plan$rules$spring)] <- "Y"; plan$rules$summer[is.na(plan$rules$summer)] <- "Y"
   plan$qc$river_mile[plan$qc$sample_type != "Trip Blank"] <- "10"
