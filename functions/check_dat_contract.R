@@ -99,25 +99,26 @@ check_dat_contract <- function(dat,
   add("monitoring_location_id is not bare digits (a KENAI_WQX- prefix is not allowed)",
       !grepl("^[0-9]+$", dat$monitoring_location_id), dat$monitoring_location_id)
   match_xlsx <- file.path(ref_dir, "wqx_templates/wqx_template_matching_table.xlsx")
-  site_ids <- as.character(readxl::read_excel(match_xlsx, sheet = "site_coordinates")$monitoring_location_id)
-  add("monitoring_location_id not in site_coordinates",
+  # baseline_sites.csv is the single source of registered (CDX) site IDs and coordinates
+  baseline <- utils::read.csv(file.path(ref_dir, "baseline_sites.csv"), colClasses = "character")
+  site_ids <- sub("^KENAI_WQX-", "", baseline$MonitoringLocationIdentifier)
+  add("monitoring_location_id not in baseline_sites.csv",
       grepl("^[0-9]+$", dat$monitoring_location_id) & !dat$monitoring_location_id %in% site_ids,
       dat$monitoring_location_id)
 
   # Coordinates of the sites in dat: ASCII only, numeric, inside Alaska. Read as text so a
   # stray character (e.g. a Unicode minus sign) is seen instead of being coerced to NA.
   ak_lat <- c(50, 72); ak_lon <- c(-170, -130)
-  coords <- readxl::read_excel(match_xlsx, sheet = "site_coordinates", col_types = "text")
-  ci <- match(dat$monitoring_location_id, as.character(site_ids))
-  raw_lat <- coords$latitude[ci]; raw_lon <- coords$longitude[ci]
+  ci <- match(dat$monitoring_location_id, site_ids)
+  raw_lat <- baseline$latitude[ci]; raw_lon <- baseline$longitude[ci]
   has_site <- !is.na(ci)
   non_ascii <- function(v) !is.na(v) & grepl("[^\\x01-\\x7F]", v, perl = TRUE)
-  add("site_coordinates latitude or longitude contains a non-ASCII character",
+  add("baseline_sites.csv latitude or longitude contains a non-ASCII character",
       has_site & (non_ascii(raw_lat) | non_ascii(raw_lon)), paste(raw_lat, raw_lon))
   num_lat <- suppressWarnings(as.numeric(raw_lat)); num_lon <- suppressWarnings(as.numeric(raw_lon))
-  add("site_coordinates latitude or longitude is missing or not numeric",
+  add("baseline_sites.csv latitude or longitude is missing or not numeric",
       has_site & (is.na(num_lat) | is.na(num_lon)), paste(raw_lat, raw_lon))
-  add("site_coordinates latitude or longitude is outside the Alaska bounds",
+  add("baseline_sites.csv latitude or longitude is outside the Alaska bounds",
       has_site & !is.na(num_lat) & !is.na(num_lon) &
         (num_lat < ak_lat[1] | num_lat > ak_lat[2] | num_lon < ak_lon[1] | num_lon > ak_lon[2]),
       paste(num_lat, num_lon))
@@ -132,13 +133,10 @@ check_dat_contract <- function(dat,
   code_ok <- grepl("^KBL_[mt]_[0-9]{2}\\.[0-9]$", code)
   add("site code in adec_site_names is not of the form KBL_<m|t>_NN.N",
       !is.na(code) & !code_ok, code)
-  baseline <- utils::read.csv(file.path(ref_dir, "baseline_sites.csv"), colClasses = "character")
-  bl_id    <- sub("^KENAI_WQX-", "", baseline$MonitoringLocationIdentifier)
+  bl_id    <- site_ids
   bl_class <- c(mainstem = "m", tributary = "t")[baseline$tributary_mainstem]
   bl_mile  <- suppressWarnings(as.numeric(baseline$river_mile))
   b <- match(dat$monitoring_location_id, bl_id)
-  add("monitoring_location_id not in baseline_sites.csv (site code cannot be cross-checked)",
-      id_ok & is.na(b), dat$monitoring_location_id, severity = "warning")
   comparable <- code_ok & !is.na(b)
   add("site code class (m or t) disagrees with baseline_sites.csv tributary_mainstem",
       comparable & substr(code, 5, 5) != unname(bl_class[b]),

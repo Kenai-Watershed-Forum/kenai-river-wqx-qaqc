@@ -60,6 +60,13 @@ test_that("manual decisions reject matching rows with the note as the reason", {
   expect_equal(out$qc_fail_reason[4], "Manual flag: cooler warm")
 })
 
+test_that("a flag with stray spaces or lower case still rejects", {
+  man <- data.frame(monitoring_location_id = "2", activity_start_date = as.Date("2025-04-30"),
+                    characteristic_name = "Zinc", flag = " y ", notes = "x",
+                    stringsAsFactors = FALSE)
+  expect_equal(finalize_qc_status(mk_export(), NULL, man)$qc_status[4], "Rejected")
+})
+
 test_that("a manual row that matches nothing warns; flag N rows are ignored", {
   man <- data.frame(monitoring_location_id = c("9", "2"),
                     activity_start_date = as.Date("2025-04-30"),

@@ -6,6 +6,13 @@ sampling:
   summer_date: "2025-07-23"
 
 # All paths are relative to data/ (raw lab files for the working year only)
+# Completeness goals: QAPP v3 (A 85%, B 60%); ADEC 2026 guidance range 80-90%
+completeness:
+  goal_a: 0.85
+  goal_b: 0.60
+  adec_min: 0.80
+  adec_max: 0.90
+
 files:
   sgs:
     spring: {path: "spring_2025_wqx_data/SGS/spring_2025_kenai_baseline_sgs_results.xlsx", sheet: "Sheet8"}

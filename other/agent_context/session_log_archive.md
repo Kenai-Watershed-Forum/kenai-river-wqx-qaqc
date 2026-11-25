@@ -1,10 +1,6 @@
 # Kenai River WQX — Session Log Archive (pre-2026-07)
 
-> Older entries moved out of `session_log.md` to keep that file lean. This
-> archive is **not synced** to the qaqc repo and is **not loaded
-> automatically** — open it only when you need history predating July 2026
-> (e.g., the original appendix_a.qmd audit, the pipeline architecture
-> decision rationale, or the EPA WQX delete workflow reference).
+> Older entries moved out of `session_log.md` to keep that file lean. This archive is **not synced** to the qaqc repo and is **not loaded automatically** — open it only when you need history predating July 2026 (e.g., the original appendix_a.qmd audit, the pipeline architecture decision rationale, or the EPA WQX delete workflow reference).
 
 ------------------------------------------------------------------------
 
@@ -40,9 +36,7 @@
 - Added Task 20: replace local WQP data downloads with live `dataRetrieval` queries in parameter chapters. Committed: `a617d97`.
 - Task 1a-reupload added to numbered priorities list in AGENTS.md (was in header only).
 
-(Note, 2026-09-29: this file-hygiene pass repeats and finally wires up the
-companion-file split described above — see current `AGENTS.md` and
-`other/agent_context/context_files/`.)
+(Note, 2026-09-29: this file-hygiene pass repeats and finally wires up the companion-file split described above — see current `AGENTS.md` and `other/agent_context/context_files/`.)
 
 ------------------------------------------------------------------------
 
@@ -112,10 +106,7 @@ Extract processing logic from `appendix_a.qmd` into sourced `.R` scripts for reu
 
 Each script should accept year-specific inputs (file paths, sample dates) as arguments or via a config object.
 
-(Note, 2026-09-29: Task 9/10 for `appendix_a.qmd` itself are now marked
-complete in `AGENTS.md`; this table documents the original plan. The
-canonical forward-looking version of this idea is the qaqc repo's
-`templates/pipeline_template.qmd`, described in `AGENTS.md` / `context_files/conventions.md`.)
+(Note, 2026-09-29: Task 9/10 for `appendix_a.qmd` itself are now marked complete in `AGENTS.md`; this table documents the original plan. The canonical forward-looking version of this idea is the qaqc repo's `templates/pipeline_template.qmd`, described in `AGENTS.md` / `context_files/conventions.md`.)
 
 ------------------------------------------------------------------------
 

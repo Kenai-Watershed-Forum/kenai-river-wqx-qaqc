@@ -9,7 +9,8 @@ source(here::here("functions", "combine_dat.R"))
 
 ref <- here::here("reference")
 match_xlsx <- file.path(ref, "wqx_templates/wqx_template_matching_table.xlsx")
-site_id <- as.character(readxl::read_excel(match_xlsx, sheet = "site_coordinates")$monitoring_location_id[1])
+site_id <- sub("^KENAI_WQX-", "", utils::read.csv(file.path(ref, "baseline_sites.csv"),
+                                                   colClasses = "character")$MonitoringLocationIdentifier[1])
 analyte <- utils::read.csv(file.path(ref, "wqx_templates/analytes_list_manual_edit.csv"))$analyte[1]
 method  <- readxl::read_excel(match_xlsx, sheet = "result_sample_fraction")$analytical_method[1]
 

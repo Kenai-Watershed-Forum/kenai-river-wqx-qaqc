@@ -56,7 +56,7 @@ the extra raw columns that field data does not need (`percent_recovered`,
 | 16 | `analytical_method` | chr | yes | no | Method as the lab reports it, with any `EP` prefix removed (`200.8`, `SM21 4500NO3-F`, `2540-D`, `9222D`, `SW8260D`). `format_wqx.R` joins fraction, preservative, and container lookups on this value. |
 | 17 | `epa_analysis_id` | chr | yes | no | Method ID for WQX Result Analytical Method ID. Equals `analytical_method` for YSI; differs from it in 164 of 883 rows via the analysis-code matching table. |
 | 18 | `context_code` | chr | yes | no | WQX method context, e.g. `USEPA`, `APHA`. |
-| 19 | `monitoring_location_id` | chr | yes | no | Bare numeric ID, e.g. `10000002`, with NO `KENAI_WQX-` prefix (WQX Web adds it; a prefix produced the doubled-station problem in October 2026). Stored as character. Must exist in `site_coordinates`. |
+| 19 | `monitoring_location_id` | chr | yes | no | Bare numeric ID, e.g. `10000002`, with NO `KENAI_WQX-` prefix (WQX Web adds it; a prefix produced the doubled-station problem in October 2026). Stored as character. Must exist in `reference/baseline_sites.csv` (the registered CDX sites). |
 | 20 | `note` | chr | no | yes | Free text; becomes Activity Comment. SGS sets it to the SDG number; other labs NA. |
 | 21 | `sample_type` | chr | yes | no | Lab sample-type code. In `dat`: `PS` (primary sample) or `TB` (trip blank) in 2025. Lab QC codes (`MB`, `LCS`, ...) must have been removed. |
 | 22 | `sample_condition` | chr | yes | yes | NA for primary samples, otherwise `Field Duplicate`, `Field Blank`, or `Trip Blank`. Drives Activity ID suffix and Activity Type. |
@@ -71,7 +71,7 @@ the extra raw columns that field data does not need (`percent_recovered`,
 2. `lab_name`, `analyte`, `units`, `resultflag`, `analytical_method`, `epa_analysis_id`, `context_code`, `monitoring_location_id`, `sample_type`, `collect_date`, `run_date`, `sample` have no NA.
 3. `resultflag %in% c("=", "U", "J", "ND")`. `result` is non-NA unless `resultflag` is `U` or `ND`.
 4. `units` is in the WQX UoM list or `project_unit_spellings.csv`; no unit appears under two capitalizations.
-5. `monitoring_location_id` matches `^[0-9]+$` (no prefix) and is present in `site_coordinates`.
+5. `monitoring_location_id` matches `^[0-9]+$` (no prefix) and is present in `reference/baseline_sites.csv`.
 6. No lab QC sample types (`MB`, `LCS`, `LCSD`, `MS`, `MSD`, `CB`, `OS`, `ICV`, `CCV`, `LLQC`, `QCS`, `ICB`, `CVC`, `IB`).
 7. `sample_condition` is NA or in `{Field Duplicate, Field Blank, Trip Blank}`.
 8. `analyte` is in the analyte abbreviation list (error). `analytical_method` should be in the fraction, preservative, and container lookups: currently a warning, because the sheets do not yet cover every method (promote to an error once they do).

@@ -8,7 +8,6 @@ Moved verbatim from AGENTS.md on 2026-11-13. Read when relevant; core memory is 
 
 | Sheet | Key columns |
 |----|----|
-| `site_coordinates` | `monitoring_location_id` (numeric), lat/long |
 | `result_sample_fraction` | `analytical_method` → `result_sample_fraction` |
 | `chemical_preservative` | `analytical_method` → preservative |
 | `sample_container_type_color` | `analytical_method` → container/color |

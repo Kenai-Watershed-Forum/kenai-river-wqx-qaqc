@@ -2,10 +2,10 @@
 
 Core memory loads every session; keep it short (target 11 KB). Details live in `other/agent_context/topics/` (read the relevant file on demand, see "Topic index"). Pre-split original: `other/agent_context/archive/AGENTS_2026-11-13_pre-split.md`. Put new detail in a topic file, not here; put test-fixture counts and validation narratives in the session log or topic files.
 
-## Next steps (updated 2026-11-24)
+## Next steps (updated 2026-11-25)
 
 1. Phase B done 2026-11-13. Left: CDX lessons step 3 remainder (Method Speciation, characteristic-name mapping; waits on the historical scan); WQX trial import questions. Detail: `topics/pending_tasks.md`.
-2. Phase C (`qaqc.qmd`) in progress. Skeleton rendered 2026-11-24; Q17-Q23 done, plus field blanks, lab QC, RPD, `dl`, `sample_batches`, QC status, export wiring and the planned-samples gate (run order: combine_dat, assess_lab_qc, assign_qc_status, assess_holding_times, format_wqx, apply_qaqc_flags, generate_cdx_export). Completed-work detail: `topics/pending_tasks_done.md`. NEXT: port Q25-Q26 from `planned_cmp` and Q3, then Q28-Q42 (Q1-Q9 mostly manual prose). Open: the 2025 fixture STOPS at `apply_qaqc_flags.R` until the user adds a Y/N decision for dissolved lead at 10000015 on 7/23/2025 (`year_files/{year}_data_flag_decisions.csv`); FC/TSS receipt date/time in `config.yml` are blank. Where we interpolate from the QAPP, say so in the report text and add a row to `topics/qapp_revision_notes.md`. Delete `project_year/####.qmd` once the template design is complete.
+2. Phase C (`qaqc.qmd`) in progress; full render works end to end (`quarto render qaqc.qmd`, output `output/report/qaqc.html`). Q17-Q28 done (run order: combine_dat, assess_lab_qc, assign_qc_status, assess_holding_times, format_wqx, apply_qaqc_flags, generate_cdx_export). Completed-work detail: `topics/pending_tasks_done.md` and `topics/pending_tasks.md`. NEXT, strictly in order, never skip a question: Q29-Q31 (Q29, Q30 manual prompts; Q31 organization ID check read from config), Q32-Q42, then Q3 (QC sheet vs `dat`) and Q1-Q9 (mostly manual prose). Open: FC/TSS receipt date/time in `config.yml` are blank; the 2025 `year_files/2025_data_flag_decisions.csv` row for dissolved lead is a test placeholder. Flag decisions: `flag` is trimmed and case-insensitive everywhere. Where we interpolate from the QAPP, say so in the report text and add a row to `topics/qapp_revision_notes.md`. Delete `project_year/####.qmd` once the template design is complete. Stale: `output/2025_export_data_flagged.csv`, `2025_kwf_baseline_results_wqx.csv`, `results_activities.csv` were not rewritten by the 2026-11-25 render (find out why before any CDX upload).
 3. Historical reconcile (2014-2018 PDF workbooks) waits on the user's Decision 2 (write WQX names into `Characteristic Name`, recommended, or project names); open decisions are listed in `topics/pdf_extraction.md`.
 
 ## Repo Relationship and Purpose
@@ -45,6 +45,8 @@ Design record: `other/agent_context/plans/2026-10-28-qaqc-repo-as-parameterized-
 
 Key decisions: `dat` has 26 columns (24 plus `dl`, added 2026-11-16, plus `analytical_method_raw`, added 2026-11-24; `reference/dat_contract.md`); field blanks use Activity Type `Quality Control Sample-Field Blank` and Activity ID suffix `FB`; `lab_qc_dat` holds all 14 SGS lab QC codes plus any `(surr)` analyte and never flows to the WQX export; `prelim_report.qmd` reads only `output/assessed_results.csv`, `config.yml` and reference data.
 
+**Decisions 2026-11-25.** (1) Completeness: Measure A = Accepted / collected, primary results only; Measure B = accepted planned / planned, same denominator as Q23 (primary plus planned field QC); goals in `config.yml` `completeness:` (QAPP 85% and 60%, ADEC 80-90%); the Q25 text explains the choice. (2) Site coordinates: `reference/baseline_sites.csv` is the single source of site IDs and coordinates, equal to what is registered in CDX (verified against WQP, only a rounding difference at 10000425). `format_wqx.R`, `check_dat_contract.R` and Q28 read it; the `site_coordinates` sheet is deleted from the matching workbook. We upload only under registered CDX locations (new locations need a re-approved QAPP). Places actually sampled that differ go in the user-filled `year_files/sampled_locations.csv` (2025 fixture: 10000020, about 208 m); Q28 shows a warning callout and writes `output/q28_coordinate_differences.csv` (notes column). Nothing can detect a moved site automatically. A helper that compares `baseline_sites.csv` with the WQP station list is wanted later. Detail: `topics/pending_tasks.md`.
+
 ## ID rule
 
 Never include the `KENAI_WQX-` prefix in any ID column (WQX Web prepends it; WQP downloads already include it). Upload files use bare IDs: Location ID `10000002`; Activity ID `{site_code}-{date}-{abbrev}[-DUP/-Blank]`. `format_wqx.R` builds the IDs once; `check_cdx_ids()` stops the export on any violation. History, the 22-site ID table and the lookup sheets: `topics/lookups_and_ids.md`.
@@ -62,7 +64,7 @@ kenai-river-wqx-qaqc/
 │                               # pdf_extract/ (historical PDF tools)
 ├── reference/                  # dat_contract.md, wqx_templates/ (lookup sheets), baseline_sites.csv, ysi_site_names.csv,
 │                               # master_reg_limits.xlsx, formatted_reg_vals/
-├── year_files/                 # Working-year: flag decisions, ysi_corrections.csv, trip_blank_crews, AWQMS file
+├── year_files/                 # Working-year: flag decisions, ysi_corrections.csv, trip_blank_crews, planned_samples.xlsx, sampled_locations.csv, AWQMS file
 ├── output/                     # Working-year outputs, intermediate/
 ├── project_year/               # 2025.qmd active; 2023.qmd skeleton; 2014-2022 legacy
 ├── other/                      # agent_context/ (session_log.md synced, plans/, topics/, archive/), documents/ (md/ QAPP, CALM, 18 AAC 70;
@@ -106,4 +108,6 @@ Governance PDFs stay in the report repo's `other/agent_context/`; text versions 
 - Line endings: all text files are LF (`.gitattributes` `text=auto eol=lf`, `.editorconfig`; normalized 2026-11-24). The edit tool works normally. If an edit fails on a multi-line match, check the file for CRs (`git ls-files --eol`).
 - When running testthat or readxl from the R session, use `reporter = "silent"` and `as.data.frame(results)` to avoid progress-bar noise.
 - Before implementing code, explain what it does and why, and wait for confirmation. Present decisions one at a time.
+- Work through the QA/QC questions in numeric order and do not skip any, including manual ones (give each a MANUAL prompt). Everything must stay year-agnostic: 2025 is only a fixture.
+- Edit-tool caution (2026-11-25): a qaqc.qmd edit once landed at the top of the file and broke the YAML. After each qaqc.qmd edit, check `head -5 qaqc.qmd`; verify by rendering. Back up to the scratch dir before any bulk deletion; the agent runs `quarto render qaqc.qmd` from bash to test.
 - Corrections to hand-entered data go in a separate `<name>_corrected.xlsx` beside the original (changes shaded, logged on a `corrections_log` sheet); never modify the original. Keep the key's own conventions unless the user decides otherwise.

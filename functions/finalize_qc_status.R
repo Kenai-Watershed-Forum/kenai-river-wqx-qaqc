@@ -80,7 +80,8 @@ finalize_qc_status <- function(export_dat, rpd_pairs = NULL, manual_flags = NULL
 
   # Manual decisions
   if (!is.null(manual_flags) && nrow(manual_flags) > 0) {
-    mf <- manual_flags[manual_flags$flag %in% "Y", , drop = FALSE]
+    # Same normalization as the decision checks (stray spaces, lower case)
+    mf <- manual_flags[toupper(trimws(manual_flags$flag)) %in% "Y", , drop = FALSE]
     if (nrow(mf) > 0) {
       notes <- if ("notes" %in% names(mf)) mf$notes else rep(NA_character_, nrow(mf))
       # Optional result_sample_fraction: blank or absent matches every fraction

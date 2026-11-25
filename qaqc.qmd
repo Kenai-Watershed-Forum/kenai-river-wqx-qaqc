@@ -540,7 +540,9 @@ Expected results come from `year_files/planned_samples.xlsx`, checked by the gat
 # Final QC status lives in export_dat; dat_row links the two tables
 planned_cmp <- compare_planned_to_dat(
   planned,
-  dat |> left_join(select(export_dat, dat_row, qc_status), by = "dat_row"),
+  dat |>
+    select(-any_of(c("qc_status", "qc_fail_reason"))) |>
+    left_join(select(export_dat, dat_row, qc_status), by = "dat_row"),
   config$sampling$spring_date, config$sampling$summer_date
 )
 
@@ -610,50 +612,254 @@ MANUAL: reasons for each shortfall (for example, sites the crews could not reach
 
 **24.) Was the data collected representative of environmental conditions?**
 
+The two sampling events for this year, from `config.yml`.
+
 ```{r q24}
-#| eval: false
-# MANUAL: not yet ported from project_year/2025.qmd
+tibble(
+  season = c("Spring", "Summer"),
+  sample_date = c(config$sampling$spring_date, config$sampling$summer_date)
+)
 ```
+
+MANUAL: whether the events represent typical conditions (for example, river stage and discharge on each sampling day, recent rain or flood events, unusual temperatures, and how the dates compare with the QAPP's target sampling windows). Not yet written for this year; the legacy `2025.qmd` also left this question to manual prose.
 
 <br>
 
 **25.) Does project meet Completeness Measure A criteria?**
 
+Measure A = Accepted results / results collected, for primary results only. The QAPP wording of this ratio is inverted; this definition is our interpolation (see `topics/qapp_revision_notes.md`). Goals are set in `config.yml` (QAPP and ADEC range).
+
+Primary results are results from the routine environmental samples at each site and sampling event. They exclude field duplicates, field blanks and trip blanks (field QC samples), and lab-internal QC (method blanks, laboratory control samples, matrix spikes), which is kept in a separate table and never enters this measure. We chose primary results only because Measure A is meant to describe how much of the environmental data collected is usable. Field QC samples exist to evaluate data quality rather than to characterize the river, so counting them would let the pass rate of QC samples change the completeness of the environmental record. Field QC results are still counted in Measure B (Q26), through the same expected total used in Q23.
+
 ```{r q25}
-#| eval: false
-# AUTO: not yet ported from project_year/2025.qmd
+completeness_tbl <- function(x, num, den, goal) {
+  x |>
+    summarise(n_num = sum({{ num }}), n_den = sum({{ den }}), .by = c(analyte, sample_fraction)) |>
+    filter(n_den > 0) |>
+    mutate(pct = round(100 * n_num / n_den, 1),
+           meets_goal = n_num / n_den >= goal) |>
+    arrange(analyte, sample_fraction)
+}
+
+cma_primary <- planned_cmp |> filter(sample_type == "Primary")
+
+cma_overall <- cma_primary |>
+  summarise(accepted = sum(accepted), collected = sum(received)) |>
+  mutate(measure_a_pct = round(100 * accepted / collected, 1),
+         goal_pct = 100 * config$completeness$goal_a,
+         meets_goal = accepted / collected >= config$completeness$goal_a)
+cma_overall
+
+completeness_tbl(cma_primary, accepted, received, config$completeness$goal_a) |>
+  rename(accepted = n_num, collected = n_den, measure_a_pct = pct)
 ```
 
-Port note: Accepted results / results collected; QAPP interpolation, see topics/qapp_revision_notes.md.
+The first table is the overall result and the second is by analyte and fraction. The goal is `goal_a` in `config.yml`; the ADEC range is shown there for comparison.
+
+MANUAL: discussion of any analyte below the goal (not yet written for this year).
 
 <br>
 
 **26.) Does project meet Completeness Measure B criteria?**
 
+Measure B = Accepted results / planned results, using the same expected total as Q23 (primary plus planned field QC). Only accepted results that were planned count in the numerator, so unplanned extras never raise the figure. The QAPP wording is inverted here too (see `topics/qapp_revision_notes.md`).
+
 ```{r q26}
-#| eval: false
-# AUTO: not yet ported from project_year/2025.qmd
+cmb_overall <- planned_cmp |>
+  summarise(accepted_planned = sum(accepted_planned), planned = sum(planned),
+            .by = sample_type) |>
+  bind_rows(
+    summarise(planned_cmp, sample_type = "All planned",
+              accepted_planned = sum(accepted_planned), planned = sum(planned))
+  ) |>
+  mutate(measure_b_pct = round(100 * accepted_planned / planned, 1),
+         goal_pct = 100 * config$completeness$goal_b,
+         meets_goal = accepted_planned / planned >= config$completeness$goal_b)
+cmb_overall
+
+planned_cmp |>
+  filter(planned > 0) |>
+  completeness_tbl(accepted_planned, planned, config$completeness$goal_b) |>
+  rename(accepted_planned = n_num, planned = n_den, measure_b_pct = pct)
 ```
 
-Port note: Accepted results / planned results; needs the planned-samples template.
+The first table is by sample type and overall; the second is by analyte and fraction, over all planned sample types.
+
+MANUAL: discussion of any analyte below the goal, and the causes of shortfalls already described in Q23 (not yet written for this year).
 
 <br>
 
 **27.) Was the QA officer consulted for any data concerns?**
 
-```{r q27}
-#| eval: false
-# MANUAL: not yet ported from project_year/2025.qmd
-```
+MANUAL: whether the QA officer was consulted about any data concerns this year, with the date, the concern, and the outcome (not yet written for this year).
 
 <br>
 
 **28.) Are the correct monitoring locations associated with the project? Are latitude and longitude filled out in a consistent format?**
 
-```{r q28}
-#| eval: false
-# MIXED: not yet ported from project_year/2025.qmd
+Project policy: all results are submitted under the monitoring locations already registered in CDX (the sites in the approved QAPP). New locations are not created, because that would require a modified and re-approved QAPP. When the place actually sampled differs slightly from a registered location, the difference is described in a note and the registered location is still used.
+
+`reference/baseline_sites.csv` is the single source of site coordinates for the whole pipeline: the locations and coordinates registered in CDX. The ingest contract check, the Activity Latitude and Longitude in the export, and this section all read it (its identifiers carry the `KENAI_WQX-` prefix, removed here to match the upload IDs; the contract check and `format_wqx.R` stop if a location is not in that file).
+
+Places the crews actually sample that differ from a registered location are recorded by the user in `year_files/sampled_locations.csv` (columns `monitoring_location_id`, `sampled_latitude`, `sampled_longitude`, `notes`; a header-only file means no differences). Nothing in the pipeline can detect a changed sampling location, so fill this file in each year from field records. Entries that differ from the registered coordinates by more than the tolerance below are listed for your attention, because the QAPP coordinates no longer describe where samples are collected. Assumption: `baseline_sites.csv` holds the coordinates registered in CDX; it was checked against the Water Quality Portal listing of the organization's locations on 2026-11-25 (agreement to within rounding) and should be re-checked whenever sites change.
+
+```{r q28-check}
+# Differences below this distance are treated as rounding
+tolerance_m <- 10
+
+haversine_m <- function(lat1, lon1, lat2, lon2) {
+  rad <- pi / 180
+  a <- sin((lat2 - lat1) * rad / 2)^2 +
+    cos(lat1 * rad) * cos(lat2 * rad) * sin((lon2 - lon1) * rad / 2)^2
+  round(2 * 6371000 * asin(sqrt(a)), 1)
+}
+
+ref_sites <- read_csv(here("reference/baseline_sites.csv"), show_col_types = FALSE) |>
+  transmute(
+    monitoring_location_id = str_remove(MonitoringLocationIdentifier, "^KENAI_WQX-"),
+    ref_lat = latitude, ref_lon = longitude, river_mile
+  )
+
+sampled_path <- here("year_files/sampled_locations.csv")
+sampled_sites <- if (file.exists(sampled_path)) {
+  read_csv(sampled_path, show_col_types = FALSE,
+           col_types = cols(monitoring_location_id = col_character(),
+                            sampled_latitude = col_double(), sampled_longitude = col_double(),
+                            .default = col_character())) |>
+    transmute(monitoring_location_id, sampled_lat = sampled_latitude, sampled_lon = sampled_longitude,
+              sampled_note = notes)
+} else {
+  tibble(monitoring_location_id = character(), sampled_lat = double(), sampled_lon = double(),
+         sampled_note = character())
+}
+
+site_check <- export_dat |>
+  distinct(monitoring_location_id, activity_latitude, activity_longitude) |>
+  mutate(
+    monitoring_location_id = as.character(monitoring_location_id),
+    lat = suppressWarnings(as.numeric(activity_latitude)),
+    lon = suppressWarnings(as.numeric(activity_longitude))
+  ) |>
+  left_join(ref_sites, by = "monitoring_location_id") |>
+  left_join(sampled_sites, by = "monitoring_location_id") |>
+  mutate(
+    in_reference   = !is.na(ref_lat),
+    numeric_ok     = !is.na(lat) & !is.na(lon),
+    # Kenai Peninsula, longitude west of Greenwich is negative
+    sign_ok        = numeric_ok & lon < 0,
+    export_matches = in_reference & numeric_ok & haversine_m(lat, lon, ref_lat, ref_lon) <= tolerance_m,
+    sampled_differs = in_reference & !is.na(sampled_lat) &
+      haversine_m(sampled_lat, sampled_lon, ref_lat, ref_lon) > tolerance_m
+  )
+
+site_check |>
+  summarise(
+    locations                          = n_distinct(monitoring_location_id),
+    not_in_reference                   = sum(!in_reference),
+    non_numeric_coords                 = sum(!numeric_ok),
+    wrong_longitude_sign               = sum(!sign_ok),
+    export_differs_from_registered     = sum(in_reference & !export_matches),
+    sampled_location_differs_from_qapp = sum(sampled_differs),
+    locations_with_several_coord_pairs = sum(duplicated(monitoring_location_id))
+  )
 ```
+
+Every count above should be zero except `sampled_location_differs_from_qapp`, which is informational (the registered location is still used for the upload). Each location with a problem or a sampled-location difference is listed below and written to `output/q28_coordinate_differences.csv`. Use the blank `notes` column to describe each one (where the crew sampled and why); a difference is documented, not fixed by adding a new location. Notes already in that file are kept when the document is re-rendered (matched on location ID and issue).
+
+```{r q28-problems}
+q28_path <- here("output/q28_coordinate_differences.csv")
+
+coord_diffs <- site_check |>
+  filter(!in_reference | !numeric_ok | !sign_ok | !export_matches | sampled_differs) |>
+  mutate(
+    issue = case_when(
+      !in_reference   ~ "Location not registered in CDX",
+      !numeric_ok     ~ "Non-numeric coordinates",
+      !sign_ok        ~ "Longitude is not negative",
+      !export_matches ~ "Export coordinates differ from registered coordinates",
+      TRUE            ~ "Sampled location differs from QAPP-registered location"
+    ),
+    distance_m = case_when(
+      sampled_differs ~ haversine_m(sampled_lat, sampled_lon, ref_lat, ref_lon),
+      TRUE            ~ haversine_m(lat, lon, ref_lat, ref_lon)
+    )
+  ) |>
+  select(monitoring_location_id, river_mile, issue,
+         sampled_latitude = sampled_lat, sampled_longitude = sampled_lon,
+         registered_latitude = ref_lat, registered_longitude = ref_lon, distance_m) |>
+  arrange(monitoring_location_id)
+
+# Carry over notes typed into a previous version of the file
+coord_diffs$notes <- ""
+if (file.exists(q28_path)) {
+  old <- read_csv(q28_path, col_types = cols(.default = col_character()))
+  if (all(c("monitoring_location_id", "issue", "notes") %in% names(old))) {
+    prior <- old$notes[match(paste(coord_diffs$monitoring_location_id, coord_diffs$issue),
+                             paste(old$monitoring_location_id, old$issue))]
+    coord_diffs$notes <- coalesce(prior, "")
+  }
+}
+
+write_csv(coord_diffs, q28_path)
+coord_diffs
+```
+
+The table above is empty when every location passes (the CSV is then written with only its header row).
+
+```{r q28-download}
+#| results: asis
+if (knitr::is_html_output()) {
+  uri <- paste0("data:text/csv;base64,", jsonlite::base64_enc(readBin(q28_path, "raw", file.size(q28_path))))
+  cat(sprintf('<p><a download="q28_coordinate_differences.csv" href="%s">Download q28_coordinate_differences.csv</a></p>', uri))
+}
+```
+
+The link above downloads the table as a CSV that you can fill in; to keep notes in the repo, edit `output/q28_coordinate_differences.csv` directly.
+
+```{r q28-cue}
+#| results: asis
+if (any(coord_diffs$issue == "Sampled location differs from QAPP-registered location")) {
+  cat("::: {.callout-warning}\n## Action needed: sampled location differs from the QAPP\n\n",
+      "For the location(s) below, the coordinates where crews sample differ from the coordinates ",
+      "registered in CDX and listed in the QAPP. The upload uses the registered location. ",
+      "Describe the difference where appropriate in this report (and in the `notes` column of ",
+      "the CSV above). The QAPP site coordinates should be updated at the next QAPP revision.\n\n",
+      paste0("- ", unique(coord_diffs$monitoring_location_id[
+        coord_diffs$issue == "Sampled location differs from QAPP-registered location"]),
+        collapse = "\n"),
+      "\n:::\n", sep = "")
+}
+```
+
+Reference sites with no results in this year's data (informational; planned-but-missing sites are handled in Q23):
+
+```{r q28-absent}
+ref_sites |>
+  anti_join(site_check, by = "monitoring_location_id") |>
+  arrange(river_mile)
+```
+
+Map of the registered locations used in the export (blue markers); red circles mark where crews actually sample when that differs from the registered location.
+
+```{r q28-map}
+if (knitr::is_html_output()) {
+  site_check |>
+    filter(numeric_ok) |>
+    distinct(monitoring_location_id, lat, lon) |>
+    leaflet::leaflet() |>
+    leaflet::addTiles() |>
+    leaflet::addMarkers(~lon, ~lat,
+                        popup = ~monitoring_location_id, label = ~monitoring_location_id) |>
+    leaflet::addCircleMarkers(
+      data = filter(site_check, sampled_differs),
+      lng = ~sampled_lon, lat = ~sampled_lat, color = "red",
+      label = ~paste(monitoring_location_id, "(sampled location)"))
+} else {
+  site_check |> distinct(monitoring_location_id, lat, lon) |> knitr::kable()
+}
+```
+
+MANUAL: confirm the registered location list in CDX still matches the QAPP and that the map looks right; describe in `notes` (and here) any place where sampling differed from a registered location (not yet written for this year).
 
 <br>
 
@@ -792,4 +998,3 @@ cdx_files <- here("output", c("results_activities.csv", "project.csv", "station.
 tibble(file = basename(cdx_files),
        rows = map_int(cdx_files, \(f) if (file.exists(f)) nrow(read.csv(f)) else NA_integer_))
 ```
-

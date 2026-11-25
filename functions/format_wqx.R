@@ -35,13 +35,25 @@ if (!"dat_row" %in% names(dat)) dat$dat_row <- seq_len(nrow(dat))
 
 
 ############ b.) match latitude and longitude coordinates to sites ##################
-site_coords <- read_excel(
-  file.path(cfg$templates_dir, "wqx_template_matching_table.xlsx"),
-  sheet = "site_coordinates"
-) |>
-  remove_empty() |>
-  mutate(monitoring_location_id = as.character(monitoring_location_id))
-dat <- left_join(dat, site_coords)
+# reference/baseline_sites.csv is the single source of site coordinates: the locations and
+# coordinates registered in CDX. Results are submitted under them (new locations would need a
+# re-approved QAPP). Places actually sampled that differ are recorded in
+# year_files/sampled_locations.csv and reported in qaqc.qmd Q28; they are never uploaded.
+registered_sites <- utils::read.csv(here::here("reference/baseline_sites.csv"),
+                                    colClasses = "character") |>
+  transmute(monitoring_location_id = sub("^KENAI_WQX-", "", MonitoringLocationIdentifier),
+            reg_latitude = as.numeric(latitude), reg_longitude = as.numeric(longitude))
+unregistered <- setdiff(unique(as.character(dat$monitoring_location_id)),
+                        registered_sites$monitoring_location_id)
+if (length(unregistered) > 0) {
+  stop("format_wqx: location(s) not in reference/baseline_sites.csv (registered CDX sites): ",
+       paste(unregistered, collapse = ", "), call. = FALSE)
+}
+dat <- dat |>
+  mutate(monitoring_location_id = as.character(monitoring_location_id)) |>
+  left_join(registered_sites, by = "monitoring_location_id") |>
+  mutate(latitude = reg_latitude, longitude = reg_longitude) |>
+  select(-reg_latitude, -reg_longitude)
 
 # Site code (KBL_*) prefixes every Activity ID. The `adec_site_names` column
 # `MonitoringLocationIdentifier` holds this code, not a WQP identifier.

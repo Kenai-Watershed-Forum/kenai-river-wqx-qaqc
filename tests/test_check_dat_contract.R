@@ -9,7 +9,8 @@ source(here::here("functions", "check_dat_contract.R"))
 
 ref <- here::here("reference")
 match_xlsx <- file.path(ref, "wqx_templates/wqx_template_matching_table.xlsx")
-site_id <- as.character(readxl::read_excel(match_xlsx, sheet = "site_coordinates")$monitoring_location_id[1])
+site_id <- sub("^KENAI_WQX-", "", utils::read.csv(file.path(ref, "baseline_sites.csv"),
+                                                   colClasses = "character")$MonitoringLocationIdentifier[1])
 analyte <- utils::read.csv(file.path(ref, "wqx_templates/analytes_list_manual_edit.csv"))$analyte[1]
 method  <- readxl::read_excel(match_xlsx, sheet = "result_sample_fraction")$analytical_method[1]
 
@@ -69,7 +70,7 @@ test_that("result_sample_fraction must be a WQX value or NA", {
 test_that("location IDs must be bare digits and known", {
   expect_true(has_issue(mutate(good, monitoring_location_id = paste0("KENAI_WQX-", site_id)),
                         "not bare digits"))
-  expect_true(has_issue(mutate(good, monitoring_location_id = "99999999"), "not in site_coordinates"))
+  expect_true(has_issue(mutate(good, monitoring_location_id = "99999999"), "not in baseline_sites.csv"))
 })
 
 test_that("lab QC rows and surrogates are rejected", {
@@ -159,10 +160,10 @@ test_that("site code is cross-checked against baseline_sites.csv and adec_site_n
   utils::write.csv(bl3, file.path(tmp, "baseline_sites.csv"), row.names = FALSE)
   expect_true(any(grepl("river mile disagrees", chk(), fixed = TRUE)))
 
-  # Site missing from baseline_sites.csv: warning only
+  # Site missing from baseline_sites.csv (the registered CDX list): error
   utils::write.csv(bl[-row, ], file.path(tmp, "baseline_sites.csv"), row.names = FALSE)
   d <- issues_for(good, ref_dir = tmp)
-  expect_equal(d$severity[grepl("not in baseline_sites.csv", d$check, fixed = TRUE)], "warning")
+  expect_equal(d$severity[grepl("not in baseline_sites.csv", d$check, fixed = TRUE)], "error")
   utils::write.csv(bl, file.path(tmp, "baseline_sites.csv"), row.names = FALSE)
 
   # Malformed code in the adec sheet
@@ -185,27 +186,21 @@ test_that("site coordinates must be ASCII, numeric and inside Alaska", {
             file.path(tmp, "wqx_templates"))
   file.copy(file.path(ref, "baseline_sites.csv"), tmp)
 
-  tmp_xlsx <- file.path(tmp, "wqx_templates/wqx_template_matching_table.xlsx")
-  sheets <- readxl::excel_sheets(tmp_xlsx)
-  all_sheets <- setNames(lapply(sheets, readxl::read_excel, path = tmp_xlsx), sheets)
-  coords <- all_sheets$site_coordinates
-  row <- which(as.character(coords$monitoring_location_id) == site_id)
-  skip_if(length(row) != 1, "test site is not in site_coordinates")
+  coords <- utils::read.csv(file.path(tmp, "baseline_sites.csv"), colClasses = "character")
+  row <- which(sub("^KENAI_WQX-", "", coords$MonitoringLocationIdentifier) == site_id)
+  skip_if(length(row) != 1, "test site is not in baseline_sites.csv")
 
-  # Write the sheet with the test site's coordinates replaced (as text, so any value is allowed)
+  # Write baseline_sites.csv with the test site's coordinates replaced (as text, so any value is allowed)
   with_coords <- function(lat, lon) {
     cc <- coords
-    cc$latitude <- as.character(cc$latitude)
-    cc$longitude <- as.character(cc$longitude)
     cc$latitude[row] <- lat
     cc$longitude[row] <- lon
-    all_sheets$site_coordinates <- cc
-    writexl::write_xlsx(all_sheets, tmp_xlsx)
+    utils::write.csv(cc, file.path(tmp, "baseline_sites.csv"), row.names = FALSE, na = "")
     issues_for(good, ref_dir = tmp)$check
   }
   lat0 <- "60.5"; lon0 <- "-151.2"
 
-  expect_false(any(grepl("site_coordinates latitude", with_coords(lat0, lon0), fixed = TRUE)))
+  expect_false(any(grepl("baseline_sites.csv latitude", with_coords(lat0, lon0), fixed = TRUE)))
   expect_true(any(grepl("non-ASCII", with_coords(lat0, "\u2212151.2"), fixed = TRUE)))
   expect_true(any(grepl("not numeric", with_coords(lat0, "abc"), fixed = TRUE)))
   expect_true(any(grepl("not numeric", with_coords(NA_character_, lon0), fixed = TRUE)))
