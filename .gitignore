@@ -8,3 +8,8 @@
 **/*.quarto_ipynb
 archive_restore/
 archive_staging/
+
+# Render caches and purl scratch
+*_cache/
+*_files/
+qaqc_run_tmp.R
