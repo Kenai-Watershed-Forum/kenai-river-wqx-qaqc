@@ -43,7 +43,7 @@ check_dat_contract <- function(dat,
     "resultflag",             "chr",  "loq",                    "dbl",  "lod",                    "dbl",  "dl",                     "dbl",
     "collect_date",           "Date", "collect_time",           "hms",  "rec_date",               "Date",
     "rec_time",               "hms",  "run_date",               "Date", "run_time",               "hms",
-    "analytical_method",      "chr",  "epa_analysis_id",        "chr",  "context_code",           "chr",
+    "analytical_method",      "chr",  "analytical_method_raw",  "chr",  "epa_analysis_id",        "chr",  "context_code",           "chr",
     "monitoring_location_id", "chr",  "note",                   "chr",  "sample_type",            "chr",
     "sample_condition",       "chr",  "dissolved",              "chr",  "result_sample_fraction", "chr"
   )

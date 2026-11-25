@@ -288,50 +288,240 @@ MANUAL: receipt temperature and preservation finding (not yet written for this y
 
 **18.) Are dissolved metal quantities less than total metals quantities?**
 
-```{r q18}
-#| eval: false
-# AUTO: not yet ported from project_year/2025.qmd
+For every characteristic measured in both fractions at the same location and date (primary samples only), the dissolved result is compared with the total result. A Dissolved result comes from a filtered sample and a total result from an unfiltered one (SGS flags these `L` and `.` in its data deliverable; `Total` and `Unfiltered` are both treated as total). Results are compared in ug/L. A pair is Not comparable when either result is a non-detect or below the quantification limit. Dissolved above total is reported in two tiers: within tolerance, when the relative percent difference is no larger than the duplicate RPD limit for that characteristic (`rpd_threshold()`), or exceeding tolerance. The tolerance is a project convention; the QAPP does not state one.
+
+This comparison does not reject anything by itself. Every pair that exceeds tolerance needs a decision recorded in `year_files/{year}_data_flag_decisions.csv` (`flag` Y rejects, N accepts, with `notes`; a blank `result_sample_fraction` applies to both results). The pipeline stops before the export until each exceedance has a decision.
+
+```{r q18-summary}
+dt_pairs |>
+  count(characteristic_name, dt_status) |>
+  pivot_wider(names_from = dt_status, values_from = n, values_fill = 0)
 ```
+
+```{r q18-exceptions}
+dt_pairs |>
+  filter(startsWith(dt_status, "Dissolved >")) |>
+  select(monitoring_location_id, activity_start_date, characteristic_name, unit,
+         dissolved_result, total_result, rpd_pct, threshold, dt_status)
+```
+
+The table above lists every pair with dissolved above total; it is empty when there are none.
+
+```{r q18-decisions}
+dt_pairs |>
+  filter(dt_status == "Dissolved > total (exceeds tolerance)") |>
+  left_join(
+    read.csv(cfg$flag_decisions_path, colClasses = "character") |>
+      mutate(activity_start_date = mdy(activity_start_date)) |>
+      select(monitoring_location_id, activity_start_date, characteristic_name,
+             result_sample_fraction, decision = flag, notes),
+    by = c("monitoring_location_id", "activity_start_date", "characteristic_name")
+  ) |>
+  select(monitoring_location_id, activity_start_date, characteristic_name,
+         result_sample_fraction, decision, notes)
+```
+
+MANUAL: interpretation of any dissolved-above-total pairs and the decision rationale (not yet written for this year).
 
 <br>
 
 **19.) Are the duplicate sample(s) RPD (Relative Percent Difference) within range described in QAPP?**
 
-```{r q19}
-#| eval: false
-# MIXED: not yet ported from project_year/2025.qmd
+Each original and field duplicate pair is evaluated under two rules side by side (`assess_rpd()`): QAPP v3, the rule this project operates under, and the ADEC 2026 QAPP guidance. Under QAPP v3, RPD is used only when one or both results are above the LOQ and one or both are at least 2x the LOQ; otherwise the pair is Not evaluable. ADEC 2026 differs for results below the LOQ: RPD is skipped when the other result is under 2x the LOQ, and the pair fails when the other result is at least 2x the LOQ. Non-detects arrive with value 0. RPD limits are those of QAPP v3 Tables 4 and 5: 20% for metals, 25% for nutrients, 5% for suspended solids.
+
+Fecal coliform has no precision criterion in QAPP v3 Table 5 (only sterility and temperature checks), so its pairs are shown with the RPD and the status No criterion, and they never reject results. This is a project decision; a criterion should be written into the next QAPP (`topics/qapp_revision_notes.md`).
+
+A pair that fails under QAPP v3 rejects both the original and the duplicate result in the export (reason `Field duplicate RPD fail (QAPP v3)`). The exception is a failing pair in which one result is below the LOQ (for example a detect against a non-detect). Those pairs need a decision recorded in `year_files/{year}_data_flag_decisions.csv` (`flag` Y rejects both results, N accepts, with `notes`); the pipeline stops before the export until each has one, and they are rejected only on Y.
+
+```{r q19-summary}
+rpd_pairs |>
+  summarise(pairs = n(), .by = c(qapp_v3, adec_2026)) |>
+  arrange(qapp_v3, adec_2026)
 ```
 
-Port note: QAPP v3 primary, ADEC 2026 beside it (assess_rpd).
+```{r q19-by-analyte}
+rpd_pairs |>
+  summarise(
+    pairs = n(),
+    limit_pct = first(threshold),
+    pass = sum(qapp_v3 == "Pass"),
+    fail = sum(qapp_v3 == "Fail"),
+    not_evaluable = sum(qapp_v3 == "Not evaluable"),
+    no_criterion = sum(qapp_v3 == "No criterion"),
+    .by = c(characteristic_name, sample_fraction)
+  ) |>
+  arrange(characteristic_name, sample_fraction)
+```
+
+```{r q19-exceptions}
+rpd_pairs |>
+  filter(qapp_v3 == "Fail" | adec_2026 == "Fail" | !rules_agree) |>
+  select(monitoring_location_id, activity_start_date, characteristic_name, sample_fraction,
+         result_orig, result_rep, loq, rpd_pct, threshold, qapp_v3, adec_2026, needs_decision)
+```
+
+The table above lists every pair that fails under either rule, or on which the two rules disagree. `needs_decision` is TRUE for pairs that wait on a decision.
+
+DECISION PENDING: dissolved lead at 10000015 on 7/23/2025 (original 7.36 ug/L, replicate not detected, LOQ 2, DL 0.5) fails both rules with one result below the LOQ. A Y or N row is needed in `year_files/2025_data_flag_decisions.csv` before the pipeline can reach the export.
+
+MANUAL: discussion of the RPD results and any decisions made (not yet written for this year).
 
 <br>
 
 **20.) Were there any laboratory discrepancies, errors, data qualifiers, or QC failures (review laboratory duplicates, matrix spikes and blanks)?**
 
-```{r q20}
-#| eval: false
-# MIXED: not yet ported from project_year/2025.qmd
+The laboratory QC records (`lab_qc`: blanks, laboratory control and fortified samples, matrix spikes and duplicates, calibration checks, surrogates) are assessed by `assess_lab_qc()` against the limits the laboratory reports with each record; nothing is hardcoded. A record is Fail if any applicable check fails, Pass if at least one check passes and none fail, and Not evaluable otherwise (including a missing limit). Low-level QC (LLQC) records carry no recovery limits from SGS, so they are Not evaluable here.
+
+Blanks are assessed under two rules side by side: the QAPP v3 rule (primary; any detection above the detection limit fails) and the ADEC 2026 rule (fails at or above the LOQ). Only the QAPP rule sets the record's result.
+
+A failed record rejects results through `assign_qc_status()`, by scope:
+
+- Batch controls (LCS, LCSD, CCV, ICV and similar): every result in the same batch with the same laboratory, method, analyte and fraction.
+- Blanks: detected results in the same batch, method, analyte and fraction that are below `blank_multiple` times the blank result. The multiple is a project convention set in `config.yml`; the QAPP does not state one.
+- Matrix spikes and duplicates: the parent sample only.
+
+The Rejected results themselves are reported under Q21.
+
+```{r q20-summary}
+lab_qc |>
+  count(lab_name, qc_group, qc_result) |>
+  pivot_wider(names_from = qc_result, values_from = n, values_fill = 0) |>
+  arrange(lab_name, qc_group)
 ```
 
-Port note: assess_lab_qc and lab_qc_actions; LLQC not evaluated; blank multiple is a project convention.
+```{r q20-fails}
+lab_qc |>
+  filter(qc_result == "Fail") |>
+  select(lab_name, season, qc_group, sample_type, sample_id, analyte, analytical_method,
+         qc_check, result, resultflag, units, loq, dl, percent_recovered, rec_limit_low,
+         rec_limit_high, sample_rpd, rpd_limit_high, anl_batch)
+```
+
+The table above lists every failed laboratory QC record; it is empty when there are none.
+
+```{r q20-blank-rules}
+lab_qc |>
+  filter(qc_group == "blank") |>
+  count(lab_name, blank_qapp, blank_adec) |>
+  arrange(lab_name, blank_qapp, blank_adec)
+```
+
+```{r q20-actions}
+lab_qc_actions
+```
+
+The table above shows, for each failed record, its scope, how many results it matched (`n_matched`) and how many were Rejected (`n_rejected`).
+
+```{r q20-qualifiers}
+dat |>
+  filter(!is.na(resultflag)) |>
+  count(lab_name, resultflag) |>
+  arrange(lab_name, resultflag)
+```
+
+Result flags above are the laboratory's own (`=` detected, `J` estimated between the detection limit and the LOQ, `U` not detected). Laboratory narrative notes, discrepancies and errors are not in the data tables; review the laboratory reports and record the finding below.
+
+MANUAL: laboratory discrepancies, errors and narrative review (not yet written for this year).
 
 <br>
 
 **21.) Is any laboratory data rejected and why?**
 
-```{r q21}
-#| eval: false
-# MANUAL: not yet ported from project_year/2025.qmd
+A result is Rejected when any of these apply: a failed laboratory QC record (Q20), a blank fail (Q20), a field duplicate RPD fail under QAPP v3 (Q19), a decision recorded as Y in `year_files/{year}_data_flag_decisions.csv` (Q18, Q19), or a missed holding time (Q17). `finalize_qc_status()` combines them, so `export_dat` holds each result's final `qc_status` and every reason in `qc_fail_reason`. Rejected results stay in the export with a flag; they are not deleted.
+
+```{r q21-summary}
+export_dat |>
+  count(activity_type, qc_status) |>
+  pivot_wider(names_from = qc_status, values_from = n, values_fill = 0) |>
+  mutate(percent_rejected = round(100 * Rejected / (Accepted + Rejected), 1))
 ```
+
+```{r q21-reasons}
+# A result can carry several reasons, so the rows below can sum to more than the Rejected count
+reason_patterns <- c(
+  "Blank fail" = "^Blank fail|; Blank fail",
+  "Lab QC fail" = "Lab QC fail",
+  "Field duplicate RPD fail" = "Field duplicate RPD fail",
+  "Hold time exceeded" = "Hold time exceeded",
+  "Manual flag" = "Manual flag"
+)
+
+rejected <- export_dat |>
+  filter(qc_status == "Rejected")
+
+tibble(
+  reason = names(reason_patterns),
+  results = map_int(reason_patterns, \(p) sum(grepl(p, rejected$qc_fail_reason)))
+) |>
+  add_row(reason = "Other (not matched above)",
+          results = sum(!Reduce(`|`, map(reason_patterns, \(p) grepl(p, rejected$qc_fail_reason)))))
+```
+
+```{r q21-by-analyte}
+rejected |>
+  count(characteristic_name, result_sample_fraction, name = "rejected") |>
+  left_join(
+    export_dat |> count(characteristic_name, result_sample_fraction, name = "total"),
+    by = c("characteristic_name", "result_sample_fraction")
+  ) |>
+  arrange(desc(rejected))
+```
+
+```{r q21-list}
+rejected |>
+  select(monitoring_location_id, activity_start_date, activity_type, characteristic_name,
+         result_sample_fraction, result_value, result_unit, qc_fail_reason)
+```
+
+The table above lists every Rejected result with the reason(s); it is empty when none are rejected. Each blank-fail reason names the blank, its result and its batch.
+
+MANUAL: discussion of the rejected data (not yet written for this year).
 
 <br>
 
 **22.) During the field season, review raw data files (EDDs, instrument records) as they are received. Document changes and corrections to methods as needed.**
 
-```{r q22}
-#| eval: false
-# MANUAL: not yet ported from project_year/2025.qmd
+Raw files are read once, by the ingest functions, and are never edited. Every change made on the way in is listed below, derived from the data, so the list stays complete without a hand-written note.
+
+Site labels. SGS labels resolve through `sgs_site_names_matching_table.xlsx` (a lookup, not a correction). Other labs' labels resolve by river mile in `resolve_rm_site()`, which accepts underscores and tolerates spacing and letter-for-zero typos. The table shows each label that was not already in the form `RM <number>` or `RM <number> DUP`.
+
+```{r q22-site-labels}
+dat |>
+  filter(lab_name != "SGS", grepl("^RM", sample), !grepl("^RM [0-9.]+( DUP)?$", sample)) |>
+  distinct(lab_name, sample, monitoring_location_id) |>
+  mutate(change = if_else(
+    grepl("^RM [0-9.]+( DUP)?$", gsub("_", " ", sample)),
+    "Underscore read as space",
+    "Spelling or spacing normalized"
+  )) |>
+  arrange(change, lab_name, monitoring_location_id)
 ```
+
+Method names. `analytical_method_raw` holds the method exactly as the lab file reports it; `analytical_method` is the cleaned value used for the lookups.
+
+```{r q22-methods}
+dat |>
+  filter(analytical_method != analytical_method_raw) |>
+  count(lab_name, analytical_method_raw, analytical_method, name = "results")
+```
+
+The table above is empty when no method names were changed.
+
+YSI value corrections. Reviewed values that were corrected before replicates were averaged, from `year_files/ysi_corrections.csv`; each row carries its reason.
+
+```{r q22-ysi}
+ysi_corrections_path <- here("year_files/ysi_corrections.csv")
+if (file.exists(ysi_corrections_path)) {
+  read.csv(ysi_corrections_path, colClasses = "character", na.strings = "") |>
+    as_tibble()
+} else {
+  tibble(note = "No YSI corrections file for this year.")
+}
+```
+
+The table above is empty when no values were corrected.
+
+MANUAL: corrections made outside the code (lab reissues, hand-edited files, corrected copies such as `<name>_corrected.xlsx` with their `corrections_log` sheet) and any change to methods during the season (not yet written for this year).
 
 <br>
 

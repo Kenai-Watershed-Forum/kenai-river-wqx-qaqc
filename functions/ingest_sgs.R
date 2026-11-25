@@ -62,6 +62,8 @@ ingest_sgs <- function(season,
       run_dt       = mdy_hm(run_date_time),
       run_date     = as.Date(run_dt),
       run_time     = as_hms(run_dt),
+      # Raw value kept so qaqc.qmd Q22 can list method names changed at ingest
+      analytical_method_raw = analytical_method,
       # EP200.8 -> 200.8
       analytical_method = str_replace(analytical_method, "^EP", ""),
       # Metals only; nutrients and others are filled by format_wqx.R lookups
@@ -124,8 +126,8 @@ ingest_sgs <- function(season,
     select(
       sample = sample_id, lab_sample = lab_sample_id, lab_name, analyte, result,
       units, resultflag, loq, lod, dl, collect_date, collect_time, rec_date, rec_time,
-      run_date, run_time, analytical_method, epa_analysis_id, context_code,
-      monitoring_location_id, note, sample_type, sample_condition, dissolved,
+      run_date, run_time, analytical_method, analytical_method_raw, epa_analysis_id,
+      context_code, monitoring_location_id, note, sample_type, sample_condition, dissolved,
       result_sample_fraction
     )
 

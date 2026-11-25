@@ -51,3 +51,25 @@ test_that("unpaired rows are dropped", {
   d <- mk(10, 11)
   expect_equal(nrow(assess_rpd(d[1, ])), 0)
 })
+
+test_that("fecal coliform has no criterion and never fails", {
+  r <- assess_rpd(mk(10, 40, ch = "Fecal Coliform"))
+  expect_equal(c(r$qapp_v3, r$adec_2026), c("No criterion", "No criterion"))
+  expect_false(r$needs_decision)
+})
+
+test_that("a QAPP fail with one result below the LOQ needs a decision", {
+  expect_true(assess_rpd(mk(0, 5))$needs_decision)
+  expect_false(assess_rpd(mk(10, 20))$needs_decision)
+  expect_false(assess_rpd(mk(0, 3))$needs_decision)
+})
+
+test_that("check_rpd_decisions stops until a Y or N row exists", {
+  p <- assess_rpd(mk(0, 5))
+  expect_error(check_rpd_decisions(p, NULL), "no decision is recorded")
+  mf <- data.frame(activity_start_date = as.Date("2025-01-01"), characteristic_name = "Zinc",
+                   monitoring_location_id = "1", result_sample_fraction = "",
+                   flag = "N", notes = "ok", stringsAsFactors = FALSE)
+  expect_silent(check_rpd_decisions(p, mf))
+  expect_silent(check_rpd_decisions(assess_rpd(mk(10, 20)), NULL))
+})

@@ -21,11 +21,15 @@
 # Produces in global env:
 #   export_dat  (snake_case columns plus qc_status, qc_fail_reason, flag; read by generate_cdx_export.R)
 #   rpd_pairs   (assess_rpd() output: both guidance rules per duplicate pair, for Q19)
+#   (rpd_pairs: pairs with needs_decision also stop the script until a Y/N row exists.)
+#   dt_pairs    (assess_dissolved_total() output, for Q18). Stops if a pair exceeds tolerance
+#               without a Y/N decision row in the flag decisions file.
 #
 # Also writes:
 #   cfg$flagged_export_path  (e.g., output/{year}_export_data_flagged.csv)
 
 source(here::here("functions/assess_rpd.R"))
+source(here::here("functions/assess_dissolved_total.R"))
 source(here::here("functions/finalize_qc_status.R"))
 
 # Required, not optional: a silent skip would leave hold time failures Accepted
@@ -60,6 +64,7 @@ if (file.exists(cfg$flag_decisions_path)) {
                              activity_start_date    = "character",
                              characteristic_name    = "character",
                              monitoring_location_id = "character",
+                             result_sample_fraction = "character",
                              flag                   = "character",
                              notes                  = "character"
                            )) |>
@@ -68,6 +73,13 @@ if (file.exists(cfg$flag_decisions_path)) {
   warning("apply_qaqc_flags: no manual decisions file at ", cfg$flag_decisions_path,
           "; continuing without manual flags.", call. = FALSE)
 }
+
+# Q18: dissolved > total beyond tolerance needs a recorded decision before anything is exported
+dt_pairs <- assess_dissolved_total(export_dat)
+check_dissolved_total_decisions(dt_pairs, manual_flags)
+
+# Q19: a duplicate fail with one result below the LOQ likewise needs a recorded decision
+check_rpd_decisions(rpd_pairs, manual_flags)
 
 export_dat <- finalize_qc_status(export_dat, rpd_pairs, manual_flags, holding_times) |>
   filter(!is.na(activity_id))

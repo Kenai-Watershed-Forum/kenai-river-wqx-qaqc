@@ -15,7 +15,8 @@
 #                 result_analytical_method_id, result_unit
 #   rpd_pairs     assess_rpd() output, or NULL
 #   manual_flags  data frame with monitoring_location_id, activity_start_date, characteristic_name,
-#                 flag, notes (optional column), or NULL. Unmatched "Y" rows give a warning.
+#                 flag, notes (optional column), result_sample_fraction (optional; blank = all
+#                 fractions), or NULL. Unmatched "Y" rows give a warning.
 #   holding_times assess_holding_times() output, or NULL. Rows with hold_status "Fail" are Rejected
 #                 (matched on dat_row, which export_dat must carry) with hold_note as the reason.
 # Returns export_dat with qc_status, qc_fail_reason and flag ("Y" when Rejected, else "N").
@@ -45,7 +46,10 @@ finalize_qc_status <- function(export_dat, rpd_pairs = NULL, manual_flags = NULL
 
   # Q19: both rows of a failing pair
   if (!is.null(rpd_pairs) && nrow(rpd_pairs) > 0) {
-    fails <- rpd_pairs[rpd_pairs$qapp_v3 %in% "Fail", , drop = FALSE]
+    # Pairs needing a user decision are rejected only through a "Y" manual row
+    auto <- if ("needs_decision" %in% names(rpd_pairs)) !(rpd_pairs$needs_decision %in% TRUE) else
+      rep(TRUE, nrow(rpd_pairs))
+    fails <- rpd_pairs[rpd_pairs$qapp_v3 %in% "Fail" & auto, , drop = FALSE]
     if (nrow(fails) > 0) {
       pk <- key(fails$monitoring_location_id, as.character(fails$activity_start_date),
                 fails$characteristic_name, fails$sample_fraction, fails$method_id, fails$unit)
@@ -79,19 +83,28 @@ finalize_qc_status <- function(export_dat, rpd_pairs = NULL, manual_flags = NULL
     mf <- manual_flags[manual_flags$flag %in% "Y", , drop = FALSE]
     if (nrow(mf) > 0) {
       notes <- if ("notes" %in% names(mf)) mf$notes else rep(NA_character_, nrow(mf))
+      # Optional result_sample_fraction: blank or absent matches every fraction
+      frac <- if ("result_sample_fraction" %in% names(mf)) mf$result_sample_fraction else
+        rep(NA_character_, nrow(mf))
+      frac[!is.na(frac) & trimws(frac) == ""] <- NA_character_
       mk <- key(mf$monitoring_location_id, as.character(as.Date(mf$activity_start_date)),
                 mf$characteristic_name)
       ek <- key(d$monitoring_location_id, as.character(as.Date(d$activity_start_date)),
                 d$characteristic_name)
-      unmatched <- !mk %in% ek
+      hits <- lapply(seq_along(mk), function(i) {
+        which(ek == mk[i] & (is.na(frac[i]) | d$result_sample_fraction %in% frac[i]))
+      })
+      unmatched <- lengths(hits) == 0
       if (any(unmatched)) {
         warning("finalize_qc_status: manual flag row(s) matched no result: ",
-                paste(mk[unmatched], collapse = "; "), call. = FALSE)
+                paste(ifelse(is.na(frac[unmatched]), mk[unmatched],
+                             paste(mk[unmatched], frac[unmatched], sep = "|")),
+                      collapse = "; "), call. = FALSE)
       }
       text <- ifelse(is.na(notes) | notes == "", "Manual flag",
                      paste0("Manual flag: ", notes))
       for (i in seq_along(mk)) {
-        idx <- which(ek == mk[i])
+        idx <- hits[[i]]
         if (length(idx) > 0) {
           reason <- add_reason(reason, idx, text[i])
           rejected[idx] <- TRUE

@@ -31,7 +31,7 @@ the extra raw columns that field data does not need (`percent_recovered`,
 `rec_limit_low`, `rec_limit_high`, `sample_rpd`, `rpd_limit_low`, `rpd_limit_high`,
 `dissolved`, etc.). Its contract is still to be written.
 
-## Columns (25)
+## Columns (26)
 
 "Req" means required by `format_wqx.R` or later steps, so the column must exist.
 "NA ok" means the value may be missing for some rows.
@@ -63,10 +63,11 @@ the extra raw columns that field data does not need (`percent_recovered`,
 | 23 | `dissolved` | chr | no | yes | SGS's raw flag (`L` filtered, `.` unfiltered, `T`). NA for non-SGS rows. Kept in `dat` (user decision 2026-10-28) as well as in `lab_qc_dat`; `result_sample_fraction` is the working field. |
 | 24 | `result_sample_fraction` | chr | yes | yes | `Dissolved`, `Total`, `Unfiltered`, or NA. NA is acceptable at ingest; `format_wqx.R` fills it from `wqx_template_matching_table.xlsx` and overrides TSS (`Suspended`) and FC (`None`). A value set at ingest wins over the lookup. |
 | 25 | `dl` | dbl | yes | yes | Lab detection limit (SGS DL, the maximum method detection limit), in `units`; `dl <= lod <= loq`. SGS: EDD `DL`. TSS: `config.yml` `tss$dl` (QAPP Table 5, 0.31 mg/L). FC: 1 cfu/100 mL (QAPP Table 5). NA for YSI. Maps to WQX Result Detection Limit Value 2 (Method Detection Level); Type 2 is blank when NA. |
+| 26 | `analytical_method_raw` | chr | yes | no | Method exactly as the lab file reports it, before any ingest cleanup (SGS `EP200.8`; equals `analytical_method` for labs and in-situ methods that need no cleanup). Used only by the Q22 correction table in `qaqc.qmd`; no later step reads it. |
 
 ## Invariants the contract check should test
 
-1. All 25 columns present with the types above (`Date`, `hms`, `dbl`, `chr`).
+1. All 26 columns present with the types above (`Date`, `hms`, `dbl`, `chr`).
 2. `lab_name`, `analyte`, `units`, `resultflag`, `analytical_method`, `epa_analysis_id`, `context_code`, `monitoring_location_id`, `sample_type`, `collect_date`, `run_date`, `sample` have no NA.
 3. `resultflag %in% c("=", "U", "J", "ND")`. `result` is non-NA unless `resultflag` is `U` or `ND`.
 4. `units` is in the WQX UoM list or `project_unit_spellings.csv`; no unit appears under two capitalizations.

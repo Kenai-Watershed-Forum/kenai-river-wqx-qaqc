@@ -23,3 +23,35 @@ Phase C: `qaqc.qmd`. Done: field blank coding (`activity_coding.R`), `assess_lab
 
 ## Historical data scan (moved from AGENTS.md)
 **Pending: historical data scan (2026-11-09).** Before CDX lessons step 3, the user wants all 2014-2024 data scanned (read-only) to learn what the template must handle: labs and layouts, site-label spellings (`resolve_rm_site`, SGS name table), method codes and units against the lookup sheets, non-numeric text (`to_numeric_strict`), gaps in the 24-column contract. Output: a gap table by year. The user arranges `other/input/<year>/` and says when ready; prompt for it. Open questions: compare against 2025 as baseline; include the 2013-2017 lab-measurement workbooks. The PDF extraction work (`topics/pdf_extraction.md`) prepares the PDF-only years.
+
+## Q18 (done 2026-11-24)
+`functions/assess_dissolved_total.R` (25 tests; `finalize_qc_status` gained a fraction-aware manual match, 1 test). Total = fraction Total or Unfiltered (SGS EDD `.` = unfiltered, `L` = filtered). Tolerance for dissolved > total = the Q19 RPD limit by characteristic (`rpd_threshold()`), a project convention, not in the QAPP (add a row to `topics/qapp_revision_notes.md` when next editing it). Non-detects and below-LOQ results are Not comparable. Exceedances beyond tolerance need a Y (reject) or N (accept) row in the flag decisions file or the pipeline stops before export. Test-fixture 2025: 1 OK pair, 47 Not comparable, 0 exceedances, so the stop path was tested only on synthetic data.
+
+## Q19 (done 2026-11-24)
+Decided with the user: fecal coliform has no QAPP v3 criterion (Table 5), so `rpd_threshold()` returns NA and its pairs are `No criterion` (never reject). The Gemini notebook guide's coliform rules (30% ADEC tier, absolute-difference waiver, ratio rejection) are cited to the ADEC Field Sampling Guidance 2024 and the ADEC Kenai River 2023 report, neither in the repo; not adopted. Add those PDFs to `other/documents/md/` to revisit. A QAPP v3 fail with one result below the LOQ (`needs_decision`, e.g. detect vs non-detect) is not auto-rejected: `check_rpd_decisions()` stops `apply_qaqc_flags.R` until a Y/N row exists in the flag decisions file; Y rejects both results. Test-fixture 2025: the pipeline currently STOPS on dissolved lead at 10000015, 7/23/2025 (7.36 vs U; DL 0.5, LOD 1.5, LOQ 2). The user must add the Y/N row; none was invented. Tests: 22 in test_assess_rpd, 25 in test_finalize_qc_status. Note: qaqc.qmd had CRLF endings again and was re-stripped.
+
+## Planned-samples template design (agreed 2026-11-24; workbook BUILT 2026-11-24, code not yet written)
+
+Built: `functions/build_planned_samples_template.R` (dev tool; refuses to overwrite a filled workbook), `reference/analyte_groups.csv`, `year_files/planned_samples.xlsx` (sheets README, analyte_rules, qc_samples, site_list). `analyte_rules` has `site_rule` all/range/list plus `rm_min`, `rm_max`, `add_rm`, `exclude_rm`, `needs_confirm`; BTEX is `list` at RM 1.5, 6.5, 40, 43, summer only (QAPP v3 field manual). CODE WRITTEN 2026-11-24: `functions/planned_samples.R` (`read_planned_samples`, `check_planned_samples` gate, `expand_planned_samples`, `compare_planned_to_dat` returning planned/received/accepted/accepted_planned/missing/unplanned per season, site, analyte, sample type) with 33 tests in `tests/test_planned_samples.R`. Missing planned results all count as shortfalls; reasons go in the narrative. Still to do: wire the gate and comparison into `qaqc.qmd` (Q3, Q23, then Q25 and Q26 counts); the gate is not yet in the pipeline run order. Decided 2026-11-24: dissolved metals `rm_max` = 30 (QAPP B.5, "at and downstream of RM 30"; the QAPP is the authority). Results collected but not planned (for example 2025 fixture dissolved metals at the RM 31 mainstem site) are listed as "unplanned" in a separate Q23 table and stay out of the completeness denominator. Ask the crews whether RM 31 dissolved metals were deliberate.
+
+Workbook `year_files/planned_samples.xlsx`, filled in each year before the QA/QC run. Sampling dates stay in `config.yml`. Decisions so far:
+- Site rules use a river-mile range per rule plus optional add and exclude site lists (22 sites, fixed for now).
+- Analyte groups (dissolved metals, total metals, nutrients, BTEX, fecal coliform, TSS, field parameters, turbidity) come from an editable reference table; total metals vary by year (Ca and Mg standard until about 2022-2023, more in some later years), so that group is listed per analyte.
+- Standard plan pre-filled; variable items start blank and carry a `confirm` column. The pipeline stops until every flagged row is answered (gate like Q18/Q19), with a `notes` column for why a year differed.
+- QC sheet: one row per planned QC sample (`season`, `sample_type`, `river_mile`, `analyte_group`, `confirm`, `notes`). Defaults: 2 field duplicates and 2 field blanks per event (blanks at RM 30 and downstream), trip blanks one per cooler, summer only; no BTEX in spring. Duplicate and blank sites rotate yearly and are entered by the user. Trip blank rows are typed, not generated from `config.yml` `sgs$trip_blank_sites`, so the plan stays independent of what was received.
+- Dissolved metals are sampled at RM 30 and downstream only.
+- Completeness denominator: primary plus planned field QC; lab-internal QC excluded; report primary and QC counts separately.
+- Q3 compares the QC sheet with `dat`; Q23 compares the expanded plan with `dat`; Q25 and Q26 use the same expected counts.
+- Open: `lab_name` is `Hach` for turbidity rows (an instrument, not a lab); check whether it feeds WQX Laboratory Name.
+- QAPP wording conflicts are in `qapp_revision_notes.md`.
+
+## Q22 (done 2026-11-24)
+
+`dat` gained `analytical_method_raw` (contract column 26; SGS keeps the pre-cleanup value, other labs set it equal to `analytical_method`). Chunks `q22-site-labels` (non-SGS labels not already `RM <n>`; SGS uses the lookup table), `q22-methods`, `q22-ysi`. Corrections outside the code stay a MANUAL line.
+
+## Q21 (done 2026-11-24)
+
+Chunks `q21-summary`, `q21-reasons`, `q21-by-analyte`, `q21-list` read the final `export_dat` (`qc_status`, `qc_fail_reason`). Reasons are classified by text pattern (Blank fail, Lab QC fail, Field duplicate RPD fail, Hold time exceeded, Manual flag); if a reason string in `assign_qc_status.R`, `finalize_qc_status.R` or `assess_holding_times.R` is reworded, update `reason_patterns`. Narrative stays MANUAL.
+
+## Q20 (done 2026-11-24)
+Ported into `qaqc.qmd` from `lab_qc` and `lab_qc_actions` (all five chunks run on the fixture). Principle restated by the user: the template is year-agnostic; 2025 is only a fixture, so year-specific decision rows or notes never go into template text. Decision gates (Q18, Q19) make the fixture stop until rows are added to its decisions file; that is expected behavior, and fixture decision rows are fixture data, not template work. `qaqc.qmd` reverted to CRLF twice this session; re-strip before editing.

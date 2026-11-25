@@ -197,6 +197,7 @@ dl  <- suppressWarnings(as.numeric(config$tss$dl))
       run_date     = run_date,
       run_time     = run_time,
       analytical_method = "2540-D",
+      analytical_method_raw = "2540-D",
       epa_analysis_id   = "2540-D",
       context_code = "APHA",
       monitoring_location_id,

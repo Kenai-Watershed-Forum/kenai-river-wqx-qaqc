@@ -21,7 +21,7 @@ good <- tibble::tibble(
   collect_date = as.Date("2031-05-01"), collect_time = hms::as_hms("10:00:00"),
   rec_date = as.Date("2031-05-02"), rec_time = hms::as_hms("09:00:00"),
   run_date = as.Date("2031-05-03"), run_time = hms::as_hms("08:00:00"),
-  analytical_method = method, epa_analysis_id = method, context_code = "USEPA",
+  analytical_method = method, analytical_method_raw = method, epa_analysis_id = method, context_code = "USEPA",
   monitoring_location_id = site_id, note = NA_character_, sample_type = "PS",
   sample_condition = NA_character_, dissolved = NA_character_,
   result_sample_fraction = "Total"

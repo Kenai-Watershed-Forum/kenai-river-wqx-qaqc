@@ -95,3 +95,32 @@ test_that("hold time failures are Rejected by dat_row with the hold note as reas
   out5 <- finalize_qc_status(mk_export(), holding_times = ht5)
   expect_equal(out5$qc_fail_reason[5], "Lab QC fail (CCV); Hold time exceeded")
 })
+
+test_that("a manual row with a fraction rejects only that fraction; blank rejects all", {
+  e <- mk_export()
+  e <- rbind(e, transform(e[1, ], dat_row = 6L, result_sample_fraction = "Dissolved",
+                          qc_status = "Accepted", qc_fail_reason = NA))
+  mf <- data.frame(monitoring_location_id = "1", activity_start_date = as.Date("2025-04-30"),
+                   characteristic_name = "Zinc", result_sample_fraction = "Dissolved",
+                   flag = "Y", notes = "dissolved > total", stringsAsFactors = FALSE)
+  out <- finalize_qc_status(e, manual_flags = mf)
+  expect_equal(out$qc_status[out$dat_row == 6], "Rejected")
+  expect_equal(out$qc_status[out$dat_row == 1], "Accepted")
+  mf$result_sample_fraction <- ""
+  out2 <- finalize_qc_status(e, manual_flags = mf)
+  expect_equal(out2$qc_status[out2$dat_row %in% c(1, 6)], c("Rejected", "Rejected"))
+  mf$result_sample_fraction <- "Total"
+  mf$characteristic_name <- "Zinc"
+  expect_equal(finalize_qc_status(e, manual_flags = mf)$qc_status[6], "Accepted")
+})
+
+test_that("a pair that needs a decision is not auto-rejected; a Y row rejects it", {
+  rp <- mk_rpd(); rp$needs_decision <- TRUE
+  out <- finalize_qc_status(mk_export(), rpd_pairs = rp)
+  expect_equal(out$qc_status[1:2], c("Accepted", "Accepted"))
+  mf <- data.frame(monitoring_location_id = "1", activity_start_date = as.Date("2025-04-30"),
+                   characteristic_name = "Zinc", result_sample_fraction = "", flag = "Y",
+                   notes = "detect vs non-detect", stringsAsFactors = FALSE)
+  out2 <- finalize_qc_status(mk_export(), rpd_pairs = rp, manual_flags = mf)
+  expect_equal(out2$qc_status[1:2], c("Rejected", "Rejected"))
+})
