@@ -80,3 +80,21 @@ Phase E (to do): `config.yml` holds 2025 fixture values for `year`, `sampling`, 
 ## Q33 built 2026-11-25 (render currently STOPS at Q33 by design)
 - Added `reference/wqx_domains/` (ActivityMedia.CSV, Characteristic.CSV, README), `functions/check_wqx_domain.R`, `tests/test_check_wqx_domain.R` (3 pass), `config.yml` `wqx:` block; `format_wqx.R` reads media and subdivision from `cfg`.
 - Q33 finding (2025 fixture): `Characteristic Name` is written from the project `analyte` (format_wqx.R line ~210), so 7 names are not accepted WQX names: Dissolved Oxygen, P & M -Xylene, Specific Conductance, Total Nitrate/Nitrite-N, Total Phosphorus, Water Temperature, Xylenes (total). WQX equivalents exist for most (e.g. "Dissolved oxygen (DO)", "Specific conductance", "Temperature, water", "Nitrate + Nitrite", "Phosphorus", "Xylene"). This is the pending characteristic-name mapping (Decision 2). Needs the user's decision before Q34 can render.
+
+## Q33 resolved 2026-11-25 (characteristic-name mapping)
+- `reference/wqx_templates/analytes_list_manual_edit.csv` has a third column `wqx_characteristic_name`; `format_wqx.R` writes it to `Characteristic Name` and stops if an analyte has none. Project `analyte` is kept for reports and Activity IDs. Surrogates (`(surr)`) are blank (never exported).
+- Mapping: Dissolved Oxygen to Dissolved oxygen (DO); Specific Conductance to Specific conductance; Water Temperature to Temperature, water; Total Nitrate/Nitrite-N to Nitrate + Nitrite; Total Phosphorus to Phosphorus; Xylenes (total) to Total xylenes; P & M -Xylene to m,p-Xylene. Basis for xylenes: WQX list (Total xylenes and Xylene share CAS 1330-20-7), KWF's own 2021 WQP upload (total, m,p, o as separate names, fraction Volatile), ADEC practice. Total xylenes includes the isomers: never sum them.
+- `generate_cdx_export.R` line 74 filters `characteristic_name == "Phosphorus"` with method 200.8; it was dead code with the old name "Total Phosphorus" and is now live. Untested here (CDX step skipped).
+- Still open: Method Speciation (`as P`, `as N`) is blank; consider a total >= o + m,p consistency check for xylenes; 2022-2024 xylene results are not on WQP (confirm names match when historical upload is checked).
+- Render completes through Q33; test suite 144 tests, 0 failures.
+
+## Q34 built 2026-11-25
+- Online domain file names are the internal domain names, not the labels: `SampleContainerType`, `SampleContainerColor`, `ThermalPreservativeUsed` (label "Thermal Preservative"), `SampleCollectionEquipment`, plus (probed, not yet downloaded) `SampleCollectionMethod`, `ActivityType`, `ActivityMediaSubdivision`, `RelativeDepth`, `ResultDetectionCondition`, `ResultMeasureQualifier`, `MethodSpeciation`, `SampleCollectionEquipmentType`. Chemical Preservative has no domain list. The `C:\_github\kwf\epa_cdx_domains` mirror (Jan 2024) matched online for container, color and thermal; equipment online has 7 more names.
+- Finding fixed: `format_wqx.R` wrote thermal preservative "Cold packs", which is not a WQX name; now `config.yml` `wqx: thermal_preservative` = "Cold Packs (4 deg C)".
+- Resolved: WQX accepts `Probe/Sensor` and `Water Bottle` as Equipment ID.
+- Q34 stops on invalid values; chemical preservative shown for review only. Render completes through Q34. Open: whether to supply Sample Collection Method ID (all blank); thermal preservative is a fixed value, not verified against receipt temperature.
+
+## Q35 built 2026-11-25
+- User decision: keep `Field Msr/Obs` and `Quality Control Field Replicate Msr/Obs` (matches 2021 upload, report repo appendix_a, assess_rpd/finalize_qc_status). KWF WQP history: 2000-2013 used `Sample-Routine` and `Quality Control Sample-Field Replicate`; 2021 used the Msr/Obs wording; 2014-2020 and 2022-2024 are not on WQP.
+- `ActivityType.CSV` names its name column `Code`; `read_wqx_domain()` handles both. Q35 checks domain membership, suffix and type pairs (taken from `activity_coding.R`), one type per Activity ID; warns if a planned QC type is absent. Render completes through Q35.
+- Open: Q37 relative depth decision; Q36 next.

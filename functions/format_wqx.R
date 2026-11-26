@@ -9,7 +9,7 @@
 #   dat         -- standardized field results (see dat column contract in AGENTS.md); may also
 #                  carry qc_status and qc_fail_reason from assign_qc_status()
 #   cfg         -- list with keys: templates_dir, wqx_template_file, wqx_intermediate_path,
-#                  activity_media_name, activity_media_subdivision_name
+#                  activity_media_name, activity_media_subdivision_name, thermal_preservative
 #   year        -- integer data year (also used for Activity ID)
 #   spring_sample_date -- character "M/D/YYYY"
 #
@@ -156,14 +156,21 @@ dat <- dat |>
 ## a.) analyte abbreviations
 # Abbreviations are manually assigned in "analytes_list_manual_edit.csv"
 analyte_abbrev <- read.csv(file.path(cfg$templates_dir, "analytes_list_manual_edit.csv"))
-colnames(analyte_abbrev) <- c("analyte", "analyte_abbreviation")
-analyte_abbrev <- analyte_abbrev |> select(analyte, analyte_abbreviation)
+# wqx_characteristic_name is the EPA WQX domain-list name written to the upload (checked in Q33);
+# `analyte` keeps the project name used in reports and Activity IDs.
+analyte_abbrev <- analyte_abbrev |> select(analyte, analyte_abbreviation, wqx_characteristic_name)
 
 # An analyte without an abbreviation would produce a broken Activity ID
 new_analytes <- setdiff(unique(dat$analyte), analyte_abbrev$analyte)
 if (length(new_analytes) > 0) {
   stop("format_wqx: no abbreviation in analytes_list_manual_edit.csv for: ",
        paste(new_analytes, collapse = ", "), call. = FALSE)
+}
+# A blank WQX name would upload an empty Characteristic Name
+no_wqx_name <- analyte_abbrev |> filter(analyte %in% dat$analyte, is.na(wqx_characteristic_name) | wqx_characteristic_name == "")
+if (nrow(no_wqx_name) > 0) {
+  stop("format_wqx: no wqx_characteristic_name in analytes_list_manual_edit.csv for: ",
+       paste(no_wqx_name$analyte, collapse = ", "), call. = FALSE)
 }
 dat <- dat |> left_join(analyte_abbrev, by = "analyte")
 
@@ -207,7 +214,7 @@ dat <- dat |>
     `Activity Bottom Depth/Height Unit`   = "",
     `Activity Relative Depth Name`        = "",
     `Activity Comment`                    = note,
-    `Characteristic Name`                 = analyte,
+    `Characteristic Name`                 = wqx_characteristic_name,
     `Result Analytical Method ID`         = epa_analysis_id,
     `Result Analytical Method Context`    = context_code,
     `Method Speciation`                   = "",
@@ -237,7 +244,7 @@ dat <- dat |>
     `Analysis Start Time`                 = run_time,
     `Biological Intent`                   = "",
     `Subject Taxonomic Name`              = "",
-    `Thermal Preservative`                = if_else(analytical_method %in% in_situ_methods, "", "Cold packs"),
+    `Thermal Preservative`                = if_else(analytical_method %in% in_situ_methods, "", cfg$thermal_preservative),
     `Sample Container Type`               = sample_container_type,
     `Sample Container Color`              = sample_container_color,
     `Chemical Preservative`               = preservative,

@@ -1,0 +1,14 @@
+Domain,Unique Identifier,Name,Description,Last Change Date
+Thermal Preservative(ThermalPreservativeUsedName),5,Cold Packs (4 deg C),Sample surrounded with cold packs,7/26/2006 10:57:50 AM
+Thermal Preservative(ThermalPreservativeUsedName),3,Dry Ice (-78.5 deg C),Sample is frozen and stored with dry ice.,7/26/2006 10:57:50 AM
+Thermal Preservative(ThermalPreservativeUsedName),9,Freeze Dried,Sample is dehydrated after freezing.,7/26/2006 10:57:50 AM
+Thermal Preservative(ThermalPreservativeUsedName),12,Frozen (-10 deg C),Sample was placed in -10 deg C environment.,7/25/2023 3:12:57 PM
+Thermal Preservative(ThermalPreservativeUsedName),7,Frozen (-20 deg C),Sample is stored in the freezer portion of a refrigerator.,7/26/2006 10:57:50 AM
+Thermal Preservative(ThermalPreservativeUsedName),8,Frozen (-50 deg C),Sample was placed in a ultra freezer.,7/26/2006 10:57:50 AM
+Thermal Preservative(ThermalPreservativeUsedName),6,Frozen (0 deg C),Sampled is placed in a 0 deg C environment.,7/26/2006 10:57:50 AM
+Thermal Preservative(ThermalPreservativeUsedName),1,None,No physical preservation employed.,7/26/2006 10:57:50 AM
+Thermal Preservative(ThermalPreservativeUsedName),4,Refrigerated (4 deg C),Sample is placed in a refrigerator and stored there.,7/26/2006 10:57:50 AM
+Thermal Preservative(ThermalPreservativeUsedName),11,Refrigerated (6 deg C),Sample is placed in a refrigerator and stored there.,11/16/2022 3:21:19 PM
+Thermal Preservative(ThermalPreservativeUsedName),10,Unspecified,Unspecified,7/26/2006 10:57:50 AM
+Thermal Preservative(ThermalPreservativeUsedName),2,Wet Ice (4 deg C),"Sample is stored with ice, usually in a cooler.",7/26/2006 10:57:50 AM
+

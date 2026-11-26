@@ -44,6 +44,7 @@ cfg <- list(
   wqx_downloads_dir     = here("other/input/WQX_downloads"),
   activity_media_name   = config$wqx$activity_media_name,
   activity_media_subdivision_name = config$wqx$activity_media_subdivision_name,
+  thermal_preservative  = config$wqx$thermal_preservative,
   spring_sample_date    = spring_sample_date,
   summer_sample_date    = config$sampling$summer_date
 )
@@ -1091,19 +1092,127 @@ MANUAL: confirm that no non-water media (sediment, tissue, air) were sampled thi
 
 **34.) Check Sample Collection, Preparation and Preservation Methods, Thermal Preservative, Equipment ID, Activity Media. Is supporting information included and correct?**
 
+Container type, container color, thermal preservative and Equipment ID are checked against EPA's WQX domain lists in `reference/wqx_domains/` (downloaded `r config$wqx$domain_download_date`; see the README there). WQX Web rejects values that do not match a list entry exactly. Meter readings (methods listed in `reference/wqx_templates/in_situ_methods.csv`) have no container, thermal preservative or chemical preservative; laboratory results must have all of them. Chemical Preservative has no WQX list, so it is shown for review but not validated.
+
 ```{r q34}
-#| eval: false
-# MIXED: not yet ported from project_year/2025.qmd
+in_situ_ids <- read.csv(here("reference/wqx_templates/in_situ_methods.csv"), colClasses = "character")$analytical_method
+x34 <- export_dat |>
+  mutate(in_situ = result_analytical_method_id %in% in_situ_ids,
+         across(c(sample_container_type, sample_container_color, thermal_preservative, chemical_preservative),
+                \(v) if_else(is.na(v), "", v)))
+lab34 <- filter(x34, !in_situ)
+insitu34 <- filter(x34, in_situ)
+
+bad34 <- bind_rows(
+  check_wqx_domain(x34$equipment_id, "SampleCollectionEquipment") |> mutate(field = "Equipment ID"),
+  check_wqx_domain(lab34$sample_container_type, "SampleContainerType") |> mutate(field = "Sample Container Type (lab)"),
+  check_wqx_domain(lab34$sample_container_color, "SampleContainerColor") |> mutate(field = "Sample Container Color (lab)"),
+  check_wqx_domain(lab34$thermal_preservative, "ThermalPreservativeUsed") |> mutate(field = "Thermal Preservative (lab)")
+)
+
+q34_checks <- tibble(
+  check = c("Equipment ID is in the WQX list on every row",
+            "Lab rows: container type, color and thermal preservative are in the WQX lists",
+            "Meter rows: no container, color, thermal or chemical preservative"),
+  passed = c(!any(bad34$field == "Equipment ID"),
+             !any(bad34$field != "Equipment ID"),
+             all(insitu34$sample_container_type == "", insitu34$sample_container_color == "",
+                 insitu34$thermal_preservative == "", insitu34$chemical_preservative == ""))
+)
+q34_checks
+
+bad34
+
+x34 |>
+  count(result_analytical_method_id, equipment_id, thermal_preservative, sample_container_type,
+        sample_container_color, chemical_preservative, name = "n_results")
 ```
+
+```{r q34-stop}
+if (any(!q34_checks$passed)) {
+  stop("Q34: supporting information not accepted by WQX: ",
+       paste(unique(bad34$field), collapse = "; "), "; see the Q34 tables.")
+}
+```
+
+Sample Collection Method ID is optional; `r sum(!is.na(export_dat$sample_collection_method_id) & export_dat$sample_collection_method_id != "")` of `r nrow(export_dat)` rows carry one. The thermal preservative is a fixed value in `config.yml` (`wqx: thermal_preservative`), so the sample temperature at receipt is not verified here (Q17).
+
+MANUAL: confirm the container, preservative and equipment descriptions against the laboratory sample receipt and the field sampling log, and decide whether a Sample Collection Method ID should be supplied (not yet written for this year).
 
 <br>
 
 **35.) Are all expected activity types present and are QC samples correctly identified?**
 
+Activity Type values come from `functions/activity_coding.R` and are checked against EPA's WQX Activity Type list (`reference/wqx_domains/ActivityType.CSV`, downloaded `r config$wqx$domain_download_date`). The Activity ID suffix comes from the same file, so the check confirms that each suffix and Activity Type travel together. This program uses these Activity Types:
+
+- `Field Msr/Obs`: a routine result, with no suffix. WQX describes it as something measured in its environmental setting, or observed; we use it for both meter readings and laboratory results, as in the 2021 upload.
+- `Quality Control Field Replicate Msr/Obs` (suffix `DUP`): a field duplicate.
+- `Quality Control Sample-Field Blank` (suffix `FB`): analyte-free water poured into a container in the field and shipped with the samples.
+- `Quality Control Sample-Trip Blank` (suffix `Blank`): analyte-free media carried from the laboratory to the site and back unopened.
+
+WQX also has `Sample-Routine` and `Quality Control Sample-Field Replicate`, which KWF used in its 2000 to 2013 uploads. The template keeps the `Msr/Obs` wording (decision recorded 2026-11-25) because the 2021 upload, the report repo and the QC functions use it.
+
 ```{r q35}
-#| eval: false
-# MIXED: not yet ported from project_year/2025.qmd
+source(here("functions/activity_coding.R"))
+
+# Suffix and type pairs, taken from the same functions format_wqx.R uses
+conditions <- c(NA, "Field Duplicate", "Field Blank", "Trip Blank")
+expected_pairs <- tibble(
+  sample_type   = c("Primary", "Field Duplicate", "Field Blank", "Trip Blank"),
+  suffix        = coalesce(condition_abbrev(conditions), "(none)"),
+  activity_type = activity_type(conditions, NA_character_)
+)
+expected_pairs
+
+x35 <- export_dat |>
+  mutate(suffix = coalesce(str_match(activity_id, "-(DUP|FB|Blank)$")[, 2], "(none)"))
+
+type_bad <- check_wqx_domain(x35$activity_type, "ActivityType")
+
+pair_bad <- x35 |>
+  anti_join(expected_pairs, by = c("suffix", "activity_type")) |>
+  count(suffix, activity_type, name = "n_results")
+
+multi_type <- x35 |>
+  distinct(activity_id, activity_type) |>
+  count(activity_id) |>
+  filter(n > 1)
+
+q35_checks <- tibble(
+  check = c("Every Activity Type is in the WQX Activity Type list",
+            "Every Activity ID suffix has the Activity Type that goes with it",
+            "No Activity ID has more than one Activity Type"),
+  passed = c(nrow(type_bad) == 0, nrow(pair_bad) == 0, nrow(multi_type) == 0)
+)
+q35_checks
+
+# Planned QC types present: planned and received counts per sample type from Q23
+planned_cmp |>
+  summarise(planned = sum(planned), received = sum(received) - sum(unplanned), .by = sample_type) |>
+  left_join(expected_pairs, by = "sample_type") |>
+  left_join(count(x35, activity_type, name = "rows_in_export"), by = "activity_type") |>
+  mutate(rows_in_export = coalesce(rows_in_export, 0L)) |>
+  arrange(match(sample_type, expected_pairs$sample_type))
 ```
+
+```{r q35-stop}
+if (any(!q35_checks$passed)) {
+  stop("Q35: Activity Type problems: not in WQX list: ", paste(type_bad$value, collapse = "; "),
+       "; suffix and type disagree: ", paste(pair_bad$suffix, pair_bad$activity_type, sep = " / ", collapse = "; "),
+       "; Activity IDs with several types: ", nrow(multi_type))
+}
+planned_types <- planned_cmp |> summarise(planned = sum(planned), .by = sample_type) |> filter(planned > 0)
+type_missing <- planned_types |>
+  inner_join(expected_pairs, by = "sample_type") |>
+  filter(!activity_type %in% x35$activity_type)
+if (nrow(type_missing) > 0) {
+  warning("Q35: planned but absent from the export: ", paste(type_missing$activity_type, collapse = "; "), call. = FALSE)
+}
+```
+
+Whether each planned QC sample arrived is assessed in Q23. `received` counts only planned results; `rows_in_export` counts every export row of that Activity Type, so it also includes results that were not planned (listed in Q23).
+
+MANUAL: confirm that each QC sample type recorded in the field log (duplicates, field blanks, trip blanks) appears with the Activity Type shown above (not yet written for this year).
 
 <br>
 

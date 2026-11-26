@@ -18,3 +18,10 @@ test_that("Characteristic list keeps only Accepted names", {
 test_that("shipped ActivityMedia list contains Water", {
   expect_true("Water" %in% read_wqx_domain("ActivityMedia"))
 })
+
+test_that("lists that name the column Code (ActivityType) are read", {
+  d <- withr::local_tempdir()
+  writeLines(c("Domain,Unique Identifier,Code", "x,1,Field Msr/Obs"), file.path(d, "ActivityType.CSV"))
+  expect_equal(read_wqx_domain("ActivityType", d), "Field Msr/Obs")
+  expect_true("Field Msr/Obs" %in% read_wqx_domain("ActivityType"))
+})

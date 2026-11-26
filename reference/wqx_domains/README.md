@@ -9,3 +9,9 @@ To refresh, re-download each file, overwrite it here, and update the date in `co
 |----|----|
 | `ActivityMedia.CSV` | Q33 |
 | `Characteristic.CSV` | Q33 (only rows with Domain Value Status "Accepted" are valid) |
+| `SampleContainerType.CSV`, `SampleContainerColor.CSV` | Q34 |
+| `ThermalPreservativeUsed.CSV` | Q34 (domain "Thermal Preservative"; file name differs from the label) |
+| `SampleCollectionEquipment.CSV` | Q34 (Equipment ID) |
+| `ActivityType.CSV` | Q35 (name column is headed `Code`) |
+
+File names are the domain's internal name, not the label (for example `SampleContainerType`, not `Container Type`). Chemical Preservative has no WQX domain list (free text), so it is not validated here. The older mirror in `C:\_github\kwf\epa_cdx_domains` (January 2024) had identical container, color and thermal lists and 7 fewer equipment names than the online lists.

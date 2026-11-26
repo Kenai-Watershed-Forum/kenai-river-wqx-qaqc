@@ -83,5 +83,7 @@ ysi:
 wqx:
   activity_media_name: "Water"
   activity_media_subdivision_name: "Surface Water"
+  # Must match the WQX Thermal Preservative list exactly (checked in Q34)
+  thermal_preservative: "Cold Packs (4 deg C)"
   # Date reference/wqx_domains/*.CSV were downloaded from https://cdx.epa.gov/wqx/download/DomainValues/
   domain_download_date: "2026-11-25"

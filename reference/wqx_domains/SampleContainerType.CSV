@@ -1,0 +1,37 @@
+Domain,Unique Identifier,Name,Description,Last Change Date
+Container Type(SampleContainerTypeName),1,Aluminum Dish,Sample handled or stored in an aluminum dish,7/26/2006 10:57:47 AM
+Container Type(SampleContainerTypeName),2,Aluminum Foil Wrap,Sample secured within wrapper of aluminum foil,7/26/2006 10:57:47 AM
+Container Type(SampleContainerTypeName),3,BOD Bottle,Sample bottle designed for use in measuring Biological Oxygen Demand (BOD),7/26/2006 10:57:47 AM
+Container Type(SampleContainerTypeName),4,Carboy Container,Sample container designed for large samples,7/26/2006 10:57:47 AM
+Container Type(SampleContainerTypeName),5,Cubitainer,Sample secured in Cubitainer,7/26/2006 10:57:47 AM
+Container Type(SampleContainerTypeName),6,Galvanized Steel Container,Container made of Galvanized Steel,7/26/2006 10:57:47 AM
+Container Type(SampleContainerTypeName),7,Glass Bottle,Sample bottle made of glass,7/26/2006 10:57:47 AM
+Container Type(SampleContainerTypeName),8,Glass Media Bottle,Sample container designed for incubation,7/26/2006 10:57:47 AM
+Container Type(SampleContainerTypeName),9,Glass Petri Dish,Sample container designed for incubation,7/26/2006 10:57:47 AM
+Container Type(SampleContainerTypeName),10,Glass Tube,Sample container designed for blood collection,7/26/2006 10:57:47 AM
+Container Type(SampleContainerTypeName),11,Glass Vial,Sample vial made of glass,7/26/2006 10:57:47 AM
+Container Type(SampleContainerTypeName),12,Glass Vial w/ Septa,Sample container designed for collection of Volatile Organic Compounds (VOCs),1/31/2025 8:40:34 AM
+Container Type(SampleContainerTypeName),13,HDPE Bottle,Sample bottle made of High Density Poly Ethylene (HDPE),7/26/2006 10:57:47 AM
+Container Type(SampleContainerTypeName),14,HDPE Vial,Sample vial made of High Density Poly Ethylene (HDPE),7/26/2006 10:57:47 AM
+Container Type(SampleContainerTypeName),15,Nalgene Bottle,Sample bottle made of Nalgene,7/26/2006 10:57:47 AM
+Container Type(SampleContainerTypeName),16,Nalgene Vial,Sample vial made of Nalgene,7/26/2006 10:57:47 AM
+Container Type(SampleContainerTypeName),99,PETG Bottle,Sample bottle made of Polyethylene terephthalate glycol (PETG); Used in Sampling Harmful Algal Blooms-Microcystins can adhere to other types of plastic,7/23/2020 1:31:17 PM
+Container Type(SampleContainerTypeName),18,Plastic Bag,Plastic bag/baggie (e.g. ZipLoc),7/26/2006 10:57:47 AM
+Container Type(SampleContainerTypeName),17,Plastic Bottle,Bottle made of unspecified plastic,7/26/2006 10:57:47 AM
+Container Type(SampleContainerTypeName),19,Plastic Dilution Bottle,Container designed for auto-dilution of sample,7/26/2006 10:57:47 AM
+Container Type(SampleContainerTypeName),20,Plastic Syringe,"A device used to transfer liquids into or out of a sampling area. It is made up of a hollow needle, which is attached to a tube and a plunger.",10/15/2012 10:57:47 AM
+Container Type(SampleContainerTypeName),21,Polycarbonate Media Bottle,Container designed for sample incubation,7/26/2006 10:57:47 AM
+Container Type(SampleContainerTypeName),22,Polyethylene Bottle,Sample bottle made of Polyethylene,7/26/2006 10:57:47 AM
+Container Type(SampleContainerTypeName),23,Polyethylene Container,Sample container made of Polyethylene,7/26/2006 10:57:47 AM
+Container Type(SampleContainerTypeName),24,Polyethylene Vial,Sample vial made of Polyethylene,7/26/2006 10:57:47 AM
+Container Type(SampleContainerTypeName),25,Polypropylene Bottle,Sample bottle made of Polypropylene,7/26/2006 10:57:47 AM
+Container Type(SampleContainerTypeName),26,Polypropylene Container,Sample container made of Polypropylene,7/26/2006 10:57:47 AM
+Container Type(SampleContainerTypeName),27,Polypropylene Vial,Sample vial made of Polypropylene,7/26/2006 10:57:47 AM
+Container Type(SampleContainerTypeName),28,Polystyrene Container,Sample container made of Polystyrene,7/26/2006 10:57:47 AM
+Container Type(SampleContainerTypeName),29,Polystyrene Petri Dish,Sample placed directly into a Petri Dish,7/26/2006 10:57:47 AM
+Container Type(SampleContainerTypeName),34,SPMD,"Semipermeable membrane device; also called ""fatbag"". It's a device that mimics parts of aquatic animals that cause bioconcentration.  SPMDs are used to assess contamination in water and air",7/10/2015 3:54:08 PM
+Container Type(SampleContainerTypeName),30,Stainless Steel Container,Container made of Stainless Steel,1/31/2025 8:40:35 AM
+Container Type(SampleContainerTypeName),31,Teflon Bottle,Sample bottle made of Teflon,7/26/2006 10:57:47 AM
+Container Type(SampleContainerTypeName),32,Teflon Vial,Sample vial made of Teflon,7/26/2006 10:57:47 AM
+Container Type(SampleContainerTypeName),33,Unspecified,Unspecified,7/26/2006 10:57:47 AM
+
